@@ -6,52 +6,57 @@ import backtype.storm.LocalDRPC;
 import backtype.storm.StormSubmitter;
 import backtype.storm.generated.AlreadyAliveException;
 import backtype.storm.generated.InvalidTopologyException;
-import backtype.storm.utils.Utils;
-import storm.trident.operation.BaseFunction;
-
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Values;
+import backtype.storm.utils.Utils;
+import com.metamx.tranquility.storm.BeamBolt;
+import com.metamx.tranquility.storm.TridentBeamState;
+import com.metamx.tranquility.storm.TridentBeamStateFactory;
+import com.metamx.tranquility.storm.TridentBeamStateUpdater;
 import com.redborder.storm.trident.bolt.EventBuilderTrindetFuction;
 import com.redborder.storm.trident.spout.TrindetKafkaSpout;
 import com.redborder.storm.trident.spout.TwitterStreamTridentSpout;
 import com.redborder.storm.trident.state.MemcachedState;
+import com.redborder.storm.trident.state.query.twitterQuery;
+import com.redborder.storm.trident.state.twitterUpdater;
 import com.redborder.storm.util.GetKafkaConfig;
 import com.redborder.storm.util.KeyUtils;
 import com.redborder.storm.util.RBEventType;
-import com.thimbleware.jmemcached.LocalCacheElement;
-import com.thimbleware.jmemcached.MemCacheDaemon;
-import java.io.FileNotFoundException;
-import java.util.Map;
-import net.spy.memcached.MemcachedClient;
-import storm.trident.Stream;
-import storm.trident.TridentState;
-import storm.trident.TridentTopology;
-import storm.trident.operation.TridentCollector;
-import storm.trident.tuple.TridentTuple;
-
+import com.redborder.storm.util.druid.MyBeamFactoryMapEvent;
+import com.redborder.storm.util.druid.MyBeamFactoryMapMonitor;
 import com.thimbleware.jmemcached.CacheImpl;
 import com.thimbleware.jmemcached.Key;
 import com.thimbleware.jmemcached.LocalCacheElement;
 import com.thimbleware.jmemcached.MemCacheDaemon;
 import com.thimbleware.jmemcached.storage.CacheStorage;
 import com.thimbleware.jmemcached.storage.hash.ConcurrentLinkedHashMap;
+import java.io.FileNotFoundException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import net.spy.memcached.MemcachedClient;
+import storm.trident.Stream;
+import storm.trident.TridentState;
+import storm.trident.TridentTopology;
 
 import storm.trident.operation.BaseFilter;
+import storm.trident.operation.BaseFunction;
+import storm.trident.operation.TridentCollector;
 import storm.trident.operation.builtin.Count;
 import storm.trident.operation.builtin.MapGet;
 import storm.trident.operation.builtin.Sum;
 import storm.trident.operation.builtin.TupleCollectionGet;
 import storm.trident.state.BaseQueryFunction;
-import storm.trident.testing.MemoryMapState;
 import storm.trident.state.BaseStateUpdater;
 import storm.trident.state.State;
 import storm.trident.state.StateFactory;
 import storm.trident.state.map.CachedMap;
 import storm.trident.state.map.MapState;
+import storm.trident.testing.MemoryMapState;
+import storm.trident.tuple.TridentTuple;
+
 
 public class CorrelationTridentTopology {
 
@@ -79,8 +84,8 @@ public class CorrelationTridentTopology {
         @Override
         public void execute(TridentTuple tuple, TridentCollector collector) {
             List<Object> list = tuple.getValues();
-            for (Object o : list){     
-            System.out.println(_str + " " + o.toString());
+            for (Object o : list) {
+                System.out.println("\n\n\n" + _str + " " + o.toString());
             }
 
         }
@@ -91,7 +96,7 @@ public class CorrelationTridentTopology {
 
         @Override
         public void execute(TridentTuple tuple, TridentCollector collector) {
-            
+
             Map<String, Object> event = (Map<String, Object>) tuple.getValueByField("event");
             collector.emit(new Values(event.get("sensor_name")));
         }
@@ -201,29 +206,39 @@ public class CorrelationTridentTopology {
         zkConfig.setTopicInt(RBEventType.MONITOR);
 
         int PORT = 52030;
-
         StateFactory memcached = MemcachedState.transactional(Arrays.asList(new InetSocketAddress("localhost", PORT)));
-        //StateFactory memcached1 = MemcachedState.transactional(Arrays.asList(new InetSocketAddress("localhost", PORT)));
-
-        
-        TridentState eventState = topology.newStream("rb_monitor", new TrindetKafkaSpout().builder(
+              
+       topology.newStream("rb_monitor", new TrindetKafkaSpout().builder(
                 zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
-                .each(new Fields("str"), new EventBuilderTrindetFuction(RBEventType.MONITOR), new Fields("topic", "event"))
-                //.each(new Fields("event"), new GetID(), new Fields("id"))
-                .partitionPersist(memcached, new Fields("event"), new memcachedUpdate("rb_event"), new Fields("cacheEvent"));
-
-        Stream tweetState = topology.newStream("twitterStream", new TwitterStreamTridentSpout())
-                .each(new Fields("tweet"), new EventBuilderTrindetFuction(5), new Fields("topic", "tweetMap"))
-                .project(new Fields("tweetMap"));
-                //.each(new Fields("tweetMap", "tweet"), new GetTweetID(), new Fields("userId"))
+                .each(new Fields("str"), new EventBuilderTrindetFuction(RBEventType.MONITOR), new Fields("topic", "event"));
+                
+                /* TridentState eventState = topology.newStream("rb_monitor", new TrindetKafkaSpout().builder(
+                 zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
+                 .each(new Fields("str"), new EventBuilderTrindetFuction(RBEventType.MONITOR), new Fields("topic", "event"))
+                 //.each(new Fields("event"), new GetID(), new Fields("id"))
+                 .partitionPersist(memcached, new Fields("event"), new memcachedUpdate("rb_event"), new Fields("cacheEvent"));*/ //.each(new Fields("tweetMap", "tweet"), new GetTweetID(), new Fields("userId"))
                 //.stateQuery(state, new queryUpdate(), new Fields("event"));
                 //.stateQuery(state, new MapGet(), new Fields("event"));
-               // .partitionPersist(memcached1, new Fields("tweetMap"), new memcachedUpdate("tweet"), new Fields("cacheTweet"));
-
-        topology.merge(new Fields("tweet"), tweetState)
-                .stateQuery(eventState, new queryUpdate("rb_event"), new Fields("event"))
-                .each(new Fields("tweet", "event"), new PrinterBolt("tweeeee:"), new Fields("a"));
-
+                // .partitionPersist(memcached1, new Fields("tweetMap"), new memcachedUpdate("tweet"), new Fields("cacheTweet"));
+                /*topology.merge(new Fields("tweet"), tweetState)
+                 .stateQuery(eventState, new queryUpdate("rb_event"), new Fields("event"))
+                 .each(new Fields("tweet", "event"), new PrinterBolt("tweeeee:"), new Fields("a"));*/ /* Twitter macth IDuser 
+        
+                 TridentState tweetState = topology.newStream("twitterStream", new TwitterStreamTridentSpout())
+                 .each(new Fields("tweet"), new EventBuilderTrindetFuction(5), new Fields("topic", "tweetMap"))
+                 .project(new Fields("tweetMap"))
+                 .each(new Fields("tweetMap"), new GetTweetID(), new Fields("userTwitterID"))
+                 .partitionBy(new Fields("userTwitterID"))
+                 .partitionPersist(memcached, new Fields("tweetMap", "userTwitterID"), new twitterUpdater());
+        
+                 topology.newStream("rb_monitor", new TrindetKafkaSpout().builder(
+                 zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
+                 .each(new Fields("str"), new EventBuilderTrindetFuction(RBEventType.MONITOR), new Fields("topic", "event"))
+                 .each(new Fields("event"), new GetID(), new Fields("id"))
+                 .stateQuery(tweetState, new Fields("id", "event"), new twitterQuery(), new Fields("eventTwitter"))
+                 .project(new Fields ("eventTwitter"))
+                 .each(new Fields("eventTwitter"), new PrinterBolt("tweeeee:"), new Fields("a"));*/
+        
         if (args[0].equalsIgnoreCase("local")) {
             Config conf = new Config();
             conf.setMaxTaskParallelism(1);
@@ -246,7 +261,7 @@ public class CorrelationTridentTopology {
             startLocalMemcacheInstance(PORT);
             cluster.submitTopology("Redborder-Topology", conf, topology.build());
 
-            Utils.sleep(100000);
+            Utils.sleep(1000000);
             cluster.killTopology("Redborder-Topology");
             cluster.shutdown();
 
