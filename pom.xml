@@ -17,6 +17,7 @@
         <druid.version>0.6.58</druid.version>
         <finagle.version>6.11.1</finagle.version>
         <jackson.version>2.2.2</jackson.version>
+        <tranquility.version>0.1.13</tranquility.version>
     </properties>
 
     <repositories>
@@ -75,6 +76,7 @@
             <version>0.9.0-mmx4</version>
             <scope>provided</scope>
         </dependency> 
+        
         <!--dependency>
             <groupId>org.apache.storm</groupId>
             <artifactId>storm-70k-core</artifactId>
@@ -112,7 +114,7 @@
         <dependency>
             <groupId>com.metamx</groupId>
             <artifactId>tranquility</artifactId>
-            <version>0.1.11</version>
+            <version>${tranquility.version}</version>
             <exclusions>
                 <exclusion>
                     <artifactId>slf4j-log4j12</artifactId>

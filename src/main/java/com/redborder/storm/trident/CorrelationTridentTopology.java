@@ -57,7 +57,6 @@ import storm.trident.state.map.MapState;
 import storm.trident.testing.MemoryMapState;
 import storm.trident.tuple.TridentTuple;
 
-
 public class CorrelationTridentTopology {
 
     private static final MemCacheDaemon<LocalCacheElement> daemon
@@ -186,18 +185,6 @@ public class CorrelationTridentTopology {
 
     }
 
-    public static class Correlation extends BaseFunction {
-
-        @Override
-        public void execute(TridentTuple tuple, TridentCollector collector) {
-            Map<String, Object> event = (Map<String, Object>) tuple.getValueByField("cacheEvent");
-            Map<String, Object> tweet = (Map<String, Object>) tuple.getValueByField("tweetMap");
-            System.out.println(event.toString());
-            System.out.println(tweet.toString());
-        }
-
-    }
-
     public static void main(String[] args) throws AlreadyAliveException, InvalidTopologyException, FileNotFoundException {
 
         TridentTopology topology = new TridentTopology();
@@ -207,38 +194,27 @@ public class CorrelationTridentTopology {
 
         int PORT = 52030;
         StateFactory memcached = MemcachedState.transactional(Arrays.asList(new InetSocketAddress("localhost", PORT)));
-              
-       topology.newStream("rb_monitor", new TrindetKafkaSpout().builder(
+        StateFactory druidState = new TridentBeamStateFactory<>(new MyBeamFactoryMapMonitor(zkConfig));
+
+        topology.newStream("rb_monitor", new TrindetKafkaSpout().builder(
                 zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
-                .each(new Fields("str"), new EventBuilderTrindetFuction(RBEventType.MONITOR), new Fields("topic", "event"));
-                
-                /* TridentState eventState = topology.newStream("rb_monitor", new TrindetKafkaSpout().builder(
-                 zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
-                 .each(new Fields("str"), new EventBuilderTrindetFuction(RBEventType.MONITOR), new Fields("topic", "event"))
-                 //.each(new Fields("event"), new GetID(), new Fields("id"))
-                 .partitionPersist(memcached, new Fields("event"), new memcachedUpdate("rb_event"), new Fields("cacheEvent"));*/ //.each(new Fields("tweetMap", "tweet"), new GetTweetID(), new Fields("userId"))
-                //.stateQuery(state, new queryUpdate(), new Fields("event"));
-                //.stateQuery(state, new MapGet(), new Fields("event"));
-                // .partitionPersist(memcached1, new Fields("tweetMap"), new memcachedUpdate("tweet"), new Fields("cacheTweet"));
-                /*topology.merge(new Fields("tweet"), tweetState)
-                 .stateQuery(eventState, new queryUpdate("rb_event"), new Fields("event"))
-                 .each(new Fields("tweet", "event"), new PrinterBolt("tweeeee:"), new Fields("a"));*/ /* Twitter macth IDuser 
-        
-                 TridentState tweetState = topology.newStream("twitterStream", new TwitterStreamTridentSpout())
-                 .each(new Fields("tweet"), new EventBuilderTrindetFuction(5), new Fields("topic", "tweetMap"))
-                 .project(new Fields("tweetMap"))
-                 .each(new Fields("tweetMap"), new GetTweetID(), new Fields("userTwitterID"))
-                 .partitionBy(new Fields("userTwitterID"))
-                 .partitionPersist(memcached, new Fields("tweetMap", "userTwitterID"), new twitterUpdater());
-        
-                 topology.newStream("rb_monitor", new TrindetKafkaSpout().builder(
-                 zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
-                 .each(new Fields("str"), new EventBuilderTrindetFuction(RBEventType.MONITOR), new Fields("topic", "event"))
-                 .each(new Fields("event"), new GetID(), new Fields("id"))
-                 .stateQuery(tweetState, new Fields("id", "event"), new twitterQuery(), new Fields("eventTwitter"))
-                 .project(new Fields ("eventTwitter"))
-                 .each(new Fields("eventTwitter"), new PrinterBolt("tweeeee:"), new Fields("a"));*/
-        
+                .each(new Fields("str"), new EventBuilderTrindetFuction(RBEventType.MONITOR), new Fields("topic", "event"))
+                .partitionPersist(druidState, new Fields("event"), new TridentBeamStateUpdater());
+
+        /* TridentState tweetState = topology.newStream("twitterStream", new TwitterStreamTridentSpout())
+         .each(new Fields("tweet"), new EventBuilderTrindetFuction(5), new Fields("topic", "tweetMap"))
+         .project(new Fields("tweetMap"))
+         .each(new Fields("tweetMap"), new GetTweetID(), new Fields("userTwitterID"))
+         .partitionBy(new Fields("userTwitterID"))
+         .partitionPersist(memcached, new Fields("tweetMap", "userTwitterID"), new twitterUpdater());
+
+         topology.newStream("rb_monitor", new TrindetKafkaSpout().builder(
+         zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
+         .each(new Fields("str"), new EventBuilderTrindetFuction(RBEventType.MONITOR), new Fields("topic", "event"))
+         .each(new Fields("event"), new GetID(), new Fields("id"))
+         .stateQuery(tweetState, new Fields("id", "event"), new twitterQuery(), new Fields("eventTwitter"))
+         .project(new Fields("eventTwitter"))
+         .each(new Fields("eventTwitter"), new PrinterBolt("----"), new Fields("a"));*/
         if (args[0].equalsIgnoreCase("local")) {
             Config conf = new Config();
             conf.setMaxTaskParallelism(1);
