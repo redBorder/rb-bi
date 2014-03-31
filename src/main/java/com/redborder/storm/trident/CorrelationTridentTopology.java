@@ -13,7 +13,7 @@ import com.metamx.tranquility.storm.BeamBolt;
 import com.metamx.tranquility.storm.TridentBeamState;
 import com.metamx.tranquility.storm.TridentBeamStateFactory;
 import com.metamx.tranquility.storm.TridentBeamStateUpdater;
-import com.redborder.storm.trident.bolt.EventBuilderTrindetFuction;
+import com.redborder.storm.trident.function.EventBuilderFunction;
 import com.redborder.storm.trident.spout.TrindetKafkaSpout;
 import com.redborder.storm.trident.spout.TwitterStreamTridentSpout;
 import com.redborder.storm.trident.state.MemcachedState;
@@ -198,7 +198,7 @@ public class CorrelationTridentTopology {
 
         topology.newStream("rb_monitor", new TrindetKafkaSpout().builder(
                 zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
-                .each(new Fields("str"), new EventBuilderTrindetFuction(RBEventType.MONITOR), new Fields("topic", "event"))
+                .each(new Fields("str"), new EventBuilderFunction(RBEventType.MONITOR), new Fields("topic", "event"))
                 .partitionPersist(druidState, new Fields("event"), new TridentBeamStateUpdater());
 
         /* TridentState tweetState = topology.newStream("twitterStream", new TwitterStreamTridentSpout())

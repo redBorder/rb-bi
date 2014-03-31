@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.redborder.storm.trident.bolt;
+package com.redborder.storm.trident.function;
 
 import backtype.storm.tuple.Values;
 import com.redborder.storm.util.scheme.SchemeEvent_rb_event;
@@ -20,11 +20,11 @@ import storm.trident.tuple.TridentTuple;
  *
  * @author andresgomez
  */
-public class EventBuilderTrindetFuction extends BaseFunction {
+public class EventBuilderFunction extends BaseFunction {
     
     int _topic;
     
-    public EventBuilderTrindetFuction(int topic){
+    public EventBuilderFunction(int topic){
         _topic=topic;
     }
 
@@ -37,7 +37,7 @@ public class EventBuilderTrindetFuction extends BaseFunction {
             try {
                 event = mapper.readValue(jsonEvent, Map.class);
             } catch (IOException ex) {
-                Logger.getLogger(EventBuilderTrindetFuction.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(EventBuilderFunction.class.getName()).log(Level.SEVERE, null, ex);
             }
             collector.emit(new Values(_topic,event));
         }

@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.redborder.storm.trident.bolt;
+package com.redborder.storm.trident.function;
 
 import backtype.storm.tuple.Values;
 import java.util.Map;
@@ -15,7 +15,7 @@ import storm.trident.tuple.TridentTuple;
  *
  * @author andresgomez
  */
-public class DropboxUserTridentFuction extends BaseFunction {
+public class DropboxUserFuction extends BaseFunction {
 
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
