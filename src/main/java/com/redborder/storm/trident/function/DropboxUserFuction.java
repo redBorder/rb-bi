@@ -19,7 +19,6 @@ public class DropboxUserFuction extends BaseFunction {
 
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
-        int topic = (int) tuple.getValueByField("topic");
         Map<String, Object> event = (Map<String, Object>) tuple.getValue(0);
 
         if (event.containsValue("http_host")) {
@@ -39,7 +38,7 @@ public class DropboxUserFuction extends BaseFunction {
                 }
             }
         }
-        collector.emit(new Values(event, topic));
+        collector.emit(new Values(event));
     }
 
     private int compareLess(int end1, int end2) {
