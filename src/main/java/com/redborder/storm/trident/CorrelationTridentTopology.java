@@ -201,20 +201,7 @@ public class CorrelationTridentTopology {
                 .each(new Fields("str"), new EventBuilderFunction(RBEventType.MONITOR), new Fields("topic", "event"))
                 .partitionPersist(druidState, new Fields("event"), new TridentBeamStateUpdater());
 
-        /* TridentState tweetState = topology.newStream("twitterStream", new TwitterStreamTridentSpout())
-         .each(new Fields("tweet"), new EventBuilderTrindetFuction(5), new Fields("topic", "tweetMap"))
-         .project(new Fields("tweetMap"))
-         .each(new Fields("tweetMap"), new GetTweetID(), new Fields("userTwitterID"))
-         .partitionBy(new Fields("userTwitterID"))
-         .partitionPersist(memcached, new Fields("tweetMap", "userTwitterID"), new twitterUpdater());
 
-         topology.newStream("rb_monitor", new TrindetKafkaSpout().builder(
-         zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
-         .each(new Fields("str"), new EventBuilderTrindetFuction(RBEventType.MONITOR), new Fields("topic", "event"))
-         .each(new Fields("event"), new GetID(), new Fields("id"))
-         .stateQuery(tweetState, new Fields("id", "event"), new twitterQuery(), new Fields("eventTwitter"))
-         .project(new Fields("eventTwitter"))
-         .each(new Fields("eventTwitter"), new PrinterBolt("----"), new Fields("a"));*/
         if (args[0].equalsIgnoreCase("local")) {
             Config conf = new Config();
             conf.setMaxTaskParallelism(1);

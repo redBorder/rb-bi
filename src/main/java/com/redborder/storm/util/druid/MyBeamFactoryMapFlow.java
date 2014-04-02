@@ -12,6 +12,7 @@ import com.metamx.common.Granularity;
 import com.metamx.tranquility.beam.Beam;
 import com.metamx.tranquility.beam.ClusteredBeamTuning;
 import com.metamx.tranquility.druid.DruidBeams;
+import com.metamx.tranquility.druid.DruidDimensions;
 import com.metamx.tranquility.druid.DruidEnvironment;
 import com.metamx.tranquility.druid.DruidLocation;
 import com.metamx.tranquility.druid.DruidRollup;
@@ -58,7 +59,14 @@ public class MyBeamFactoryMapFlow implements BeamFactory<Map<String, Object>> {
             curator.start();
 
             final String dataSource = _topic;
-            final List<String> dimensions = ImmutableList.of("...");
+            final List<String> exclusions = ImmutableList.of(
+            "http_url", "http_user_agent", "first_switched", "transaction_id",
+                    "flow_end_reason", "flow_sampler_id", "src_name", "dst_name",
+                    "vlan_name", "src_port_name", "dst_port_name", "l4_proto_name",
+                    "tcp_flags", "srv_port_name", "type", "src_country", "dst_country",
+                    "sta_mac_address_unit", "application_id", "engine_id", "src_as",
+                    "dst_as", "second", "bytes", "pkts", "sta_mac_address_lat",
+                    "sta_mac_address_long", "src_net", "dst_net");
             final List<AggregatorFactory> aggregators = ImmutableList.<AggregatorFactory>of(
                     new CountAggregatorFactory("events"),
                     new LongSumAggregatorFactory("sum_bytes","bytes"),
@@ -86,7 +94,7 @@ public class MyBeamFactoryMapFlow implements BeamFactory<Map<String, Object>> {
                                     ), dataSource
                             )
                     )
-                    .rollup(DruidRollup.create(dimensions, aggregators, QueryGranularity.NONE))
+                    .rollup(DruidRollup.create(DruidDimensions.schemalessWithExclusions(exclusions), aggregators, QueryGranularity.NONE))
                     .tuning(ClusteredBeamTuning.create(Granularity.HOUR, new Period("PT0M"), new Period("PT10M"), 2, 2));
 
             final Beam<Map<String, Object>> beam = builder.buildBeam();

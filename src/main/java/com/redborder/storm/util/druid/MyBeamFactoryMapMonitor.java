@@ -12,6 +12,7 @@ import com.metamx.common.Granularity;
 import com.metamx.tranquility.beam.Beam;
 import com.metamx.tranquility.beam.ClusteredBeamTuning;
 import com.metamx.tranquility.druid.DruidBeams;
+import com.metamx.tranquility.druid.DruidDimensions;
 import com.metamx.tranquility.druid.DruidEnvironment;
 import com.metamx.tranquility.druid.DruidLocation;
 import com.metamx.tranquility.druid.DruidRollup;
@@ -65,6 +66,8 @@ public class MyBeamFactoryMapMonitor implements BeamFactory<Map<String, Object>>
             final String dataSource = _topic;
             final List<String> dimensions = ImmutableList.of(
                     "sensor_name", "monitor", "value", "type", "unit");
+            final List<String> exclusions = ImmutableList.of(
+            "unit", "type");
             final List<AggregatorFactory> aggregators = ImmutableList.<AggregatorFactory>of(
                     new CountAggregatorFactory("events"),
                     new DoubleSumAggregatorFactory("sum_value", "value"),
@@ -92,8 +95,8 @@ public class MyBeamFactoryMapMonitor implements BeamFactory<Map<String, Object>>
                                     ), dataSource
                             )
                     )
-                    .rollup(DruidRollup.create(dimensions, aggregators, QueryGranularity.MINUTE))
-                    .tuning(ClusteredBeamTuning.create(Granularity.HOUR, new Period("PT0M"), new Period("PT10M"), 1, 1))
+                    .rollup(DruidRollup.create(DruidDimensions.schemalessWithExclusions(exclusions), aggregators, QueryGranularity.MINUTE))
+                    .tuning(ClusteredBeamTuning.create(Granularity.MINUTE, new Period("PT0M"), new Period("PT10M"), 1, 1))
                     .timestampSpec(new TimestampSpec("timestamp", "posix"));
 
             final Beam<Map<String, Object>> beam = builder.buildBeam();
