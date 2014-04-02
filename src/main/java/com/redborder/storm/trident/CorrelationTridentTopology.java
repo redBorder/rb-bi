@@ -19,6 +19,7 @@ import com.redborder.storm.trident.spout.TwitterStreamTridentSpout;
 import com.redborder.storm.trident.state.MemcachedState;
 import com.redborder.storm.trident.state.query.twitterQuery;
 import com.redborder.storm.trident.state.twitterUpdater;
+import com.redborder.storm.util.CreateConfig;
 import com.redborder.storm.util.GetKafkaConfig;
 import com.redborder.storm.util.KeyUtils;
 import com.redborder.storm.util.RBEventType;
@@ -194,7 +195,7 @@ public class CorrelationTridentTopology {
             TridentTopology topology = new TridentTopology();
             GetKafkaConfig zkConfig = new GetKafkaConfig();
 
-        //int PORT = 52030;
+            //int PORT = 52030;
             //StateFactory memcached = MemcachedState.transactional(Arrays.asList(new InetSocketAddress("localhost", PORT)));
             zkConfig.setTopicInt(RBEventType.MONITOR);
             StateFactory druidStateMonitor = new TridentBeamStateFactory<>(new MyBeamFactoryMapMonitor(zkConfig));
@@ -221,22 +222,7 @@ public class CorrelationTridentTopology {
                     .partitionPersist(druidStateFlow, new Fields("event"), new TridentBeamStateUpdater());
 
             if (args[0].equalsIgnoreCase("local")) {
-                Config conf = new Config();
-                conf.setMaxTaskParallelism(1);
-                conf.setDebug(false);
-                conf.put(Config.TOPOLOGY_TRIDENT_BATCH_EMIT_INTERVAL_MILLIS, 10000);
-
-                String CONSUMER_KEY = "twitter.consumerKey";
-                String CONSUMER_SECRET = "twitter.consumerSecret";
-                String TOKEN = "twitter.token";
-                String TOKEN_SECRET = "twitter.tokenSecret";
-                String QUERY = "twitter.query";
-
-                conf.put(CONSUMER_KEY, "Vkoyw2Bwgk13RFaTyJlYQ");
-                conf.put(CONSUMER_SECRET, "TkW74gdR764dH6lOkD3cKSwGLMKy7xrA9s7ZCZsqRno");
-                conf.put(TOKEN, "154536310-Yxg7DqA6mg982MSxG2peKa6TIUf00loFJnVMwOaP");
-                conf.put(TOKEN_SECRET, "oG5JIcg1CKCDNQwqIVrt1RVR2bqPWZ91DUJXEYefnjCkX");
-                conf.put(QUERY, "redborder");
+                Config conf = new CreateConfig(args[0]).makeConfig();
 
                 LocalCluster cluster = new LocalCluster();
                 // startLocalMemcacheInstance(PORT);
@@ -248,7 +234,7 @@ public class CorrelationTridentTopology {
 
             } else if (args[0].equalsIgnoreCase("cluster")) {
 
-                Config conf = new Config();
+                Config conf = new CreateConfig(args[0]).makeConfig();
                 StormSubmitter.submitTopology("Redborder-Topology", conf, topology.build());
                 System.out.println("Topology uploaded successfully.");
             }
