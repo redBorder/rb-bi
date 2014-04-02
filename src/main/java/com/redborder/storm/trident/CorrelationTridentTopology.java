@@ -23,6 +23,7 @@ import com.redborder.storm.util.GetKafkaConfig;
 import com.redborder.storm.util.KeyUtils;
 import com.redborder.storm.util.RBEventType;
 import com.redborder.storm.util.druid.MyBeamFactoryMapEvent;
+import com.redborder.storm.util.druid.MyBeamFactoryMapFlow;
 import com.redborder.storm.util.druid.MyBeamFactoryMapMonitor;
 import com.thimbleware.jmemcached.CacheImpl;
 import com.thimbleware.jmemcached.Key;
@@ -190,17 +191,32 @@ public class CorrelationTridentTopology {
         TridentTopology topology = new TridentTopology();
         GetKafkaConfig zkConfig = new GetKafkaConfig();
 
-        zkConfig.setTopicInt(RBEventType.MONITOR);
+        //int PORT = 52030;
+        //StateFactory memcached = MemcachedState.transactional(Arrays.asList(new InetSocketAddress("localhost", PORT)));
 
-        int PORT = 52030;
-        StateFactory memcached = MemcachedState.transactional(Arrays.asList(new InetSocketAddress("localhost", PORT)));
-        StateFactory druidState = new TridentBeamStateFactory<>(new MyBeamFactoryMapMonitor(zkConfig));
+        zkConfig.setTopicInt(RBEventType.MONITOR);
+        StateFactory druidStateMonitor = new TridentBeamStateFactory<>(new MyBeamFactoryMapMonitor(zkConfig));
 
         topology.newStream("rb_monitor", new TrindetKafkaSpout().builder(
                 zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
                 .each(new Fields("str"), new EventBuilderFunction(RBEventType.MONITOR), new Fields("topic", "event"))
-                .partitionPersist(druidState, new Fields("event"), new TridentBeamStateUpdater());
+                .partitionPersist(druidStateMonitor, new Fields("event"), new TridentBeamStateUpdater());
 
+        zkConfig.setTopicInt(RBEventType.EVENT);
+        StateFactory druidStateEvent = new TridentBeamStateFactory<>(new MyBeamFactoryMapEvent(zkConfig));
+
+        topology.newStream("rb_event", new TrindetKafkaSpout().builder(
+                zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
+                .each(new Fields("str"), new EventBuilderFunction(RBEventType.EVENT), new Fields("topic", "event"))
+                .partitionPersist(druidStateEvent, new Fields("event"), new TridentBeamStateUpdater());
+
+        zkConfig.setTopicInt(RBEventType.FLOW);
+        StateFactory druidStateFlow = new TridentBeamStateFactory<>(new MyBeamFactoryMapFlow(zkConfig));
+
+        topology.newStream("rb_flow", new TrindetKafkaSpout().builder(
+                zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
+                .each(new Fields("str"), new EventBuilderFunction(RBEventType.FLOW), new Fields("topic", "event"))
+                .partitionPersist(druidStateFlow, new Fields("event"), new TridentBeamStateUpdater());
 
         if (args[0].equalsIgnoreCase("local")) {
             Config conf = new Config();
@@ -221,7 +237,7 @@ public class CorrelationTridentTopology {
             conf.put(QUERY, "redborder");
 
             LocalCluster cluster = new LocalCluster();
-            startLocalMemcacheInstance(PORT);
+           // startLocalMemcacheInstance(PORT);
             cluster.submitTopology("Redborder-Topology", conf, topology.build());
 
             Utils.sleep(1000000);
