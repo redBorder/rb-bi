@@ -191,6 +191,7 @@ public class CorrelationTridentTopology {
         TridentTopology topology = new TridentTopology();
         GetKafkaConfig zkConfig = new GetKafkaConfig();
 
+        
         //int PORT = 52030;
         //StateFactory memcached = MemcachedState.transactional(Arrays.asList(new InetSocketAddress("localhost", PORT)));
 
