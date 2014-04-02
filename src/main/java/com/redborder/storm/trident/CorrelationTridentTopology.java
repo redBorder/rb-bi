@@ -188,67 +188,70 @@ public class CorrelationTridentTopology {
 
     public static void main(String[] args) throws AlreadyAliveException, InvalidTopologyException, FileNotFoundException {
 
-        TridentTopology topology = new TridentTopology();
-        GetKafkaConfig zkConfig = new GetKafkaConfig();
+        if (args.length != 1) {
+            System.out.println("./storm jar {name_jar} {main_class} {local|cluster}");
+        } else {
+            TridentTopology topology = new TridentTopology();
+            GetKafkaConfig zkConfig = new GetKafkaConfig();
 
-        
         //int PORT = 52030;
-        //StateFactory memcached = MemcachedState.transactional(Arrays.asList(new InetSocketAddress("localhost", PORT)));
+            //StateFactory memcached = MemcachedState.transactional(Arrays.asList(new InetSocketAddress("localhost", PORT)));
+            zkConfig.setTopicInt(RBEventType.MONITOR);
+            StateFactory druidStateMonitor = new TridentBeamStateFactory<>(new MyBeamFactoryMapMonitor(zkConfig));
 
-        zkConfig.setTopicInt(RBEventType.MONITOR);
-        StateFactory druidStateMonitor = new TridentBeamStateFactory<>(new MyBeamFactoryMapMonitor(zkConfig));
+            topology.newStream("rb_monitor", new TrindetKafkaSpout().builder(
+                    zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
+                    .each(new Fields("str"), new EventBuilderFunction(RBEventType.MONITOR), new Fields("topic", "event"))
+                    .partitionPersist(druidStateMonitor, new Fields("event"), new TridentBeamStateUpdater());
 
-        topology.newStream("rb_monitor", new TrindetKafkaSpout().builder(
-                zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
-                .each(new Fields("str"), new EventBuilderFunction(RBEventType.MONITOR), new Fields("topic", "event"))
-                .partitionPersist(druidStateMonitor, new Fields("event"), new TridentBeamStateUpdater());
+            zkConfig.setTopicInt(RBEventType.EVENT);
+            StateFactory druidStateEvent = new TridentBeamStateFactory<>(new MyBeamFactoryMapEvent(zkConfig));
 
-        zkConfig.setTopicInt(RBEventType.EVENT);
-        StateFactory druidStateEvent = new TridentBeamStateFactory<>(new MyBeamFactoryMapEvent(zkConfig));
+            topology.newStream("rb_event", new TrindetKafkaSpout().builder(
+                    zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
+                    .each(new Fields("str"), new EventBuilderFunction(RBEventType.EVENT), new Fields("topic", "event"))
+                    .partitionPersist(druidStateEvent, new Fields("event"), new TridentBeamStateUpdater());
 
-        topology.newStream("rb_event", new TrindetKafkaSpout().builder(
-                zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
-                .each(new Fields("str"), new EventBuilderFunction(RBEventType.EVENT), new Fields("topic", "event"))
-                .partitionPersist(druidStateEvent, new Fields("event"), new TridentBeamStateUpdater());
+            zkConfig.setTopicInt(RBEventType.FLOW);
+            StateFactory druidStateFlow = new TridentBeamStateFactory<>(new MyBeamFactoryMapFlow(zkConfig));
 
-        zkConfig.setTopicInt(RBEventType.FLOW);
-        StateFactory druidStateFlow = new TridentBeamStateFactory<>(new MyBeamFactoryMapFlow(zkConfig));
+            topology.newStream("rb_flow", new TrindetKafkaSpout().builder(
+                    zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
+                    .each(new Fields("str"), new EventBuilderFunction(RBEventType.FLOW), new Fields("topic", "event"))
+                    .partitionPersist(druidStateFlow, new Fields("event"), new TridentBeamStateUpdater());
 
-        topology.newStream("rb_flow", new TrindetKafkaSpout().builder(
-                zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
-                .each(new Fields("str"), new EventBuilderFunction(RBEventType.FLOW), new Fields("topic", "event"))
-                .partitionPersist(druidStateFlow, new Fields("event"), new TridentBeamStateUpdater());
+            if (args[0].equalsIgnoreCase("local")) {
+                Config conf = new Config();
+                conf.setMaxTaskParallelism(1);
+                conf.setDebug(false);
+                conf.put(Config.TOPOLOGY_TRIDENT_BATCH_EMIT_INTERVAL_MILLIS, 10000);
 
-        if (args[0].equalsIgnoreCase("local")) {
-            Config conf = new Config();
-            conf.setMaxTaskParallelism(1);
-            conf.setDebug(false);
-            conf.put(Config.TOPOLOGY_TRIDENT_BATCH_EMIT_INTERVAL_MILLIS, 10000);
+                String CONSUMER_KEY = "twitter.consumerKey";
+                String CONSUMER_SECRET = "twitter.consumerSecret";
+                String TOKEN = "twitter.token";
+                String TOKEN_SECRET = "twitter.tokenSecret";
+                String QUERY = "twitter.query";
 
-            String CONSUMER_KEY = "twitter.consumerKey";
-            String CONSUMER_SECRET = "twitter.consumerSecret";
-            String TOKEN = "twitter.token";
-            String TOKEN_SECRET = "twitter.tokenSecret";
-            String QUERY = "twitter.query";
+                conf.put(CONSUMER_KEY, "Vkoyw2Bwgk13RFaTyJlYQ");
+                conf.put(CONSUMER_SECRET, "TkW74gdR764dH6lOkD3cKSwGLMKy7xrA9s7ZCZsqRno");
+                conf.put(TOKEN, "154536310-Yxg7DqA6mg982MSxG2peKa6TIUf00loFJnVMwOaP");
+                conf.put(TOKEN_SECRET, "oG5JIcg1CKCDNQwqIVrt1RVR2bqPWZ91DUJXEYefnjCkX");
+                conf.put(QUERY, "redborder");
 
-            conf.put(CONSUMER_KEY, "Vkoyw2Bwgk13RFaTyJlYQ");
-            conf.put(CONSUMER_SECRET, "TkW74gdR764dH6lOkD3cKSwGLMKy7xrA9s7ZCZsqRno");
-            conf.put(TOKEN, "154536310-Yxg7DqA6mg982MSxG2peKa6TIUf00loFJnVMwOaP");
-            conf.put(TOKEN_SECRET, "oG5JIcg1CKCDNQwqIVrt1RVR2bqPWZ91DUJXEYefnjCkX");
-            conf.put(QUERY, "redborder");
+                LocalCluster cluster = new LocalCluster();
+                // startLocalMemcacheInstance(PORT);
+                cluster.submitTopology("Redborder-Topology", conf, topology.build());
 
-            LocalCluster cluster = new LocalCluster();
-           // startLocalMemcacheInstance(PORT);
-            cluster.submitTopology("Redborder-Topology", conf, topology.build());
+                Utils.sleep(1000000);
+                cluster.killTopology("Redborder-Topology");
+                cluster.shutdown();
 
-            Utils.sleep(1000000);
-            cluster.killTopology("Redborder-Topology");
-            cluster.shutdown();
+            } else if (args[0].equalsIgnoreCase("cluster")) {
 
-        } else if (args[0].equalsIgnoreCase("cluster")) {
-
-            Config conf = new Config();
-            StormSubmitter.submitTopology("Redborder-Topology", conf, topology.build());
+                Config conf = new Config();
+                StormSubmitter.submitTopology("Redborder-Topology", conf, topology.build());
+                System.out.println("Topology uploaded successfully.");
+            }
         }
     }
 }
