@@ -26,6 +26,7 @@ public class GetKafkaConfig {
      * Constructor.
      */
     public GetKafkaConfig() {
+        _zkConnect = "localhost";
     }
 
     /**
@@ -36,6 +37,8 @@ public class GetKafkaConfig {
      */
     public GetKafkaConfig(int topic) {
         _topicInt = topic;
+        _zkConnect = "localhost";
+
     }
 
     /**
@@ -64,7 +67,7 @@ public class GetKafkaConfig {
             _zkConnect = config.get("zk_connect").toString();
         } else {
             Logger.getLogger(GetKafkaConfig.class.getName()).log(Level.SEVERE, null, "Topic not found");
-
+            _zkConnect = "localhost";
         }
     }
 

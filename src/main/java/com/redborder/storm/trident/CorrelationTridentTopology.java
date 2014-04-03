@@ -17,9 +17,10 @@ import com.redborder.storm.trident.function.EventBuilderFunction;
 import com.redborder.storm.trident.spout.TrindetKafkaSpout;
 import com.redborder.storm.trident.spout.TwitterStreamTridentSpout;
 import com.redborder.storm.trident.state.MemcachedMultipleState;
+import com.redborder.storm.trident.state.MemcachedMultipleState.Options;
 import com.redborder.storm.trident.state.MemcachedState;
 import com.redborder.storm.trident.state.query.twitterQuery;
-import com.redborder.storm.trident.state.twitterUpdater;
+import com.redborder.storm.trident.updater.twitterUpdater;
 import com.redborder.storm.util.CreateConfig;
 import com.redborder.storm.util.GetKafkaConfig;
 import com.redborder.storm.util.KeyUtils;
@@ -27,6 +28,7 @@ import com.redborder.storm.util.RBEventType;
 import com.redborder.storm.util.druid.MyBeamFactoryMapEvent;
 import com.redborder.storm.util.druid.MyBeamFactoryMapFlow;
 import com.redborder.storm.util.druid.MyBeamFactoryMapMonitor;
+import com.redborder.storm.util.state.ConcatKeyBuilder;
 import com.thimbleware.jmemcached.CacheImpl;
 import com.thimbleware.jmemcached.Key;
 import com.thimbleware.jmemcached.LocalCacheElement;
@@ -183,7 +185,11 @@ public class CorrelationTridentTopology {
         public void execute(TridentTuple tuple, TridentCollector collector) {
             Map<String, Object> event = (Map<String, Object>) tuple.getValue(0);
             String id = String.valueOf(event.get("userid"));
-            collector.emit(new Values(id));
+            if (id != null) {
+                collector.emit(new Values(id));
+            } else {
+                collector.emit(new Values("-"));
+            }
         }
 
     }
@@ -197,7 +203,10 @@ public class CorrelationTridentTopology {
             GetKafkaConfig zkConfig = new GetKafkaConfig();
 
             int PORT = 52030;
-            StateFactory memcached = MemcachedMultipleState.transactional(Arrays.asList(new InetSocketAddress("localhost", PORT)));
+            Options twitterOpts = new Options();
+           
+            twitterOpts.keyBuilder = new ConcatKeyBuilder("Twitter");
+            StateFactory memcached = MemcachedMultipleState.transactional(Arrays.asList(new InetSocketAddress("localhost", PORT)),twitterOpts);
             TridentState tweetState = topology.newStream("twitterStream", new TwitterStreamTridentSpout())
                     .each(new Fields("tweet"), new EventBuilderFunction(5), new Fields("topic", "tweetMap"))
                     .project(new Fields("tweetMap"))
@@ -205,6 +214,7 @@ public class CorrelationTridentTopology {
                     .partitionBy(new Fields("userTwitterID"))
                     .partitionPersist(memcached, new Fields("tweetMap", "userTwitterID"), new twitterUpdater());
 
+            zkConfig.setTopicInt(RBEventType.MONITOR);
             topology.newStream("rb_monitor", new TrindetKafkaSpout().builder(
                     zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
                     .each(new Fields("str"), new EventBuilderFunction(RBEventType.MONITOR), new Fields("topic", "event"))

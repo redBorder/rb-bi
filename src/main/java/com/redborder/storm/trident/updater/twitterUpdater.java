@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package com.redborder.storm.trident.state;
+package com.redborder.storm.trident.updater;
 
 import com.redborder.storm.util.KeyUtils;
 import java.util.ArrayList;
@@ -29,6 +29,7 @@ public class twitterUpdater extends BaseStateUpdater<MapState<Map<String, Object
         for (TridentTuple t : tuples) {
             events.add((Map<String, Object>) t.getValueByField("tweetMap"));
             keys.add(t.getValueByField("userTwitterID"));
+            System.out.println(t.getValueByField("userTwitterID"));
         }
         state.multiPut(Arrays.asList(keys), events);
     }
