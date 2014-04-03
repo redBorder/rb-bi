@@ -3,14 +3,15 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-
 package com.redborder.storm.util;
 
 /**
+ * Contains the various topics associated with an integer.
  *
- * @author andresgf92
+ * @author andresgomez
  */
 public class RBEventType {
+
     public static final int EVENT = 1;
     public static final int MONITOR = 2;
     public static final int FLOW = 3;

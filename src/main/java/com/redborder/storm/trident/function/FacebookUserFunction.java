@@ -12,6 +12,7 @@ import storm.trident.operation.TridentCollector;
 import storm.trident.tuple.TridentTuple;
 
 /**
+ * Get the facebook user of the http_url.
  *
  * @author andresgomez
  */

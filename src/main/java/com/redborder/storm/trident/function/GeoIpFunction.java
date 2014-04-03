@@ -24,6 +24,7 @@ import storm.trident.operation.TridentOperationContext;
 import storm.trident.tuple.TridentTuple;
 
 /**
+ * Get the geoLocation from a IPv4 or IPv6 (sourcer and destination).
  *
  * @author andresgomez
  */

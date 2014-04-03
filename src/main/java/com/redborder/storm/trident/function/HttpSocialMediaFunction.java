@@ -12,6 +12,7 @@ import storm.trident.operation.TridentCollector;
 import storm.trident.tuple.TridentTuple;
 
 /**
+ * Get all media from http_url (mp3|avi|png|mp4|gif|jpg).
  *
  * @author andresgomez
  */

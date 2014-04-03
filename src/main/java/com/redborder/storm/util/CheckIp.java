@@ -9,6 +9,7 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 /**
+ * Check if an IP is version4 or version6.
  *
  * @author andresgomez
  */

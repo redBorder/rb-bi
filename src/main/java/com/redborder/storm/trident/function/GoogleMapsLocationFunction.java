@@ -3,7 +3,6 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-
 package com.redborder.storm.trident.function;
 
 import backtype.storm.tuple.Values;
@@ -13,10 +12,11 @@ import storm.trident.operation.TridentCollector;
 import storm.trident.tuple.TridentTuple;
 
 /**
+ * Get GoogleMapsLocation from http_url.
  *
  * @author andresgomez
  */
-public class GoogleMapsLocationFunction extends BaseFunction{
+public class GoogleMapsLocationFunction extends BaseFunction {
 
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
@@ -32,11 +32,12 @@ public class GoogleMapsLocationFunction extends BaseFunction{
                     int start = url.indexOf("center=") + "center=".length();
                     int end = url.indexOf("&", start);
                     event.put("google_maps_location",
-                    url.substring(start, end).replace(",", "%2C"));
+                            url.substring(start, end).replace(",", "%2C"));
 
                 }
             }
         }
-        collector.emit(new Values(event));    }
-    
+        collector.emit(new Values(event));
+    }
+
 }

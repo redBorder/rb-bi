@@ -36,7 +36,7 @@ import java.util.Map;
 import org.apache.curator.retry.RetryOneTime;
 
 /**
- *
+ * BeamFactory is used to make the BeamStateMonitor to Tranquility.
  * @author andresgomez
  */
 public class MyBeamFactoryMapMonitor implements BeamFactory<Map<String, Object>> {
@@ -44,6 +44,11 @@ public class MyBeamFactoryMapMonitor implements BeamFactory<Map<String, Object>>
     String _zkConnect;
     String _topic;
 
+    /**
+     * Consturctor.
+     *
+     * @param zkConfig Class GetKafkaConfig with the selected topic.
+     */
     public MyBeamFactoryMapMonitor(GetKafkaConfig zkConfig) {
         _zkConnect = zkConfig.getZkConnect();
         _topic = zkConfig.getTopic();

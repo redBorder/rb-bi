@@ -35,6 +35,7 @@ import java.util.Map;
 import org.apache.curator.retry.BoundedExponentialBackoffRetry;
 
 /**
+ * BeamFactory is used to make the BeamStateMonitor to Tranquility.
  *
  * @author andresgomez
  */
@@ -43,6 +44,11 @@ public class MyBeamFactoryMapEvent implements BeamFactory<Map<String, Object>> {
     String _zkConnect;
     String _topic;
 
+    /**
+     * Consturctor.
+     *
+     * @param zkConfig Class GetKafkaConfig with the selected topic.
+     */
     public MyBeamFactoryMapEvent(GetKafkaConfig zkConfig) {
         _zkConnect = zkConfig.getZkConnect();
         _topic = zkConfig.getTopic();
@@ -75,7 +81,7 @@ public class MyBeamFactoryMapEvent implements BeamFactory<Map<String, Object>> {
                                 public DateTime timestamp(Map<String, Object> theMap) {
                                     Long date = Long.parseLong(theMap.get("timestamp").toString());
                                     date = date * 1000;
-                                    return new DateTime(date.longValue());   
+                                    return new DateTime(date.longValue());
                                 }
                             }
                     )

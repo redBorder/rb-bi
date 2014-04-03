@@ -6,7 +6,6 @@
 package com.redborder.storm.trident.function;
 
 import backtype.storm.tuple.Values;
-import com.redborder.storm.util.scheme.SchemeEvent_rb_event;
 import java.io.IOException;
 import java.util.Map;
 import java.util.logging.Level;
@@ -17,15 +16,22 @@ import storm.trident.operation.TridentCollector;
 import storm.trident.tuple.TridentTuple;
 
 /**
+ * Make a java.util.Map from the json string.
  *
  * @author andresgomez
  */
 public class EventBuilderFunction extends BaseFunction {
-    
+
     int _topic;
-    
-    public EventBuilderFunction(int topic){
-        _topic=topic;
+
+    /**
+     * Constructor.
+     *
+     * @param topic Use RBEventType class to select the topic
+     * {event|flow|monitor}.
+     */
+    public EventBuilderFunction(int topic) {
+        _topic = topic;
     }
 
     @Override
@@ -39,7 +45,7 @@ public class EventBuilderFunction extends BaseFunction {
             } catch (IOException ex) {
                 Logger.getLogger(EventBuilderFunction.class.getName()).log(Level.SEVERE, null, ex);
             }
-            collector.emit(new Values(_topic,event));
+            collector.emit(new Values(_topic, event));
         }
     }
 

@@ -23,6 +23,7 @@ import storm.trident.operation.TridentOperationContext;
 import storm.trident.tuple.TridentTuple;
 
 /**
+ * Get MacVendor from mac address (source and destination).
  *
  * @author andresgomez
  */
@@ -32,6 +33,11 @@ public class MacVendorFunction extends BaseFunction {
 
     Map<String, String> _ouiMap;
 
+    /**
+     * Constructor.
+     *
+     * @param ouiPath Path where is the database of oui.
+     */
     public MacVendorFunction(String ouiPath) {
         _ouiFilePath = ouiPath;
     }
@@ -90,7 +96,11 @@ public class MacVendorFunction extends BaseFunction {
         }
     }
 
-
+    /**
+     * Create the oui from the mac address.
+     * @param object Mac address.
+     * @return oui.
+     */
     private String buildOui(Object object) {
         if (object != null) {
             String mac = object.toString();

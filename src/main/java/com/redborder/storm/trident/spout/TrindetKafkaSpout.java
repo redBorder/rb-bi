@@ -13,11 +13,18 @@ import storm.kafka.trident.TransactionalTridentKafkaSpout;
 import storm.kafka.trident.TridentKafkaConfig;
 
 /**
- *
+ * Create a tridentKafkaSpout.
  * @author andresgomez
  */
 public class TrindetKafkaSpout {
     
+    /**
+     * Build the trindetKafkaSpout.
+     * @param zkHost Zookeeper IP.
+     * @param topic Topic of kafka.
+     * @param groupid Group to do commit in zookeeper.
+     * @return Trindet spout of kafka.
+     */
     public TransactionalTridentKafkaSpout builder(String zkHost, String topic, String groupid){
        TridentKafkaConfig kafkaConfig = new TridentKafkaConfig(new ZkHosts(zkHost),
                 topic, groupid);

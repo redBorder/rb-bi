@@ -12,6 +12,7 @@ import storm.trident.operation.TridentCollector;
 import storm.trident.tuple.TridentTuple;
 
 /**
+ * Get Linkedin shares from http_url.
  *
  * @author andresgomez
  */

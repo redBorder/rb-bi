@@ -36,6 +36,7 @@ import java.util.Map;
 import org.apache.curator.retry.BoundedExponentialBackoffRetry;
 
 /**
+ * BeamFactory is used to make the BeamStateMonitor to Tranquility.
  *
  * @author andresgomez
  */
@@ -44,6 +45,11 @@ public class MyBeamFactoryMapFlow implements BeamFactory<Map<String, Object>> {
     String _zkConnect;
     String _topic;
 
+    /**
+     * Consturctor.
+     *
+     * @param zkConfig Class GetKafkaConfig with the selected topic.
+     */
     public MyBeamFactoryMapFlow(GetKafkaConfig zkConfig) {
         _zkConnect = zkConfig.getZkConnect();
         _topic = zkConfig.getTopic();
@@ -60,7 +66,7 @@ public class MyBeamFactoryMapFlow implements BeamFactory<Map<String, Object>> {
 
             final String dataSource = _topic;
             final List<String> exclusions = ImmutableList.of(
-            "http_url", "http_user_agent", "first_switched", "transaction_id",
+                    "http_url", "http_user_agent", "first_switched", "transaction_id",
                     "flow_end_reason", "flow_sampler_id", "src_name", "dst_name",
                     "vlan_name", "src_port_name", "dst_port_name", "l4_proto_name",
                     "tcp_flags", "srv_port_name", "type", "src_country", "dst_country",
@@ -69,9 +75,9 @@ public class MyBeamFactoryMapFlow implements BeamFactory<Map<String, Object>> {
                     "sta_mac_address_long", "src_net", "dst_net");
             final List<AggregatorFactory> aggregators = ImmutableList.<AggregatorFactory>of(
                     new CountAggregatorFactory("events"),
-                    new LongSumAggregatorFactory("sum_bytes","bytes"),
-                    new LongSumAggregatorFactory("sum_pkts","pkts")
-                    );
+                    new LongSumAggregatorFactory("sum_bytes", "bytes"),
+                    new LongSumAggregatorFactory("sum_pkts", "pkts")
+            );
 
             final DruidBeams.Builder<Map<String, Object>> builder = DruidBeams
                     .builder(
@@ -80,7 +86,7 @@ public class MyBeamFactoryMapFlow implements BeamFactory<Map<String, Object>> {
                                 public DateTime timestamp(Map<String, Object> theMap) {
                                     Long date = Long.parseLong(theMap.get("timestamp").toString());
                                     date = date * 1000;
-                                    return new DateTime(date.longValue());   
+                                    return new DateTime(date.longValue());
                                 }
                             }
                     )

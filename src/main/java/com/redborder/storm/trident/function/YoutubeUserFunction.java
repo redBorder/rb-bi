@@ -12,6 +12,7 @@ import storm.trident.operation.TridentCollector;
 import storm.trident.tuple.TridentTuple;
 
 /**
+ * Get youtube user from http_url.
  *
  * @author andresgomez
  */
@@ -40,6 +41,13 @@ public class YoutubeUserFunction extends BaseFunction {
         collector.emit(new Values(event));
     }
 
+    /**
+     * Compare that number is lower
+     *
+     * @param end1 Number 1
+     * @param end2 Numer 2
+     * @return The lower number.
+     */
     private int compareLess(int end1, int end2) {
 
         int end = 0;

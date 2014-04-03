@@ -22,17 +22,31 @@ public class GetKafkaConfig {
     String _topic;
     String _zkConnect;
 
+    /**
+     * Constructor.
+     */
     public GetKafkaConfig() {
     }
 
+    /**
+     * Constructor
+     *
+     * @param topic Use RBEventType class to select the topic
+     * {event|flow|monitor}
+     */
     public GetKafkaConfig(int topic) {
         _topicInt = topic;
     }
 
+    /**
+     * Get the zookeeper setting of the topic indicated.
+     *
+     * @throws FileNotFoundException
+     */
     public void builder() throws FileNotFoundException {
 
-        Object object = Yaml.load(new File("/opt/rb/var/www/rb-rails/config/rbdruid_config.yml"));
-        //Object object = Yaml.load(new File("/root/rbdruid_config.yml"));
+        //Object object = Yaml.load(new File("/opt/rb/var/www/rb-rails/config/rbdruid_config.yml"));
+        Object object = Yaml.load(new File("/Users/andresgomez/rbdruid_config.yml"));
         Map<String, Object> map = (Map<String, Object>) object;
         Map<String, Object> production = (Map<String, Object>) map.get("production");
         Map<String, Object> config = null;
@@ -54,19 +68,41 @@ public class GetKafkaConfig {
         }
     }
 
+    /**
+     * Set the topic and call builder() to prepare the settings.
+     *
+     * @param topic Use RBEventType class to select the topic
+     * {event|flow|monitor}
+     * @throws FileNotFoundException
+     */
     public void setTopicInt(int topic) throws FileNotFoundException {
         _topicInt = topic;
         this.builder();
     }
 
+    /**
+     * Getter.
+     *
+     * @return name topic
+     */
     public String getTopic() {
         return _topic;
     }
 
+    /**
+     * Getter.
+     *
+     * @return zookeeper IP.
+     */
     public String getZkConnect() {
         return _zkConnect;
     }
 
+    /**
+     * Getter.
+     *
+     * @return the int associated to this topic
+     */
     public int getTopicInt() {
         return _topicInt;
     }

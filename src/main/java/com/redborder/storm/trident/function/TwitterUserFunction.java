@@ -12,7 +12,7 @@ import storm.trident.operation.TridentCollector;
 import storm.trident.tuple.TridentTuple;
 
 /**
- *
+ * Get the twitter user from the http_url.
  * @author andresgomez
  */
 public class TwitterUserFunction extends BaseFunction {
