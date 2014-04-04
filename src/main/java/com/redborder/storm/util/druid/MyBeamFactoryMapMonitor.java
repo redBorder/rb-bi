@@ -101,7 +101,7 @@ public class MyBeamFactoryMapMonitor implements BeamFactory<Map<String, Object>>
                             )
                     )
                     .rollup(DruidRollup.create(DruidDimensions.schemalessWithExclusions(exclusions), aggregators, QueryGranularity.MINUTE))
-                    .tuning(ClusteredBeamTuning.create(Granularity.HOUR, new Period("PT0M"), new Period("PT10M"), 1, 1))
+                    .tuning(ClusteredBeamTuning.create(Granularity.HOUR, new Period("PT0M"), new Period("PT30M"), 1, 1))
                     .timestampSpec(new TimestampSpec("timestamp", "posix"));
 
             final Beam<Map<String, Object>> beam = builder.buildBeam();

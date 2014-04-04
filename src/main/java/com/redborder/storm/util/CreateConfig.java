@@ -55,6 +55,7 @@ public class CreateConfig {
         if (_mode.equals("local")) {
             conf.setMaxTaskParallelism(1);
             conf.setDebug(false);
+            conf.put(Config.TOPOLOGY_TRIDENT_BATCH_EMIT_INTERVAL_MILLIS, 10000);
         } else if (_mode.equals("cluster")) {
             conf.put(Config.TOPOLOGY_TRIDENT_BATCH_EMIT_INTERVAL_MILLIS, 10000);
         }

@@ -34,6 +34,7 @@ import org.joda.time.Period;
 import java.util.List;
 import java.util.Map;
 import org.apache.curator.retry.BoundedExponentialBackoffRetry;
+import org.apache.curator.retry.RetryOneTime;
 
 /**
  * BeamFactory is used to make the BeamStateMonitor to Tranquility.
@@ -59,9 +60,12 @@ public class MyBeamFactoryMapFlow implements BeamFactory<Map<String, Object>> {
     @Override
     public Beam<Map<String, Object>> makeBeam(Map<?, ?> conf, IMetricsContext metrics) {
         try {
-            final CuratorFramework curator = CuratorFrameworkFactory.newClient(
-                    _zkConnect, new BoundedExponentialBackoffRetry(100, 1000, 5));
-
+            final CuratorFramework curator = CuratorFrameworkFactory
+                    .builder()
+                    .connectString(_zkConnect)
+                    .retryPolicy(new RetryOneTime(1000))
+                    .build();
+            
             curator.start();
 
             final String dataSource = _topic;
@@ -91,17 +95,17 @@ public class MyBeamFactoryMapFlow implements BeamFactory<Map<String, Object>> {
                             }
                     )
                     .curator(curator)
-                    .discoveryPath("/druid/discovery")
+                    .discoveryPath("/druid/discoveryPath")
                     .location(
                             new DruidLocation(
                                     new DruidEnvironment(
-                                            "druid:overlord",
-                                            "druid:prod:local"
+                                            "overlord",
+                                            "druid:local:firehose:%s"
                                     ), dataSource
                             )
                     )
                     .rollup(DruidRollup.create(DruidDimensions.schemalessWithExclusions(exclusions), aggregators, QueryGranularity.NONE))
-                    .tuning(ClusteredBeamTuning.create(Granularity.HOUR, new Period("PT0M"), new Period("PT10M"), 2, 2));
+                    .tuning(ClusteredBeamTuning.create(Granularity.HOUR, new Period("PT0M"), new Period("PT30M"), 1, 1));
 
             final Beam<Map<String, Object>> beam = builder.buildBeam();
 

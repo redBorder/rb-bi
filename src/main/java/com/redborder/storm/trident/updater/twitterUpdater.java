@@ -6,6 +6,7 @@
 
 package com.redborder.storm.trident.updater;
 
+import com.google.common.collect.Lists;
 import com.redborder.storm.util.KeyUtils;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,14 +25,16 @@ public class twitterUpdater extends BaseStateUpdater<MapState<Map<String, Object
     
     @Override
     public void updateState(MapState<Map<String, Object>> state, List<TridentTuple> tuples, TridentCollector collector) {
-        List<Map<String, Object>> events = new ArrayList<Map<String, Object>>();
-        List<Object> keys = new ArrayList<Object>();
+        List<Map<String, Object>> events = Lists.newArrayList();;
+        List<List<Object>> keys = Lists.newArrayList();;
         for (TridentTuple t : tuples) {
+            List<Object> l = Lists.newArrayList();
+            l.add(t.getValueByField("userTwitterID"));
+            keys.add(l);
             events.add((Map<String, Object>) t.getValueByField("tweetMap"));
-            keys.add(t.getValueByField("userTwitterID"));
-            System.out.println(t.getValueByField("userTwitterID"));
+            System.out.println("Twiiter: " + t.getValueByField("userTwitterID"));
         }
-        state.multiPut(Arrays.asList(keys), events);
+        state.multiPut(keys, events);
     }
     
 }

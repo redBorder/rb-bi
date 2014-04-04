@@ -6,6 +6,7 @@
 package com.redborder.storm.trident.state.query;
 
 import backtype.storm.tuple.Values;
+import com.google.common.collect.Lists;
 import com.redborder.storm.util.KeyUtils;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,13 +26,15 @@ public class twitterQuery extends BaseQueryFunction<MapState<Map<String, Object>
     @Override
     public List<Map<String, Object>> batchRetrieve(MapState<Map<String, Object>> state, List<TridentTuple> tuples) {
         List<Map<String, Object>> tweets = new ArrayList<Map<String, Object>>();
-        List<Object> keys = new ArrayList<Object>();
+        List<List<Object>> keys = Lists.newArrayList();
         for (TridentTuple t : tuples) {
-            keys.add(t.getValueByField("id"));
+            List<Object> l = Lists.newArrayList();
+            l.add(t.getValueByField("id"));
+            keys.add(l);
         }
 
-        List<Map<String, Object>> memcached = state.multiGet(Arrays.asList(keys));
-
+        List<Map<String, Object>> memcached = state.multiGet(keys);
+        System.out.println("MAP: " + memcached.toString());
         if (memcached != null && !memcached.isEmpty()) {
             for (Map<String, Object> event : memcached) {
                 if (event == null) {
