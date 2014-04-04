@@ -20,6 +20,7 @@ import com.redborder.storm.trident.state.MemcachedMultipleState;
 import com.redborder.storm.trident.state.MemcachedMultipleState.Options;
 import com.redborder.storm.trident.state.MemcachedState;
 import com.redborder.storm.trident.state.query.twitterQuery;
+import com.redborder.storm.trident.topologies.TridentRedBorderTopologies;
 import com.redborder.storm.trident.updater.twitterUpdater;
 import com.redborder.storm.util.CreateConfig;
 import com.redborder.storm.util.GetKafkaConfig;
@@ -200,54 +201,12 @@ public class CorrelationTridentTopology {
         if (args.length != 1) {
             System.out.println("./storm jar {name_jar} {main_class} {local|cluster}");
         } else {
-            TridentTopology topology = new TridentTopology();
-            GetKafkaConfig zkConfig = new GetKafkaConfig();
+            TridentRedBorderTopologies topologies = new TridentRedBorderTopologies();
 
              int PORT = 52030;
-             Options twitterOpts = new Options();
-           
-             twitterOpts.keyBuilder = new ConcatKeyBuilder("Twitter");
-             StateFactory memcached = MemcachedMultipleState.transactional(Arrays.asList(new InetSocketAddress("localhost", PORT)),twitterOpts);
-             TridentState tweetState = topology.newStream("twitterStream", new TwitterStreamTridentSpout())
-             .each(new Fields("tweet"), new EventBuilderFunction(5), new Fields("topic", "tweetMap"))
-             .project(new Fields("tweetMap"))
-             .each(new Fields("tweetMap"), new GetTweetID(), new Fields("userTwitterID"))
-             .partitionBy(new Fields("userTwitterID"))
-             .partitionPersist(memcached, new Fields("tweetMap", "userTwitterID"), new twitterUpdater());
+             
+             TridentTopology topology = topologies.twitterTopology();         
 
-             zkConfig.setTopicInt(RBEventType.MONITOR);
-             topology.newStream("rb_monitor", new TrindetKafkaSpout().builder(
-             zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
-             .each(new Fields("str"), new EventBuilderFunction(RBEventType.MONITOR), new Fields("topic", "event"))
-             .each(new Fields("event"), new GetID(), new Fields("id"))
-             .stateQuery(tweetState, new Fields("id", "event"), new twitterQuery(), new Fields("eventTwitter"))
-             .project(new Fields("eventTwitter"))
-             .each(new Fields("eventTwitter"), new PrinterBolt("----"), new Fields("a"));
-           
-            /*zkConfig.setTopicInt(RBEventType.MONITOR);
-            StateFactory druidStateMonitor = new TridentBeamStateFactory<>(new MyBeamFactoryMapMonitor(zkConfig));
-
-            topology.newStream("rb_monitor", new TrindetKafkaSpout().builder(
-                    zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
-                    .each(new Fields("str"), new EventBuilderFunction(RBEventType.MONITOR), new Fields("topic", "event"))
-                    .partitionPersist(druidStateMonitor, new Fields("event"), new TridentBeamStateUpdater());
-
-            zkConfig.setTopicInt(RBEventType.EVENT);
-            StateFactory druidStateEvent = new TridentBeamStateFactory<>(new MyBeamFactoryMapEvent(zkConfig));
-
-            topology.newStream("rb_event", new TrindetKafkaSpout().builder(
-                    zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
-                    .each(new Fields("str"), new EventBuilderFunction(RBEventType.EVENT), new Fields("topic", "event"))
-                    .partitionPersist(druidStateEvent, new Fields("event"), new TridentBeamStateUpdater());
-
-            zkConfig.setTopicInt(RBEventType.FLOW);
-            StateFactory druidStateFlow = new TridentBeamStateFactory<>(new MyBeamFactoryMapFlow(zkConfig));
-
-            topology.newStream("rb_flow", new TrindetKafkaSpout().builder(
-                    zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
-                    .each(new Fields("str"), new EventBuilderFunction(RBEventType.FLOW), new Fields("topic", "event"))
-                    .partitionPersist(druidStateFlow, new Fields("event"), new TridentBeamStateUpdater());
-*/
             if (args[0].equalsIgnoreCase("local")) {
                 Config conf = new CreateConfig(args[0]).makeConfig();
 

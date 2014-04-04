@@ -60,6 +60,8 @@ public class GetKafkaConfig {
             config = (Map<String, Object>) production.get("traffics");
         } else if (_topicInt == RBEventType.MONITOR) {
             config = (Map<String, Object>) production.get("monitor");
+        } else if (_topicInt == RBEventType.MSE) {
+            config = (Map<String, Object>) production.get("mse");
         }
 
         if (config != null) {

@@ -3,13 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-
 package com.redborder.storm.trident.updater;
 
 import com.google.common.collect.Lists;
-import com.redborder.storm.util.KeyUtils;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import storm.trident.operation.TridentCollector;
@@ -21,20 +17,19 @@ import storm.trident.tuple.TridentTuple;
  *
  * @author andresgomez
  */
-public class twitterUpdater extends BaseStateUpdater<MapState<Map<String, Object>>> {
-    
+public class mseUpdater extends BaseStateUpdater<MapState<Map<String, Object>>> {
+
     @Override
     public void updateState(MapState<Map<String, Object>> state, List<TridentTuple> tuples, TridentCollector collector) {
         List<Map<String, Object>> events = Lists.newArrayList();
         List<List<Object>> keys = Lists.newArrayList();
         for (TridentTuple t : tuples) {
             List<Object> l = Lists.newArrayList();
-            l.add(t.getValueByField("userTwitterID"));
+            l.add(t.getValueByField("mac_src_mse"));
             keys.add(l);
-            events.add((Map<String, Object>) t.getValueByField("tweetMap"));
-            System.out.println("Twiiter: " + t.getValueByField("userTwitterID"));
+            events.add((Map<String, Object>) t.getValueByField("mseMap"));
         }
         state.multiPut(keys, events);
     }
-    
+
 }
