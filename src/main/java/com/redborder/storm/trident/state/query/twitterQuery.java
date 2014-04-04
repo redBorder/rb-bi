@@ -25,6 +25,7 @@ public class twitterQuery extends BaseQueryFunction<MapState<Map<String, Object>
 
     @Override
     public List<Map<String, Object>> batchRetrieve(MapState<Map<String, Object>> state, List<TridentTuple> tuples) {
+        int tupleSize = tuples.size();
         List<Map<String, Object>> tweets = new ArrayList<Map<String, Object>>();
         List<List<Object>> keys = Lists.newArrayList();
         for (TridentTuple t : tuples) {
@@ -32,22 +33,22 @@ public class twitterQuery extends BaseQueryFunction<MapState<Map<String, Object>
             l.add(t.getValueByField("id"));
             keys.add(l);
         }
-
+        
         List<Map<String, Object>> memcached = state.multiGet(keys);
-        System.out.println("MAP: " + memcached.toString());
+        System.out.println("tupleSize "+ tupleSize+" MAP: " + memcached.toString());
         if (memcached != null && !memcached.isEmpty()) {
             for (Map<String, Object> event : memcached) {
                 if (event == null) {
-                    for (int i = 0; i < tuples.size(); i++) {
                         tweets.add(null);
-                    }
+                        tupleSize--;
                 } else {
-
-                    for (TridentTuple tuple : tuples) {
                         tweets.add(event);
-                    }
+                        tupleSize--;
                 }
             }
+            if(tupleSize!=0)
+                for(int i=0;i<tupleSize;i++)
+                    tweets.add(null);
         } else {
             for (int i = 0; i < tuples.size(); i++) {
                 tweets.add(null);

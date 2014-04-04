@@ -203,7 +203,7 @@ public class CorrelationTridentTopology {
             TridentTopology topology = new TridentTopology();
             GetKafkaConfig zkConfig = new GetKafkaConfig();
 
-            /* int PORT = 52030;
+             int PORT = 52030;
              Options twitterOpts = new Options();
            
              twitterOpts.keyBuilder = new ConcatKeyBuilder("Twitter");
@@ -222,8 +222,9 @@ public class CorrelationTridentTopology {
              .each(new Fields("event"), new GetID(), new Fields("id"))
              .stateQuery(tweetState, new Fields("id", "event"), new twitterQuery(), new Fields("eventTwitter"))
              .project(new Fields("eventTwitter"))
-             .each(new Fields("eventTwitter"), new PrinterBolt("----"), new Fields("a"));*/
-            zkConfig.setTopicInt(RBEventType.MONITOR);
+             .each(new Fields("eventTwitter"), new PrinterBolt("----"), new Fields("a"));
+           
+            /*zkConfig.setTopicInt(RBEventType.MONITOR);
             StateFactory druidStateMonitor = new TridentBeamStateFactory<>(new MyBeamFactoryMapMonitor(zkConfig));
 
             topology.newStream("rb_monitor", new TrindetKafkaSpout().builder(
@@ -246,12 +247,12 @@ public class CorrelationTridentTopology {
                     zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
                     .each(new Fields("str"), new EventBuilderFunction(RBEventType.FLOW), new Fields("topic", "event"))
                     .partitionPersist(druidStateFlow, new Fields("event"), new TridentBeamStateUpdater());
-
+*/
             if (args[0].equalsIgnoreCase("local")) {
                 Config conf = new CreateConfig(args[0]).makeConfig();
 
                 LocalCluster cluster = new LocalCluster();
-                //startLocalMemcacheInstance(PORT);
+                startLocalMemcacheInstance(PORT);
                 cluster.submitTopology(topologyName, conf, topology.build());
 
                 //Utils.sleep(1000000);
