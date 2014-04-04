@@ -6,7 +6,10 @@
 
 package com.redborder.storm.trident.filter;
 
+import backtype.storm.utils.Time;
 import backtype.storm.utils.Utils;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import storm.trident.operation.BaseFilter;
 import storm.trident.tuple.TridentTuple;
 
@@ -25,7 +28,14 @@ public class SleepFilter extends BaseFilter{
 
     @Override
     public boolean isKeep(TridentTuple tuple) {
-        Utils.sleep(_millis);       
+        
+        System.out.println("Tiempo: " + tuple.getValues().toString());
+        try {
+            //Utils.sleep(_millis);
+            Time.sleep(_millis);
+        } catch (InterruptedException ex) {
+            Logger.getLogger(SleepFilter.class.getName()).log(Level.SEVERE, null, ex);
+        }
         return true;
     }
     

@@ -13,6 +13,7 @@ import com.redborder.storm.trident.filter.MSEenrichedFilter;
 import com.redborder.storm.trident.filter.SleepFilter;
 import com.redborder.storm.trident.function.EventBuilderFunction;
 import com.redborder.storm.trident.function.GetFieldFunction;
+import com.redborder.storm.trident.function.GetMSEdata;
 import com.redborder.storm.trident.spout.TrindetKafkaSpout;
 import com.redborder.storm.trident.spout.TwitterStreamTridentSpout;
 import com.redborder.storm.trident.state.MemcachedMultipleState;
@@ -33,6 +34,7 @@ import storm.trident.Stream;
 import storm.trident.TridentState;
 import storm.trident.TridentTopology;
 import storm.trident.state.StateFactory;
+import storm.trident.operation.builtin.FilterNull;
 
 /**
  *
@@ -115,37 +117,51 @@ public class TridentRedBorderTopologies {
                 zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
                 .each(new Fields("str"), new EventBuilderFunction(RBEventType.MSE), new Fields("topic", "mseMap"))
                 .project(new Fields("mseMap"))
-                .each(new Fields("mseMap"), new GetFieldFunction("mac_src"), new Fields("mac_src_mse"))
-                .partitionBy(new Fields("mac_src"))
-                .partitionPersist(memcached, new Fields("mseMap", "mac_src"), new mseUpdater());
+                .each(new Fields("mseMap"), new GetMSEdata(), new Fields("mac_src_mse", "geoLocationMSE"))
+                .project(new Fields("mac_src_mse", "geoLocationMSE"))
+                .partitionBy(new Fields("mac_src_mse"))
+                .partitionPersist(memcached, new Fields("geoLocationMSE", "mac_src_mse"), new mseUpdater());
 
         zkConfig.setTopicInt(RBEventType.FLOW);
-        MemcachedMultipleState.Options flowOpts = new MemcachedMultipleState.Options();
-        flowOpts.expiration = 20000;
-        flowOpts.keyBuilder = new ConcatKeyBuilder("flowsNOenriched");
-        StateFactory flowsNoMemcached = MemcachedMultipleState.transactional(Arrays.asList(new InetSocketAddress("localhost", PORT)), flowOpts);
+        // MemcachedMultipleState.Options flowOpts = new MemcachedMultipleState.Options();
+        //flowOpts.expiration = 20000;
+        //flowOpts.keyBuilder = new ConcatKeyBuilder("flowsNOenriched");
+        //StateFactory flowsNoMemcached = MemcachedMultipleState.transactional(Arrays.asList(new InetSocketAddress("localhost", PORT)), flowOpts);
 
         Stream flowsMse = topology.newStream("rb_flow", new TrindetKafkaSpout().builder(
                 zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
                 .each(new Fields("str"), new EventBuilderFunction(RBEventType.FLOW), new Fields("topic", "flowsMap"))
                 .each(new Fields("flowsMap"), new GetFieldFunction("mac_src"), new Fields("mac_src_flow"))
-                .stateQuery(mseState, new Fields("mac_src_flow", "flowsMap"), new mseQuery(), new Fields("flowMseOK", "flowMseKO"))
-                .each(new Fields("flowMseOK"), new MSEenrichedFilter())
-                .each(new Fields("flowMseKO"), new MSEenrichedFilter());
+                .stateQuery(mseState, new Fields("mac_src_flow", "flowsMap"), new mseQuery("Primer", "mac_src_flow", "flowsMap"), new Fields("flowMseOK", "flowMseKO"));
 
         zkConfig.setTopicInt(RBEventType.FLOW);
         StateFactory druidStateFlow = new TridentBeamStateFactory<>(new MyBeamFactoryMapFlow(zkConfig));
 
-        flowsMse
+        Stream tranquilityStream = flowsMse
                 .project(new Fields("flowMseKO"))
-                .each(new Fields("flowMseKO"), new SleepFilter(10000l))
-                .each(new Fields("flowMseKO"), new GetFieldFunction("mac_src"), new Fields("mac_src_flow"))
-                .stateQuery(mseState, new Fields("mac_src_flow", "flowMseKO"), new mseQuery(), new Fields("flowsTranquility"))
-                .partitionPersist(druidStateFlow, new Fields("flowsTranquility"), new TridentBeamStateUpdater());
+                .each(new Fields("flowMseKO"), new MSEenrichedFilter("KO"))
+                .each(new Fields("flowMseKO"), new SleepFilter(30000l))
+                .each(new Fields("flowMseKO"), new GetFieldFunction("mac_src"), new Fields("mac_src_flow_KO"))
+                .stateQuery(mseState, new Fields("mac_src_flow_KO", "flowMseKO"), new mseQuery("Segundo", "mac_src_flow_KO", "flowMseKO"), new Fields("flowsTranquilityOK", "flowsTranquilityKO"));
+
+        tranquilityStream
+                .project(new Fields("flowsTranquilityOK"))
+                .each(new Fields("flowsTranquilityOK"), new FilterNull())
+                .each(new Fields("flowsTranquilityOK"), new CorrelationTridentTopology.PrinterBolt("----"), new Fields("a"));
+        //.partitionPersist(druidStateFlow, new Fields("flowsTranquility"), new TridentBeamStateUpdater());
+
+        tranquilityStream
+        .project(new Fields("flowsTranquilityKO"))
+                .each(new Fields("flowsTranquilityKO"), new FilterNull())
+                .each(new Fields("flowsTranquilityKO"), new CorrelationTridentTopology.PrinterBolt("----"), new Fields("b"));
+        //.partitionPersist(druidStateFlow, new Fields("flowsTranquility"), new TridentBeamStateUpdater());
 
         flowsMse
-                .partitionPersist(druidStateFlow, new Fields("flowMseOK"), new TridentBeamStateUpdater());
+                .project(new Fields("flowMseOK"))
+                .each(new Fields("flowMseOK"), new MSEenrichedFilter("OK"))
+                .each(new Fields("flowMseOK"), new CorrelationTridentTopology.PrinterBolt("----"), new Fields("a"));;
 
+        //.partitionPersist(druidStateFlow, new Fields("flowMseOK"), new TridentBeamStateUpdater());
         return topology;
     }
 

@@ -21,6 +21,22 @@ import storm.trident.tuple.TridentTuple;
  */
 public class mseQuery extends BaseQueryFunction<MapState<Map<String, Object>>, Map<String, Object>> {
 
+    String _log;
+    String _field;
+    String _key;
+
+    public mseQuery(String key, String field) {
+        _log = "";
+        _field = field;
+        _key = key;
+
+    }
+
+    public mseQuery(String log, String key, String field) {
+        this(key, field);
+        _log = log;
+    }
+
     @Override
     public List<Map<String, Object>> batchRetrieve(MapState<Map<String, Object>> state, List<TridentTuple> tuples) {
         int tupleSize = tuples.size();
@@ -28,12 +44,13 @@ public class mseQuery extends BaseQueryFunction<MapState<Map<String, Object>>, M
         List<List<Object>> keys = Lists.newArrayList();
         for (TridentTuple t : tuples) {
             List<Object> l = Lists.newArrayList();
-            l.add(t.getValueByField("mac_src_flow"));
+            l.add(t.getValueByField(_key));
+            System.out.println("MAC: " + t.getValueByField(_key));
             keys.add(l);
         }
 
         List<Map<String, Object>> memcached = state.multiGet(keys);
-        System.out.println("tupleSize " + tupleSize + " MAP: " + memcached.toString());
+        System.out.println("tupleSize " + tupleSize + " " + _log + " " + memcached.toString());
         if (memcached != null && !memcached.isEmpty()) {
             for (Map<String, Object> event : memcached) {
                 if (event == null) {
@@ -60,7 +77,8 @@ public class mseQuery extends BaseQueryFunction<MapState<Map<String, Object>>, M
 
     @Override
     public void execute(TridentTuple tuple, Map<String, Object> result, TridentCollector collector) {
-        Map<String, Object> event = (Map<String, Object>) tuple.getValueByField("flowsMap");
+        System.out.println("TUPLAS: " + tuple.getValues().toString());
+        Map<String, Object> event = (Map<String, Object>) tuple.get(1);
         if (result == null) {
             collector.emit(new Values(null, event));
         } else {

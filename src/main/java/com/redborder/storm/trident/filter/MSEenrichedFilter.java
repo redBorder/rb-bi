@@ -3,7 +3,6 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-
 package com.redborder.storm.trident.filter;
 
 import java.util.Map;
@@ -16,11 +15,23 @@ import storm.trident.tuple.TridentTuple;
  */
 public class MSEenrichedFilter extends BaseFilter {
 
+    String _log;
+
+    public MSEenrichedFilter() {
+        _log = "";
+
+    }
+
+    public MSEenrichedFilter(String log) {
+        _log = log;
+    }
+
     @Override
     public boolean isKeep(TridentTuple tuple) {
-        Map<String,Object> event = (Map<String,Object>) tuple.get(0);
-                
-        return event!=null;
+        Map<String, Object> event = (Map<String, Object>) tuple.get(0);
+        System.out.println(_log+" "+"Filter: " + event);
+
+        return event != null;
     }
-    
+
 }

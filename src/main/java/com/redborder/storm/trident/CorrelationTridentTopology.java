@@ -205,7 +205,7 @@ public class CorrelationTridentTopology {
 
              int PORT = 52030;
              
-             TridentTopology topology = topologies.twitterTopology();         
+             TridentTopology topology = topologies.flowMSEtopology();         
 
             if (args[0].equalsIgnoreCase("local")) {
                 Config conf = new CreateConfig(args[0]).makeConfig();
