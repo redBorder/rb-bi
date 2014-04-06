@@ -19,7 +19,7 @@ import com.redborder.storm.trident.spout.TwitterStreamTridentSpout;
 import com.redborder.storm.trident.state.MemcachedMultipleState;
 import com.redborder.storm.trident.state.MemcachedMultipleState.Options;
 import com.redborder.storm.trident.state.MemcachedState;
-import com.redborder.storm.trident.state.query.twitterQuery;
+import com.redborder.storm.trident.state.query.TwitterQuery;
 import com.redborder.storm.trident.topologies.TridentRedBorderTopologies;
 import com.redborder.storm.trident.updater.twitterUpdater;
 import com.redborder.storm.util.CreateConfig;

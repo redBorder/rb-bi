@@ -19,8 +19,9 @@ import com.redborder.storm.trident.function.ProducerKafkaFunction;
 import com.redborder.storm.trident.spout.TrindetKafkaSpout;
 import com.redborder.storm.trident.spout.TwitterStreamTridentSpout;
 import com.redborder.storm.trident.state.MemcachedMultipleState;
-import com.redborder.storm.trident.state.query.mseQuery;
-import com.redborder.storm.trident.state.query.twitterQuery;
+import com.redborder.storm.trident.state.query.MseQuery;
+import com.redborder.storm.trident.state.query.MseQueryWithoutDelay;
+import com.redborder.storm.trident.state.query.TwitterQuery;
 import com.redborder.storm.trident.updater.mseUpdater;
 import com.redborder.storm.trident.updater.twitterUpdater;
 import com.redborder.storm.util.GetKafkaConfig;
@@ -66,7 +67,7 @@ public class TridentRedBorderTopologies {
                 zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
                 .each(new Fields("str"), new EventBuilderFunction(RBEventType.MONITOR), new Fields("topic", "event"))
                 .each(new Fields("event"), new CorrelationTridentTopology.GetID(), new Fields("id"))
-                .stateQuery(tweetState, new Fields("id", "event"), new twitterQuery(), new Fields("eventTwitter"))
+                .stateQuery(tweetState, new Fields("id", "event"), new TwitterQuery(), new Fields("eventTwitter"))
                 .project(new Fields("eventTwitter"))
                 .each(new Fields("eventTwitter"), new CorrelationTridentTopology.PrinterBolt("----"), new Fields("a"));
 
@@ -135,7 +136,7 @@ public class TridentRedBorderTopologies {
                 zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
                 .each(new Fields("str"), new EventBuilderFunction(RBEventType.FLOW), new Fields("topic", "flowsMap"))
                 .each(new Fields("flowsMap"), new GetFieldFunction("mac_src"), new Fields("mac_src_flow"))
-                .stateQuery(mseState, new Fields("mac_src_flow", "flowsMap"), new mseQuery("Primer", "mac_src_flow", "flowsMap"), new Fields("flowMseOK", "flowMseKO"));
+                .stateQuery(mseState, new Fields("mac_src_flow", "flowsMap"), new MseQuery("Primer", "mac_src_flow", "flowsMap"), new Fields("flowMseOK", "flowMseKO"));
 
         zkConfig.setTopicInt(RBEventType.FLOW);
         StateFactory druidStateFlow = new TridentBeamStateFactory<>(new MyBeamFactoryMapFlow(zkConfig));
@@ -157,7 +158,7 @@ public class TridentRedBorderTopologies {
                 "localhost:2181", "rb_delay", "kafkaStorm"))
                 .each(new Fields("str"), new EventBuilderFunction(7), new Fields("topic", "flowMseKO"))
                 .each(new Fields("flowMseKO"), new GetFieldFunction("mac_src"), new Fields("mac_src_flow_KO"))
-                .stateQuery(mseState, new Fields("mac_src_flow_KO", "flowMseKO"), new mseQuery("Segundo", "mac_src_flow_KO", "flowMseKO"), new Fields("flowsTranquilityOK", "flowsTranquilityKO"));
+                .stateQuery(mseState, new Fields("mac_src_flow_KO", "flowMseKO"), new MseQuery("Segundo", "mac_src_flow_KO", "flowMseKO"), new Fields("flowsTranquilityOK", "flowsTranquilityKO"));
 
         tranquilityStream
                 .project(new Fields("flowsTranquilityOK"))
@@ -203,6 +204,13 @@ public class TridentRedBorderTopologies {
                 .partitionPersist(memcached, new Fields("geoLocationMSE", "mac_src_mse"), new mseUpdater());
 
         zkConfig.setTopicInt(RBEventType.FLOW);
+
+        Stream flowsMse = topology.newStream("rb_flow", new TrindetKafkaSpout().builder(
+                zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
+                .each(new Fields("str"), new EventBuilderFunction(RBEventType.FLOW), new Fields("topic", "flowsMap"))
+                .each(new Fields("flowsMap"), new GetFieldFunction("mac_src"), new Fields("mac_src_flow"))
+                .stateQuery(mseState, new Fields("mac_src_flow", "flowsMap"), new MseQueryWithoutDelay("Primer", "mac_src_flow", "flowsMap"), new Fields("flowMSE"))
+                .each(new Fields("flowMSE"), new CorrelationTridentTopology.PrinterBolt("----"), new Fields("a"));;
 
         return topology;
     }

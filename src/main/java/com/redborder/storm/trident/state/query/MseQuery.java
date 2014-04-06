@@ -19,20 +19,20 @@ import storm.trident.tuple.TridentTuple;
  *
  * @author andresgomez
  */
-public class mseQuery extends BaseQueryFunction<MapState<Map<String, Object>>, Map<String, Object>> {
+public class MseQuery extends BaseQueryFunction<MapState<Map<String, Object>>, Map<String, Object>> {
 
     String _log;
     String _field;
     String _key;
 
-    public mseQuery(String key, String field) {
+    public MseQuery(String key, String field) {
         _log = "";
         _field = field;
         _key = key;
 
     }
 
-    public mseQuery(String log, String key, String field) {
+    public MseQuery(String log, String key, String field) {
         this(key, field);
         _log = log;
     }
@@ -40,6 +40,7 @@ public class mseQuery extends BaseQueryFunction<MapState<Map<String, Object>>, M
     @Override
     public List<Map<String, Object>> batchRetrieve(MapState<Map<String, Object>> state, List<TridentTuple> tuples) {
         int tupleSize = tuples.size();
+        
         List<Map<String, Object>> mseFlows = new ArrayList<Map<String, Object>>();
         List<List<Object>> keys = Lists.newArrayList();
         for (TridentTuple t : tuples) {

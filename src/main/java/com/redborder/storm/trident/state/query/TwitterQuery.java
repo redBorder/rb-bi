@@ -7,7 +7,9 @@ package com.redborder.storm.trident.state.query;
 
 import backtype.storm.tuple.Values;
 import com.google.common.collect.Lists;
+import com.redborder.storm.util.KeyUtils;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import storm.trident.operation.TridentCollector;
@@ -19,52 +21,51 @@ import storm.trident.tuple.TridentTuple;
  *
  * @author andresgomez
  */
-public class mseQueryLater extends BaseQueryFunction<MapState<Map<String, Object>>, Map<String, Object>> {
+public class TwitterQuery extends BaseQueryFunction<MapState<Map<String, Object>>, Map<String, Object>> {
 
     @Override
     public List<Map<String, Object>> batchRetrieve(MapState<Map<String, Object>> state, List<TridentTuple> tuples) {
         int tupleSize = tuples.size();
-        List<Map<String, Object>> mseFlows = new ArrayList<Map<String, Object>>();
+        
+        List<Map<String, Object>> tweets = new ArrayList<Map<String, Object>>();
         List<List<Object>> keys = Lists.newArrayList();
         for (TridentTuple t : tuples) {
             List<Object> l = Lists.newArrayList();
-            l.add(t.getValueByField("mac_src_flow"));
+            l.add(t.getValueByField("id"));
             keys.add(l);
         }
-
+        
         List<Map<String, Object>> memcached = state.multiGet(keys);
-        System.out.println("tupleSize " + tupleSize + " MAP: " + memcached.toString());
+        System.out.println("tupleSize "+ tupleSize+" MAP: " + memcached.toString());
         if (memcached != null && !memcached.isEmpty()) {
             for (Map<String, Object> event : memcached) {
                 if (event == null) {
-                    mseFlows.add(null);
-                    tupleSize--;
+                        tweets.add(null);
+                        tupleSize--;
                 } else {
-                    mseFlows.add(event);
-                    tupleSize--;
+                        tweets.add(event);
+                        tupleSize--;
                 }
             }
-            if (tupleSize != 0) {
-                for (int i = 0; i < tupleSize; i++) {
-                    mseFlows.add(null);
-                }
-            }
+            if(tupleSize!=0)
+                for(int i=0;i<tupleSize;i++)
+                    tweets.add(null);
         } else {
             for (int i = 0; i < tuples.size(); i++) {
-                mseFlows.add(null);
+                tweets.add(null);
             }
         }
 
-        return mseFlows;
+        return tweets;
     }
 
     @Override
     public void execute(TridentTuple tuple, Map<String, Object> result, TridentCollector collector) {
-        Map<String, Object> event = (Map<String, Object>) tuple.getValueByField("flowsMap");
+        Map<String, Object> event = (Map<String, Object>) tuple.getValueByField("event");
         if (result == null) {
             collector.emit(new Values(event));
         } else {
-            event.put("mse_location", result);
+            event.put("tweet", result);
             collector.emit(new Values(event));
         }
     }
