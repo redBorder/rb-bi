@@ -21,7 +21,7 @@ import com.redborder.storm.trident.state.MemcachedMultipleState.Options;
 import com.redborder.storm.trident.state.MemcachedState;
 import com.redborder.storm.trident.state.query.TwitterQuery;
 import com.redborder.storm.trident.topologies.TridentRedBorderTopologies;
-import com.redborder.storm.trident.updater.twitterUpdater;
+import com.redborder.storm.trident.state.updater.twitterUpdater;
 import com.redborder.storm.util.CreateConfig;
 import com.redborder.storm.util.GetKafkaConfig;
 import com.redborder.storm.util.KeyUtils;
