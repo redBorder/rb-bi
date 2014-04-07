@@ -40,6 +40,10 @@ public class MacVendorFunction extends BaseFunction {
     public MacVendorFunction(String ouiPath) {
         _ouiFilePath = ouiPath;
     }
+    
+    public MacVendorFunction(){
+        _ouiFilePath="/opt/rb/etc/objects/oui-vendors";
+    }
 
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {

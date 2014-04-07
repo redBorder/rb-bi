@@ -8,12 +8,17 @@ package net.redborder.storm.topologies;
 import backtype.storm.tuple.Fields;
 import com.metamx.tranquility.storm.TridentBeamStateFactory;
 import com.metamx.tranquility.storm.TridentBeamStateUpdater;
+import java.io.FileNotFoundException;
+import java.net.InetSocketAddress;
+import java.util.Arrays;
+import java.util.Properties;
 import net.redborder.storm.CorrelationTridentTopology;
 import net.redborder.storm.filter.MSEenrichedFilter;
 import net.redborder.storm.filter.SleepFilter;
 import net.redborder.storm.function.EventBuilderFunction;
 import net.redborder.storm.function.GetFieldFunction;
 import net.redborder.storm.function.GetMSEdata;
+import net.redborder.storm.function.MacVendorFunction;
 import net.redborder.storm.function.MapToJSONFunction;
 import net.redborder.storm.function.ProducerKafkaFunction;
 import net.redborder.storm.spout.TridentKafkaSpout;
@@ -30,10 +35,6 @@ import net.redborder.storm.util.druid.MyBeamFactoryMapEvent;
 import net.redborder.storm.util.druid.MyBeamFactoryMapFlow;
 import net.redborder.storm.util.druid.MyBeamFactoryMapMonitor;
 import net.redborder.storm.util.state.ConcatKeyBuilder;
-import java.io.FileNotFoundException;
-import java.net.InetSocketAddress;
-import java.util.Arrays;
-import java.util.Properties;
 import storm.trident.Stream;
 import storm.trident.TridentState;
 import storm.trident.TridentTopology;
@@ -212,6 +213,19 @@ public class TridentRedBorderTopologies {
                 .stateQuery(mseState, new Fields("mac_src_flow", "flowsMap"), new MseQueryWithoutDelay("Primer", "mac_src_flow", "flowsMap"), new Fields("flowMSE"))
                 .each(new Fields("flowMSE"), new CorrelationTridentTopology.PrinterBolt("----"), new Fields("a"));;
 
+        return topology;
+    }
+
+    public TridentTopology mergeTest() throws FileNotFoundException {
+        TridentTopology topology = new TridentTopology();
+        GetKafkaConfig zkConfig = new GetKafkaConfig();
+        zkConfig.setTopicInt(RBEventType.FLOW);
+
+        Stream flowStream = topology.newStream("rb_flow", new TridentKafkaSpout().builder(
+                zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
+                .each(new Fields("str"), new EventBuilderFunction(), new Fields("flows"));
+        
+        
         return topology;
     }
 }
