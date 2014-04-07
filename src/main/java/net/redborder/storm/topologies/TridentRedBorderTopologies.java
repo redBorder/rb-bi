@@ -225,6 +225,12 @@ public class TridentRedBorderTopologies {
                 zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
                 .each(new Fields("str"), new EventBuilderFunction(), new Fields("flows"));
         
+        // tengo que ver como funcionaria ..
+        // no tengo muy claro de que un merge funcione
+        // habria que descomponer el evento por completo
+        // y volver a reconstruirlo al final
+        // (sin necesidad de merge).
+        
         
         return topology;
     }
