@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package net.redborder.storm.trident.state.query;
+package net.redborder.storm.state.query;
 
 import backtype.storm.tuple.Values;
 import com.google.common.collect.Lists;

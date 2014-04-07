@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package net.redborder.storm.trident.spout;
+package net.redborder.storm.spout;
 
 import backtype.storm.spout.SchemeAsMultiScheme;
 import storm.kafka.StringScheme;

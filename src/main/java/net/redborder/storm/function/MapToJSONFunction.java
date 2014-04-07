@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package net.redborder.storm.trident.function;
+package net.redborder.storm.function;
 
 import backtype.storm.tuple.Values;
 import java.io.IOException;

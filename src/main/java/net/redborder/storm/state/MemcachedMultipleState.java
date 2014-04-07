@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package net.redborder.storm.trident.state;
+package net.redborder.storm.state;
 
 import backtype.storm.Config;
 import backtype.storm.metric.api.CountMetric;

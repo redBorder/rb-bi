@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package net.redborder.storm.trident.filter;
+package net.redborder.storm.filter;
 
 import backtype.storm.utils.Time;
 import backtype.storm.utils.Utils;

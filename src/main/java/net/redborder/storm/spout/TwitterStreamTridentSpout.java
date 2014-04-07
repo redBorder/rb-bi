@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package net.redborder.storm.trident.spout;
+package net.redborder.storm.spout;
 
 import backtype.storm.spout.SpoutOutputCollector;
 import backtype.storm.task.TopologyContext;
@@ -11,7 +11,6 @@ import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Values;
 import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.collect.Lists;
-import net.redborder.storm.spout.TwitterStreamSpout;
 import com.twitter.hbc.ClientBuilder;
 import com.twitter.hbc.core.Client;
 import com.twitter.hbc.core.Constants;
@@ -37,7 +36,7 @@ import storm.trident.spout.IBatchSpout;
  */
 public class TwitterStreamTridentSpout implements IBatchSpout {
 
-    private static final Logger LOGGER = Logger.getLogger(TwitterStreamSpout.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(TwitterStreamTridentSpout.class.getName());
     private SpoutOutputCollector collector;
     private Client hbc;
     private final BlockingQueue<String> tweetsToProcess = new LinkedBlockingQueue<String>();

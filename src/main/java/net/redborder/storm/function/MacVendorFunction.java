@@ -3,10 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package net.redborder.storm.trident.function;
+package net.redborder.storm.function;
 
 import backtype.storm.tuple.Values;
-import net.redborder.storm.bolt.MacVendorBolt;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -71,7 +70,7 @@ public class MacVendorFunction extends BaseFunction {
         try {
             in = new FileInputStream(_ouiFilePath);
         } catch (FileNotFoundException ex) {
-            Logger.getLogger(MacVendorBolt.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(MacVendorFunction.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         InputStreamReader isr = new InputStreamReader(in);
@@ -83,7 +82,7 @@ public class MacVendorFunction extends BaseFunction {
                 line = br.readLine();
 
             } catch (IOException ex) {
-                Logger.getLogger(MacVendorBolt.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(MacVendorFunction.class.getName()).log(Level.SEVERE, null, ex);
             }
 
             if (line == null) {

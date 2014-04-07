@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package net.redborder.storm.trident.state.updater;
+package net.redborder.storm.state.updater;
 
 import com.google.common.collect.Lists;
 import java.util.List;

@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package net.redborder.storm.trident.filter;
+package net.redborder.storm.filter;
 
 import java.util.Map;
 import storm.trident.operation.BaseFilter;

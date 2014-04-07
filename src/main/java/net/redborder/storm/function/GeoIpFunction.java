@@ -3,14 +3,13 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package net.redborder.storm.trident.function;
+package net.redborder.storm.function;
 
 import backtype.storm.tuple.Values;
 import com.maxmind.geoip.Location;
 import com.maxmind.geoip.LookupService;
 import com.maxmind.geoip.regionName;
 import com.maxmind.geoip.timeZone;
-import net.redborder.storm.bolt.GeoIpBolt;
 import net.redborder.storm.util.CheckIp;
 import net.redborder.storm.util.RBEventType;
 import java.io.IOException;
@@ -61,7 +60,7 @@ public class GeoIpFunction extends BaseFunction {
             _asn6 = new LookupService(_asnv6db, LookupService.GEOIP_MEMORY_CACHE);
 
         } catch (IOException ex) {
-            Logger.getLogger(GeoIpBolt.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(GeoIpFunction.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 

@@ -3,27 +3,27 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package net.redborder.storm.trident.topologies;
+package net.redborder.storm.topologies;
 
 import backtype.storm.tuple.Fields;
 import com.metamx.tranquility.storm.TridentBeamStateFactory;
 import com.metamx.tranquility.storm.TridentBeamStateUpdater;
-import net.redborder.storm.trident.CorrelationTridentTopology;
-import net.redborder.storm.trident.filter.MSEenrichedFilter;
-import net.redborder.storm.trident.filter.SleepFilter;
-import net.redborder.storm.trident.function.EventBuilderFunction;
-import net.redborder.storm.trident.function.GetFieldFunction;
-import net.redborder.storm.trident.function.GetMSEdata;
-import net.redborder.storm.trident.function.MapToJSONFunction;
-import net.redborder.storm.trident.function.ProducerKafkaFunction;
-import net.redborder.storm.trident.spout.TridentKafkaSpout;
-import net.redborder.storm.trident.spout.TwitterStreamTridentSpout;
-import net.redborder.storm.trident.state.MemcachedMultipleState;
-import net.redborder.storm.trident.state.query.MseQuery;
-import net.redborder.storm.trident.state.query.MseQueryWithoutDelay;
-import net.redborder.storm.trident.state.query.TwitterQuery;
-import net.redborder.storm.trident.state.updater.mseUpdater;
-import net.redborder.storm.trident.state.updater.twitterUpdater;
+import net.redborder.storm.CorrelationTridentTopology;
+import net.redborder.storm.filter.MSEenrichedFilter;
+import net.redborder.storm.filter.SleepFilter;
+import net.redborder.storm.function.EventBuilderFunction;
+import net.redborder.storm.function.GetFieldFunction;
+import net.redborder.storm.function.GetMSEdata;
+import net.redborder.storm.function.MapToJSONFunction;
+import net.redborder.storm.function.ProducerKafkaFunction;
+import net.redborder.storm.spout.TridentKafkaSpout;
+import net.redborder.storm.spout.TwitterStreamTridentSpout;
+import net.redborder.storm.state.MemcachedMultipleState;
+import net.redborder.storm.state.query.MseQuery;
+import net.redborder.storm.state.query.MseQueryWithoutDelay;
+import net.redborder.storm.state.query.TwitterQuery;
+import net.redborder.storm.state.updater.mseUpdater;
+import net.redborder.storm.state.updater.twitterUpdater;
 import net.redborder.storm.util.GetKafkaConfig;
 import net.redborder.storm.util.RBEventType;
 import net.redborder.storm.util.druid.MyBeamFactoryMapEvent;
