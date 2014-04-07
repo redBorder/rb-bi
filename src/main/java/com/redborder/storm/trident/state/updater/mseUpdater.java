@@ -26,10 +26,10 @@ public class mseUpdater extends BaseStateUpdater<MapState<Map<String, Object>>> 
         for (TridentTuple t : tuples) {
             List<Object> l = Lists.newArrayList();
             l.add(t.getValueByField("mac_src_mse"));
-            System.out.println("MAC-LOC: " + t.getValueByField("mac_src_mse"));
+            //System.out.println("MAC-LOC: " + t.getValueByField("mac_src_mse"));
             keys.add(l);
             events.add((Map<String, Object>) t.getValueByField("geoLocationMSE"));
-            System.out.println(t.getValueByField("geoLocationMSE"));
+            //System.out.println(t.getValueByField("geoLocationMSE"));
         }
         state.multiPut(keys, events);
     }

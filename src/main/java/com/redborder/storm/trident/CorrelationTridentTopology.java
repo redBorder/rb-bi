@@ -14,7 +14,7 @@ import com.metamx.tranquility.storm.TridentBeamState;
 import com.metamx.tranquility.storm.TridentBeamStateFactory;
 import com.metamx.tranquility.storm.TridentBeamStateUpdater;
 import com.redborder.storm.trident.function.EventBuilderFunction;
-import com.redborder.storm.trident.spout.TrindetKafkaSpout;
+import com.redborder.storm.trident.spout.TridentKafkaSpout;
 import com.redborder.storm.trident.spout.TwitterStreamTridentSpout;
 import com.redborder.storm.trident.state.MemcachedMultipleState;
 import com.redborder.storm.trident.state.MemcachedMultipleState.Options;
@@ -90,7 +90,7 @@ public class CorrelationTridentTopology {
         public void execute(TridentTuple tuple, TridentCollector collector) {
             List<Object> list = tuple.getValues();
             for (Object o : list) {
-                System.out.println("\n\n\n" + _str + " " + o.toString());
+                System.out.println( _str + " " + o.toString());
             }
 
         }

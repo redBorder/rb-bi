@@ -16,7 +16,7 @@ import storm.kafka.trident.TridentKafkaConfig;
  * Create a tridentKafkaSpout.
  * @author andresgomez
  */
-public class TrindetKafkaSpout {
+public class TridentKafkaSpout {
     
     /**
      * Build the trindetKafkaSpout.
