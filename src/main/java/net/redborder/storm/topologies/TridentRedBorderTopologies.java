@@ -56,7 +56,7 @@ public class TridentRedBorderTopologies {
         twitterOpts.keyBuilder = new ConcatKeyBuilder("Twitter");
         StateFactory memcached = MemcachedMultipleState.transactional(Arrays.asList(new InetSocketAddress("localhost", PORT)), twitterOpts);
         TridentState tweetState = topology.newStream("twitterStream", new TwitterStreamTridentSpout())
-                .each(new Fields("tweet"), new EventBuilderFunction(5), new Fields("topic", "tweetMap"))
+                .each(new Fields("tweet"), new EventBuilderFunction(), new Fields("tweetMap"))
                 .project(new Fields("tweetMap"))
                 .each(new Fields("tweetMap"), new CorrelationTridentTopology.GetTweetID(), new Fields("userTwitterID"))
                 .partitionBy(new Fields("userTwitterID"))
@@ -65,7 +65,7 @@ public class TridentRedBorderTopologies {
         zkConfig.setTopicInt(RBEventType.MONITOR);
         topology.newStream("rb_monitor", new TridentKafkaSpout().builder(
                 zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
-                .each(new Fields("str"), new EventBuilderFunction(RBEventType.MONITOR), new Fields("topic", "event"))
+                .each(new Fields("str"), new EventBuilderFunction(), new Fields("event"))
                 .each(new Fields("event"), new CorrelationTridentTopology.GetID(), new Fields("id"))
                 .stateQuery(tweetState, new Fields("id", "event"), new TwitterQuery(), new Fields("eventTwitter"))
                 .project(new Fields("eventTwitter"))
@@ -83,7 +83,7 @@ public class TridentRedBorderTopologies {
 
         topology.newStream("rb_monitor", new TridentKafkaSpout().builder(
                 zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
-                .each(new Fields("str"), new EventBuilderFunction(RBEventType.MONITOR), new Fields("topic", "event"))
+                .each(new Fields("str"), new EventBuilderFunction(), new Fields("event"))
                 .partitionPersist(druidStateMonitor, new Fields("event"), new TridentBeamStateUpdater());
 
         zkConfig.setTopicInt(RBEventType.EVENT);
@@ -91,7 +91,7 @@ public class TridentRedBorderTopologies {
 
         topology.newStream("rb_event", new TridentKafkaSpout().builder(
                 zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
-                .each(new Fields("str"), new EventBuilderFunction(RBEventType.EVENT), new Fields("topic", "event"))
+                .each(new Fields("str"), new EventBuilderFunction(), new Fields("event"))
                 .partitionPersist(druidStateEvent, new Fields("event"), new TridentBeamStateUpdater());
 
         zkConfig.setTopicInt(RBEventType.FLOW);
@@ -99,7 +99,7 @@ public class TridentRedBorderTopologies {
 
         topology.newStream("rb_flow", new TridentKafkaSpout().builder(
                 zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
-                .each(new Fields("str"), new EventBuilderFunction(RBEventType.FLOW), new Fields("topic", "event"))
+                .each(new Fields("str"), new EventBuilderFunction(), new Fields("event"))
                 .partitionPersist(druidStateFlow, new Fields("event"), new TridentBeamStateUpdater());
 
         return topology;
@@ -119,7 +119,7 @@ public class TridentRedBorderTopologies {
         zkConfig.setTopicInt(RBEventType.MSE);
         TridentState mseState = topology.newStream("rb_mse", new TridentKafkaSpout().builder(
                 zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
-                .each(new Fields("str"), new EventBuilderFunction(RBEventType.MSE), new Fields("topic", "mseMap"))
+                .each(new Fields("str"), new EventBuilderFunction(), new Fields("mseMap"))
                 .project(new Fields("mseMap"))
                 .each(new Fields("mseMap"), new GetMSEdata(), new Fields("mac_src_mse", "geoLocationMSE"))
                 .project(new Fields("mac_src_mse", "geoLocationMSE"))
@@ -134,7 +134,7 @@ public class TridentRedBorderTopologies {
 
         Stream flowsMse = topology.newStream("rb_flow", new TridentKafkaSpout().builder(
                 zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
-                .each(new Fields("str"), new EventBuilderFunction(RBEventType.FLOW), new Fields("topic", "flowsMap"))
+                .each(new Fields("str"), new EventBuilderFunction(), new Fields("flowsMap"))
                 .each(new Fields("flowsMap"), new GetFieldFunction("mac_src"), new Fields("mac_src_flow"))
                 .stateQuery(mseState, new Fields("mac_src_flow", "flowsMap"), new MseQuery("Primer", "mac_src_flow", "flowsMap"), new Fields("flowMseOK", "flowMseKO"));
 
@@ -156,7 +156,7 @@ public class TridentRedBorderTopologies {
 
         Stream tranquilityStream = topology.newStream("rb_delay", new TridentKafkaSpout().builder(
                 "localhost:2181", "rb_delay", "kafkaStorm"))
-                .each(new Fields("str"), new EventBuilderFunction(7), new Fields("topic", "flowMseKO"))
+                .each(new Fields("str"), new EventBuilderFunction(), new Fields("flowMseKO"))
                 .each(new Fields("flowMseKO"), new GetFieldFunction("mac_src"), new Fields("mac_src_flow_KO"))
                 .stateQuery(mseState, new Fields("mac_src_flow_KO", "flowMseKO"), new MseQuery("Segundo", "mac_src_flow_KO", "flowMseKO"), new Fields("flowsTranquilityOK", "flowsTranquilityKO"));
 
@@ -196,7 +196,7 @@ public class TridentRedBorderTopologies {
         zkConfig.setTopicInt(RBEventType.MSE);
         TridentState mseState = topology.newStream("rb_mse", new TridentKafkaSpout().builder(
                 zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
-                .each(new Fields("str"), new EventBuilderFunction(RBEventType.MSE), new Fields("topic", "mseMap"))
+                .each(new Fields("str"), new EventBuilderFunction(), new Fields("mseMap"))
                 .project(new Fields("mseMap"))
                 .each(new Fields("mseMap"), new GetMSEdata(), new Fields("mac_src_mse", "geoLocationMSE"))
                 .project(new Fields("mac_src_mse", "geoLocationMSE"))
@@ -207,7 +207,7 @@ public class TridentRedBorderTopologies {
 
         Stream flowsMse = topology.newStream("rb_flow", new TridentKafkaSpout().builder(
                 zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
-                .each(new Fields("str"), new EventBuilderFunction(RBEventType.FLOW), new Fields("topic", "flowsMap"))
+                .each(new Fields("str"), new EventBuilderFunction(), new Fields("flowsMap"))
                 .each(new Fields("flowsMap"), new GetFieldFunction("client_mac"), new Fields("mac_src_flow"))
                 .stateQuery(mseState, new Fields("mac_src_flow", "flowsMap"), new MseQueryWithoutDelay("Primer", "mac_src_flow", "flowsMap"), new Fields("flowMSE"))
                 .each(new Fields("flowMSE"), new CorrelationTridentTopology.PrinterBolt("----"), new Fields("a"));;

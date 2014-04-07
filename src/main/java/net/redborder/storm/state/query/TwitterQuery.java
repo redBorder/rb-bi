@@ -7,7 +7,7 @@ package net.redborder.storm.state.query;
 
 import backtype.storm.tuple.Values;
 import com.google.common.collect.Lists;
-import net.redborder.storm.util.KeyUtils;
+import net.redborder.storm.util.state.KeyUtils;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;

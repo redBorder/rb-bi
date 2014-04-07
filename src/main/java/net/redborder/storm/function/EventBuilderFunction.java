@@ -34,6 +34,10 @@ public class EventBuilderFunction extends BaseFunction {
         _topic = topic;
     }
 
+    public EventBuilderFunction() {
+        _topic = -1;
+    }
+
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
         String jsonEvent = (String) tuple.getValue(0);
@@ -45,7 +49,12 @@ public class EventBuilderFunction extends BaseFunction {
             } catch (IOException ex) {
                 Logger.getLogger(EventBuilderFunction.class.getName()).log(Level.SEVERE, null, ex);
             }
-            collector.emit(new Values(_topic, event));
+            if (_topic == -1) {
+                collector.emit(new Values(event));
+            } else {
+                collector.emit(new Values(_topic,event));
+            }
+
         }
     }
 

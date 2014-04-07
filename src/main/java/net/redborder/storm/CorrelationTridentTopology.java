@@ -24,7 +24,7 @@ import net.redborder.storm.topologies.TridentRedBorderTopologies;
 import net.redborder.storm.state.updater.twitterUpdater;
 import net.redborder.storm.util.CreateConfig;
 import net.redborder.storm.util.GetKafkaConfig;
-import net.redborder.storm.util.KeyUtils;
+import net.redborder.storm.util.state.KeyUtils;
 import net.redborder.storm.util.RBEventType;
 import net.redborder.storm.util.druid.MyBeamFactoryMapEvent;
 import net.redborder.storm.util.druid.MyBeamFactoryMapFlow;

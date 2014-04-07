@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package net.redborder.storm.util;
+package net.redborder.storm.util.state;
 
 
 import java.util.Arrays;
