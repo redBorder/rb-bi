@@ -25,7 +25,7 @@ public class GetMSEdata extends BaseFunction{
         String macAddress = location.get("macAddress").toString();
         
         Map<String,Object> geoCoordinate = (Map<String,Object>) location.get("geoCoordinate");
-        System.out.println("GET: " + geoCoordinate);
+        //System.out.println("GET: " + geoCoordinate);
         collector.emit(new Values(macAddress,geoCoordinate));
     }
     

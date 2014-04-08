@@ -28,7 +28,7 @@ public class GetFieldFunction extends BaseFunction {
         Map<String, Object> event = (Map<String, Object>) tuple.getValue(0);
         if (event.containsKey(_field)) {
             String field = event.get(_field).toString();
-            System.out.println("field: " + field);
+            //System.out.println("field: " + field);
             collector.emit(new Values(field));
         } else {
             collector.emit(new Values("null"));
