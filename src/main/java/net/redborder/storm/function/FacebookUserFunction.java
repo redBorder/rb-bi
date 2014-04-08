@@ -28,12 +28,13 @@ public class FacebookUserFunction extends BaseFunction {
                 String url = event.get("http_url").toString();
                 int start = url.indexOf("_") + 1;
                 int end = url.indexOf("_", start);
-                event.put("social_user",
-                        "http://www.facebook.com/profile.php?id=" + url.substring(start, end));
+                collector.emit(new Values("http://www.facebook.com/profile.php?id=" + url.substring(start, end)));
+            } else {
+                collector.emit(new Values(""));
             }
+        } else {
+            collector.emit(new Values(""));
         }
-
-        collector.emit(new Values(event));
     }
 
 }

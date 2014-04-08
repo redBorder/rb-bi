@@ -35,13 +35,15 @@ public class FacebookLikeShareFuction extends BaseFunction {
                 } else if (url.contains("/plugins/share_button")) {
                     int start = url.indexOf("href=") + "href=".length();
                     int end = url.indexOf("&", start);
-
-                    event.put("facebook_share",
-                            url.substring(start, end).replaceAll("%3A", ":").replaceAll("%2F", "/"));
+                    collector.emit(new Values(url.substring(start, end).replaceAll("%3A", ":").replaceAll("%2F", "/")));
+                } else {
+                    collector.emit(new Values(""));
                 }
+            } else {
+                collector.emit(new Values(""));
             }
+        } else {
+            collector.emit(new Values(""));
         }
-
-        collector.emit(new Values(event));
     }
 }

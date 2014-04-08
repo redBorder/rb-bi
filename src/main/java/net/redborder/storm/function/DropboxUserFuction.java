@@ -33,13 +33,19 @@ public class DropboxUserFuction extends BaseFunction {
                     int end = compareLess(end1, compareLess(end2, end3));
 
                     if (end != 0) {
-                        event.put("social_user",
-                                "dropbox.id=" + url.substring(start, end));
+                        collector.emit(new Values(url.substring(start, end)));
+                    } else {
+                        collector.emit(new Values(""));
                     }
+                } else {
+                    collector.emit(new Values(""));
                 }
+            } else {
+                collector.emit(new Values(""));
             }
+        } else {
+            collector.emit(new Values(""));
         }
-        collector.emit(new Values(event));
     }
 
     /**

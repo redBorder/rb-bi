@@ -31,7 +31,7 @@ public class GetFieldFunction extends BaseFunction {
             //System.out.println("field: " + field);
             collector.emit(new Values(field));
         } else {
-            collector.emit(new Values("null"));
+            collector.emit(new Values(""));
         }
     }
 
