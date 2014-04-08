@@ -28,7 +28,7 @@ import net.redborder.storm.spout.TridentKafkaSpout;
 import net.redborder.storm.spout.TwitterStreamTridentSpout;
 import net.redborder.storm.state.MemcachedMultipleState;
 import net.redborder.storm.state.query.MseQuery;
-import net.redborder.storm.state.query.MseQueryWithoutDelay;
+import net.redborder.storm.state.query.MseQuery;
 import net.redborder.storm.state.query.TwitterQuery;
 import net.redborder.storm.state.updater.mseUpdater;
 import net.redborder.storm.state.updater.twitterUpdater;
@@ -140,7 +140,7 @@ public class TridentRedBorderTopologies {
                 zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
                 .each(new Fields("str"), new EventBuilderFunction(), new Fields("flowsMap"))
                 .each(new Fields("flowsMap"), new GetFieldFunction("mac_src"), new Fields("mac_src_flow"))
-                .stateQuery(mseState, new Fields("mac_src_flow", "flowsMap"), new MseQuery("Primer", "mac_src_flow", "flowsMap"), new Fields("flowMseOK", "flowMseKO"));
+                .stateQuery(mseState, new Fields("mac_src_flow"), new MseQuery("mac_src_flow"), new Fields("flowMseOK", "flowMseKO"));
 
         zkConfig.setTopicInt(RBEventType.FLOW);
         StateFactory druidStateFlow = new TridentBeamStateFactory<>(new MyBeamFactoryMapFlow(zkConfig));
@@ -162,7 +162,7 @@ public class TridentRedBorderTopologies {
                 "localhost:2181", "rb_delay", "kafkaStorm"))
                 .each(new Fields("str"), new EventBuilderFunction(), new Fields("flowMseKO"))
                 .each(new Fields("flowMseKO"), new GetFieldFunction("mac_src"), new Fields("mac_src_flow_KO"))
-                .stateQuery(mseState, new Fields("mac_src_flow_KO", "flowMseKO"), new MseQuery("Segundo", "mac_src_flow_KO", "flowMseKO"), new Fields("flowsTranquilityOK", "flowsTranquilityKO"));
+                .stateQuery(mseState, new Fields("mac_src_flow_KO", "flowMseKO"), new MseQuery("mac_src_flow_KO"), new Fields("flowsTranquilityOK", "flowsTranquilityKO"));
 
         tranquilityStream
                 .project(new Fields("flowsTranquilityOK"))
@@ -213,7 +213,7 @@ public class TridentRedBorderTopologies {
                 zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
                 .each(new Fields("str"), new EventBuilderFunction(), new Fields("flowsMap"))
                 .each(new Fields("flowsMap"), new GetFieldFunction("client_mac"), new Fields("mac_src_flow"))
-                .stateQuery(mseState, new Fields("mac_src_flow", "flowsMap"), new MseQueryWithoutDelay("Primer", "mac_src_flow", "flowsMap"), new Fields("flowMSE"))
+                .stateQuery(mseState, new Fields("mac_src_flow", "flowsMap"), new MseQuery("mac_src_flow"), new Fields("flowMSE"))
                 .each(new Fields("flowMSE"), new CorrelationTridentTopology.PrinterBolt("----"), new Fields("a"));;
 
         return topology;
@@ -226,7 +226,7 @@ public class TridentRedBorderTopologies {
         int PORT = 52030;
 
         MemcachedMultipleState.Options mseOpts = new MemcachedMultipleState.Options();
-        mseOpts.expiration = 20000;
+        mseOpts.expiration = 60000;
         mseOpts.keyBuilder = new ConcatKeyBuilder("MSE");
         StateFactory memcached = MemcachedMultipleState.transactional(Arrays.asList(new InetSocketAddress("localhost", PORT)), mseOpts);
 
@@ -247,15 +247,17 @@ public class TridentRedBorderTopologies {
                 zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
                 .each(new Fields("str"), new EventBuilderFunction(), new Fields("flows"))
                 .project(new Fields("flows"));
+                //.parallelismHint(5);
 
         Stream locationStream = flowStream
-                .each(new Fields("flows"), new GetFieldFunction("client"), new Fields("mac_src_flow"))
-                .stateQuery(mseState, new Fields("mac_src_flow", "flows"), new MseQueryWithoutDelay("Primer", "mac_src_flow", "flows"), new Fields("sta_mac_address_latlong"))
-                .project(new Fields("flows","sta_mac_address_latlong"));
+                .each(new Fields("flows"), new GetFieldFunction("client_mac"), new Fields("mac_src_flow"))
+                .stateQuery(mseState, new Fields("mac_src_flow"), new MseQuery("mac_src_flow"), new Fields("sta_mac_address_latlong"))
+                .project(new Fields("flows", "sta_mac_address_latlong"));
+                //.parallelismHint(5);
 
         Stream macVendorStream = flowStream
                 .each(new Fields("flows"), new MacVendorFunction(), new Fields("client_mac_vendor"));
-
+                       // .parallelismHint(5);
         List<Stream> joinStream = new ArrayList<>();
         joinStream.add(locationStream);
         joinStream.add(macVendorStream);
@@ -265,10 +267,9 @@ public class TridentRedBorderTopologies {
         keyFields.add(new Fields("flows"));
 
         topology.join(joinStream, keyFields, new Fields("flows", "sta_mac_address_latlong", "client_mac_vendor"))
-        //topology.join(locationStream, new Fields("flows"), macVendorStream,new Fields("flows"), new Fields("flows", "sta_mac_address_latlong", "client_mac_vendor"))
+                //topology.join(locationStream, new Fields("flows"), macVendorStream,new Fields("flows"), new Fields("flows", "sta_mac_address_latlong", "client_mac_vendor"))
                 .each(new Fields("flows", "sta_mac_address_latlong", "client_mac_vendor"), new JoinFlowFunction(), new Fields("finalMap"))
                 .each(new Fields("finalMap"), new CorrelationTridentTopology.PrinterBolt("----"), new Fields("a"));
-        
 
         return topology;
     }

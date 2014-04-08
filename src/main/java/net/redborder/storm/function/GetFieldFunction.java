@@ -26,11 +26,12 @@ public class GetFieldFunction extends BaseFunction {
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
         Map<String, Object> event = (Map<String, Object>) tuple.getValue(0);
-        String field = String.valueOf(event.get(_field));
-        if (field != null) {
+        if (event.containsKey(_field)) {
+            String field = event.get(_field).toString();
+            System.out.println("field: " + field);
             collector.emit(new Values(field));
         } else {
-            collector.emit(new Values("-"));
+            collector.emit(new Values("null"));
         }
     }
 

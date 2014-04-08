@@ -21,37 +21,25 @@ import storm.trident.tuple.TridentTuple;
  */
 public class MseQuery extends BaseQueryFunction<MapState<Map<String, Object>>, Map<String, Object>> {
 
-    String _log;
-    String _field;
     String _key;
 
-    public MseQuery(String key, String field) {
-        _log = "";
-        _field = field;
+    public MseQuery(String key) {
         _key = key;
-
-    }
-
-    public MseQuery(String log, String key, String field) {
-        this(key, field);
-        _log = log;
     }
 
     @Override
     public List<Map<String, Object>> batchRetrieve(MapState<Map<String, Object>> state, List<TridentTuple> tuples) {
         int tupleSize = tuples.size();
-        
         List<Map<String, Object>> mseFlows = new ArrayList<Map<String, Object>>();
         List<List<Object>> keys = Lists.newArrayList();
         for (TridentTuple t : tuples) {
             List<Object> l = Lists.newArrayList();
             l.add(t.getValueByField(_key));
-            System.out.println("MAC: " + t.getValueByField(_key));
             keys.add(l);
         }
 
         List<Map<String, Object>> memcached = state.multiGet(keys);
-        System.out.println("tupleSize " + tupleSize + " " + _log + " " + memcached.toString());
+        System.out.println("tupleSize " + tupleSize + " MAP: " + memcached.toString());
         if (memcached != null && !memcached.isEmpty()) {
             for (Map<String, Object> event : memcached) {
                 if (event == null) {
@@ -78,13 +66,16 @@ public class MseQuery extends BaseQueryFunction<MapState<Map<String, Object>>, M
 
     @Override
     public void execute(TridentTuple tuple, Map<String, Object> result, TridentCollector collector) {
-        System.out.println("TUPLAS: " + tuple.getValues().toString());
-        Map<String, Object> event = (Map<String, Object>) tuple.get(1);
         if (result == null) {
-            collector.emit(new Values(null, event));
+            collector.emit(new Values(""));
         } else {
-            event.put("mse_location", result);
-            collector.emit(new Values(event, null));
+            Double lattitude = (Double) result.get("lattitude");
+            lattitude=(double)Math.round(lattitude * 10000) / 10000;
+            
+            Double longitude = (Double) result.get("longitude");
+            longitude=(double)Math.round(lattitude * 10000) / 10000;
+            String location = lattitude.toString() + "," + longitude.toString();
+            collector.emit(new Values(location));
         }
     }
 
