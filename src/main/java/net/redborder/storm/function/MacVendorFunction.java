@@ -49,12 +49,12 @@ public class MacVendorFunction extends BaseFunction {
     public void execute(TridentTuple tuple, TridentCollector collector) {
 
         Map<String, Object> event = (Map<String, Object>) tuple.getValue(0);
-        String ouiSrc = "mac";
-        if (event.containsKey("client")) {
-            ouiSrc = buildOui(event.get("client"));
+        String ouiSrc = "";
+        if (event.containsKey("client_mac")) {
+            ouiSrc = buildOui(event.get("client_mac"));
             
             if(ouiSrc==null)
-                ouiSrc="mac";
+                ouiSrc="";
             else
                 ouiSrc=_ouiMap.get(ouiSrc);
         }

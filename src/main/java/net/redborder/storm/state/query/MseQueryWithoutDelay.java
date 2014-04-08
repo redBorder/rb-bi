@@ -77,7 +77,7 @@ public class MseQueryWithoutDelay extends BaseQueryFunction<MapState<Map<String,
     @Override
     public void execute(TridentTuple tuple, Map<String, Object> result, TridentCollector collector) {
         if (result == null) {
-            collector.emit(new Values("loc"));
+            collector.emit(new Values(""));
         } else {
             Double lattitude = (Double) result.get("lattitude");
             lattitude=(double)Math.round(lattitude * 10000) / 10000;
