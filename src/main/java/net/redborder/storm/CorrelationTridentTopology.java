@@ -205,7 +205,7 @@ public class CorrelationTridentTopology {
 
              int PORT = 52030;
              
-             TridentTopology topology = topologies.flowMSEtopology();         
+             TridentTopology topology = topologies.Test();         
 
             if (args[0].equalsIgnoreCase("local")) {
                 Config conf = new CreateConfig(args[0]).makeConfig();

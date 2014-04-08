@@ -10,7 +10,9 @@ import com.metamx.tranquility.storm.TridentBeamStateFactory;
 import com.metamx.tranquility.storm.TridentBeamStateUpdater;
 import java.io.FileNotFoundException;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 import net.redborder.storm.CorrelationTridentTopology;
 import net.redborder.storm.filter.MSEenrichedFilter;
@@ -18,6 +20,7 @@ import net.redborder.storm.filter.SleepFilter;
 import net.redborder.storm.function.EventBuilderFunction;
 import net.redborder.storm.function.GetFieldFunction;
 import net.redborder.storm.function.GetMSEdata;
+import net.redborder.storm.function.JoinFlowFunction;
 import net.redborder.storm.function.MacVendorFunction;
 import net.redborder.storm.function.MapToJSONFunction;
 import net.redborder.storm.function.ProducerKafkaFunction;
@@ -216,22 +219,57 @@ public class TridentRedBorderTopologies {
         return topology;
     }
 
-    public TridentTopology mergeTest() throws FileNotFoundException {
+    public TridentTopology Test() throws FileNotFoundException {
         TridentTopology topology = new TridentTopology();
         GetKafkaConfig zkConfig = new GetKafkaConfig();
+
+        int PORT = 52030;
+
+        MemcachedMultipleState.Options mseOpts = new MemcachedMultipleState.Options();
+        mseOpts.expiration = 20000;
+        mseOpts.keyBuilder = new ConcatKeyBuilder("MSE");
+        StateFactory memcached = MemcachedMultipleState.transactional(Arrays.asList(new InetSocketAddress("localhost", PORT)), mseOpts);
+
+        zkConfig.setTopicInt(RBEventType.MSE);
+
+        TridentState mseState = topology.newStream("rb_mse", new TridentKafkaSpout().builder(
+                zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
+                .each(new Fields("str"), new EventBuilderFunction(), new Fields("mseMap"))
+                .project(new Fields("mseMap"))
+                .each(new Fields("mseMap"), new GetMSEdata(), new Fields("mac_src_mse", "geoLocationMSE"))
+                .project(new Fields("mac_src_mse", "geoLocationMSE"))
+                .partitionBy(new Fields("mac_src_mse"))
+                .partitionPersist(memcached, new Fields("geoLocationMSE", "mac_src_mse"), new mseUpdater());
+
         zkConfig.setTopicInt(RBEventType.FLOW);
 
         Stream flowStream = topology.newStream("rb_flow", new TridentKafkaSpout().builder(
                 zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
-                .each(new Fields("str"), new EventBuilderFunction(), new Fields("flows"));
+                .each(new Fields("str"), new EventBuilderFunction(), new Fields("flows"))
+                .project(new Fields("flows"));
+
+        Stream locationStream = flowStream
+                .each(new Fields("flows"), new GetFieldFunction("client"), new Fields("mac_src_flow"))
+                .stateQuery(mseState, new Fields("mac_src_flow", "flows"), new MseQueryWithoutDelay("Primer", "mac_src_flow", "flows"), new Fields("sta_mac_address_latlong"))
+                .project(new Fields("flows","sta_mac_address_latlong"));
+
+        Stream macVendorStream = flowStream
+                .each(new Fields("flows"), new MacVendorFunction(), new Fields("client_mac_vendor"));
+
+        List<Stream> joinStream = new ArrayList<>();
+        joinStream.add(locationStream);
+        joinStream.add(macVendorStream);
+
+        List<Fields> keyFields = new ArrayList<>();
+        keyFields.add(new Fields("flows"));
+        keyFields.add(new Fields("flows"));
+
+        topology.join(joinStream, keyFields, new Fields("flows", "sta_mac_address_latlong", "client_mac_vendor"))
+        //topology.join(locationStream, new Fields("flows"), macVendorStream,new Fields("flows"), new Fields("flows", "sta_mac_address_latlong", "client_mac_vendor"))
+                .each(new Fields("flows", "sta_mac_address_latlong", "client_mac_vendor"), new JoinFlowFunction(), new Fields("finalMap"))
+                .each(new Fields("finalMap"), new CorrelationTridentTopology.PrinterBolt("----"), new Fields("a"));
         
-        // tengo que ver como funcionaria ..
-        // no tengo muy claro de que un merge funcione
-        // habria que descomponer el evento por completo
-        // y volver a reconstruirlo al final
-        // (sin necesidad de merge).
-        
-        
+
         return topology;
     }
 }

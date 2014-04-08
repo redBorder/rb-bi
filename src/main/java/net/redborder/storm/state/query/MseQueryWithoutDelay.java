@@ -76,12 +76,16 @@ public class MseQueryWithoutDelay extends BaseQueryFunction<MapState<Map<String,
 
     @Override
     public void execute(TridentTuple tuple, Map<String, Object> result, TridentCollector collector) {
-        Map<String, Object> event = (Map<String, Object>) tuple.getValueByField(_field);
         if (result == null) {
-            collector.emit(new Values(event));
+            collector.emit(new Values("loc"));
         } else {
-            event.put("mse_location", result);
-            collector.emit(new Values(event));
+            Double lattitude = (Double) result.get("lattitude");
+            lattitude=(double)Math.round(lattitude * 10000) / 10000;
+            
+            Double longitude = (Double) result.get("longitude");
+            longitude=(double)Math.round(lattitude * 10000) / 10000;
+            String location = lattitude.toString() + "," + longitude.toString();
+            collector.emit(new Values(location));
         }
     }
 

@@ -40,34 +40,30 @@ public class MacVendorFunction extends BaseFunction {
     public MacVendorFunction(String ouiPath) {
         _ouiFilePath = ouiPath;
     }
-    
-    public MacVendorFunction(){
-        _ouiFilePath="/opt/rb/etc/objects/oui-vendors";
+
+    public MacVendorFunction() {
+        _ouiFilePath = "/opt/rb/etc/objects/oui-vendors";
     }
 
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
 
         Map<String, Object> event = (Map<String, Object>) tuple.getValue(0);
-
-        if (event.containsKey("ethsrc") || event.containsKey("ethdst")) {
-            String ouiSrc = buildOui(event.get("ethsrc"));
-            String ouiDst = buildOui(event.get("ethdst"));
-
-            if (_ouiMap.get(ouiSrc) != null) {
-                event.put("mac_vendor_src", _ouiMap.get(ouiSrc));
-            }
-
-            if (_ouiMap.get(ouiDst) != null) {
-                event.put("mac_vendor_dst", _ouiMap.get(ouiDst));
-            }
+        String ouiSrc = "mac";
+        if (event.containsKey("client")) {
+            ouiSrc = buildOui(event.get("client"));
+            
+            if(ouiSrc==null)
+                ouiSrc="mac";
+            else
+                ouiSrc=_ouiMap.get(ouiSrc);
         }
-        collector.emit(new Values(event));
+        collector.emit(new Values(ouiSrc));
     }
 
     @Override
     public void prepare(Map conf, TridentOperationContext context) {
-        _ouiMap = new HashMap<String, String>();
+        _ouiMap = new HashMap<>();
 
         InputStream in = null;
 
@@ -101,6 +97,7 @@ public class MacVendorFunction extends BaseFunction {
 
     /**
      * Create the oui from the mac address.
+     *
      * @param object Mac address.
      * @return oui.
      */

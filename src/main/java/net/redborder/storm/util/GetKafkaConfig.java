@@ -49,6 +49,7 @@ public class GetKafkaConfig {
     public void builder() throws FileNotFoundException {
 
         Object object = Yaml.load(new File("/opt/rb/etc/redBorder-BI/zk_config.yml"));
+        //Object object = Yaml.load(new File("/Users/andresgomez/rbdruid_config.yml"));
         Map<String, Object> map = (Map<String, Object>) object;
         Map<String, Object> production = (Map<String, Object>) map.get("production");
         Map<String, Object> config = null;
