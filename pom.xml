@@ -234,7 +234,7 @@
                 <artifactId>maven-assembly-plugin</artifactId>
                 <configuration>
                     <descriptorRefs>
-                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                        <descriptorRef>selfcontained</descriptorRef>
                     </descriptorRefs>
                     <archive>
                         <manifest>
