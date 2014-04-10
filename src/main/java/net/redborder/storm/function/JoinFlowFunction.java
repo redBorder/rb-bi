@@ -6,6 +6,7 @@
 package net.redborder.storm.function;
 
 import backtype.storm.tuple.Values;
+import java.util.List;
 import java.util.Map;
 import storm.trident.operation.BaseFunction;
 import storm.trident.operation.TridentCollector;
@@ -19,17 +20,16 @@ public class JoinFlowFunction extends BaseFunction {
 
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
-        Map<String, Object> flow = (Map<String, Object>) tuple.getValueByField("flows");
-        Map<String, Object> mseData = (Map<String, Object>) tuple.getValueByField("mseData");
-
-        if (!mseData.isEmpty()) {
-            flow.putAll(mseData);
-        }
-
-        String client_mac_vendor = tuple.getStringByField("client_mac_vendor");
-
-        if (!client_mac_vendor.equals("")) {
-            flow.put("client_mac_vendor", client_mac_vendor);
+        List<Object> data = (List<Object>) tuple.getValues();
+        
+        Map<String, Object> flow = (Map<String, Object>) data.get(0);
+        data.remove(flow);       
+                
+        for(Object value : data){
+            Map<String, Object> valueMap = (Map<String, Object>) value;
+            if(!valueMap.isEmpty()){
+                flow.putAll(valueMap);
+            }
         }
 
         collector.emit(new Values(flow));
