@@ -3,11 +3,13 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-
 package net.redborder.storm.util;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -18,30 +20,36 @@ import org.ho.yaml.Yaml;
  * @author andresgomez
  */
 public class GetMemcachedConfig {
+
+    List<InetSocketAddress> memcachedServer = null;
+
     public void builder() throws FileNotFoundException {
 
         Object object = Yaml.load(new File("/opt/rb/etc/redBorder-BI/memcached_config.yml"));
         Map<String, Object> map = (Map<String, Object>) object;
         Map<String, Object> production = (Map<String, Object>) map.get("production");
-        Map<String, Object> config = null;
+        List<String> servers = null;
+        memcachedServer = new ArrayList<InetSocketAddress>();
 
-        /*if (_topicInt == RBEventType.EVENT) {
-            config = (Map<String, Object>) production.get("events");
-        } else if (_topicInt == RBEventType.FLOW) {
-            config = (Map<String, Object>) production.get("traffics");
-        } else if (_topicInt == RBEventType.MONITOR) {
-            config = (Map<String, Object>) production.get("monitor");
-        } else if (_topicInt == RBEventType.MSE) {
-            config = (Map<String, Object>) production.get("location");
-        }
+        servers = (List<String>) production.get("servers");
 
-        if (config != null) {
-            _topic = config.get("datasource").toString();
-            _zkConnect = config.get("zk_connect").toString();
+        if (servers != null) {
+            for (String server : servers) {
+                String[] iPort = server.split(":");
+                memcachedServer.add(new InetSocketAddress(iPort[0], Integer.parseInt(iPort[1])));
+            }
         } else {
-            Logger.getLogger(GetKafkaConfig.class.getName()).log(Level.SEVERE, null, "Topic not found");
-            _zkConnect = "localhost";
-        }*/
+            Logger.getLogger(GetMemcachedConfig.class.getName()).log(Level.SEVERE, "Servers not found.");
+        }
     }
 
+    public List<InetSocketAddress> getConfig() {
+        if (memcachedServer != null) {
+            Logger.getLogger(GetMemcachedConfig.class.getName()).log(Level.SEVERE, "First call builder() method, "
+                    + "default: {localhost:11211}");
+            memcachedServer = new ArrayList<InetSocketAddress>();
+            memcachedServer.add(new InetSocketAddress("localhost",11211));
+        }
+        return memcachedServer;
+    }
 }
