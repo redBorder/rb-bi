@@ -40,7 +40,7 @@ public class MseQuery extends BaseQueryFunction<MapState<Map<String, Object>>, M
         }
 
         List<Map<String, Object>> memcached = state.multiGet(keys);
-        //System.out.println("tupleSize " + tupleSize + " MAP: " + memcached.toString());
+        System.out.println("tupleSize " + tupleSize + " MAP: " + memcached.toString());
         if (memcached != null && !memcached.isEmpty()) {
             for (Map<String, Object> event : memcached) {
                 if (event == null) {
