@@ -16,4 +16,5 @@ public class RBEventType {
     public static final int MONITOR = 2;
     public static final int FLOW = 3;
     public static final int MSE = 4;
+    public static final int MOBILE = 5;
 }

@@ -44,7 +44,7 @@ public class GetMemcachedConfig {
     }
 
     public List<InetSocketAddress> getConfig() {
-        if (memcachedServer != null) {
+        if (memcachedServer == null) {
             Logger.getLogger(GetMemcachedConfig.class.getName()).log(Level.SEVERE, "First call builder() method, "
                     + "default: {localhost:11211}");
             memcachedServer = new ArrayList<InetSocketAddress>();

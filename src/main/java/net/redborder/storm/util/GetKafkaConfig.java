@@ -62,13 +62,15 @@ public class GetKafkaConfig {
             config = (Map<String, Object>) production.get("monitor");
         } else if (_topicInt == RBEventType.MSE) {
             config = (Map<String, Object>) production.get("location");
+        } else if (_topicInt == RBEventType.MOBILE) {
+            config = (Map<String, Object>) production.get("mobile");
         }
 
         if (config != null) {
             _topic = config.get("datasource").toString();
             _zkConnect = config.get("zk_connect").toString();
         } else {
-            Logger.getLogger(GetKafkaConfig.class.getName()).log(Level.SEVERE, null, "Topic not found");
+            Logger.getLogger(GetKafkaConfig.class.getName()).log(Level.SEVERE, "Topic not found");
             _zkConnect = "localhost";
         }
     }

@@ -23,16 +23,17 @@ import net.redborder.storm.function.GetMSEdata;
 import net.redborder.storm.function.JoinFlowFunction;
 import net.redborder.storm.function.MacVendorFunction;
 import net.redborder.storm.function.MapToJSONFunction;
+import net.redborder.storm.function.MobileBuilderFunction;
 import net.redborder.storm.function.ProducerKafkaFunction;
 import net.redborder.storm.spout.TridentKafkaSpout;
 import net.redborder.storm.spout.TwitterStreamTridentSpout;
 import net.redborder.storm.state.MemcachedMultipleState;
 import net.redborder.storm.state.query.MseQuery;
-import net.redborder.storm.state.query.MseQuery;
 import net.redborder.storm.state.query.TwitterQuery;
 import net.redborder.storm.state.updater.mseUpdater;
 import net.redborder.storm.state.updater.twitterUpdater;
 import net.redborder.storm.util.GetKafkaConfig;
+import net.redborder.storm.util.GetMemcachedConfig;
 import net.redborder.storm.util.RBEventType;
 import net.redborder.storm.util.druid.MyBeamFactoryMapEvent;
 import net.redborder.storm.util.druid.MyBeamFactoryMapFlow;
@@ -222,13 +223,14 @@ public class TridentRedBorderTopologies {
     public TridentTopology Test() throws FileNotFoundException {
         TridentTopology topology = new TridentTopology();
         GetKafkaConfig zkConfig = new GetKafkaConfig();
-
-        int PORT = 52030;
-
+        GetMemcachedConfig memConfig = new GetMemcachedConfig();
         MemcachedMultipleState.Options mseOpts = new MemcachedMultipleState.Options();
+        
+        memConfig.builder();
         mseOpts.expiration = 60000;
         mseOpts.keyBuilder = new ConcatKeyBuilder("MSE");
-        StateFactory memcached = MemcachedMultipleState.transactional(Arrays.asList(new InetSocketAddress("localhost", PORT)), mseOpts);
+        
+        StateFactory memcached = MemcachedMultipleState.transactional(memConfig.getConfig(), mseOpts);
 
         zkConfig.setTopicInt(RBEventType.MSE);
 
@@ -270,6 +272,21 @@ public class TridentRedBorderTopologies {
                 //topology.join(locationStream, new Fields("flows"), macVendorStream,new Fields("flows"), new Fields("flows", "sta_mac_address_latlong", "client_mac_vendor"))
                 .each(new Fields("flows", "sta_mac_address_latlong", "client_mac_vendor"), new JoinFlowFunction(), new Fields("finalMap"))
                 .each(new Fields("finalMap"), new CorrelationTridentTopology.PrinterBolt("----"), new Fields("a"));
+
+        return topology;
+    }
+    
+    public TridentTopology Mobile() throws FileNotFoundException {
+        TridentTopology topology = new TridentTopology();
+        GetKafkaConfig zkConfig = new GetKafkaConfig();
+
+        zkConfig.setTopicInt(RBEventType.MOBILE);
+
+        topology.newStream("rb_mobile", new TridentKafkaSpout().builder(
+                zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
+                .each(new Fields("str"), new MobileBuilderFunction(), new Fields("mobile"))
+                .each(new Fields("mobile"), new CorrelationTridentTopology.PrinterBolt("----"), new Fields("a"));
+                //.parallelismHint(5);
 
         return topology;
     }
