@@ -8,6 +8,7 @@ package net.redborder.storm.state.query;
 import backtype.storm.tuple.Values;
 import com.google.common.collect.Lists;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import storm.trident.operation.TridentCollector;
@@ -67,15 +68,10 @@ public class MseQuery extends BaseQueryFunction<MapState<Map<String, Object>>, M
     @Override
     public void execute(TridentTuple tuple, Map<String, Object> result, TridentCollector collector) {
         if (result == null) {
-            collector.emit(new Values(""));
+            Map<String,Object> empty = new HashMap<>();
+            collector.emit(new Values(empty));
         } else {
-            Double lattitude = (Double) result.get("lattitude");
-            lattitude=(double)Math.round(lattitude * 10000) / 10000;
-            
-            Double longitude = (Double) result.get("longitude");
-            longitude=(double)Math.round(lattitude * 10000) / 10000;
-            String location = lattitude.toString() + "," + longitude.toString();
-            collector.emit(new Values(location));
+            collector.emit(new Values(result));
         }
     }
 

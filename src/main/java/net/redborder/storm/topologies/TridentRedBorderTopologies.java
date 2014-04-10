@@ -128,7 +128,7 @@ public class TridentRedBorderTopologies {
                 .each(new Fields("mseMap"), new GetMSEdata(), new Fields("mac_src_mse", "geoLocationMSE"))
                 .project(new Fields("mac_src_mse", "geoLocationMSE"))
                 .partitionBy(new Fields("mac_src_mse"))
-                .partitionPersist(memcached, new Fields("geoLocationMSE", "mac_src_mse"), new mseUpdater());
+                .partitionPersist(memcached, new Fields("geoLocationMSE", "mac_src_mse"), new mseUpdater("mac_src_mse", "geoLocationMSE"));
 
         zkConfig.setTopicInt(RBEventType.FLOW);
         // MemcachedMultipleState.Options flowOpts = new MemcachedMultipleState.Options();
@@ -205,7 +205,7 @@ public class TridentRedBorderTopologies {
                 .each(new Fields("mseMap"), new GetMSEdata(), new Fields("mac_src_mse", "geoLocationMSE"))
                 .project(new Fields("mac_src_mse", "geoLocationMSE"))
                 .partitionBy(new Fields("mac_src_mse"))
-                .partitionPersist(memcached, new Fields("geoLocationMSE", "mac_src_mse"), new mseUpdater());
+                .partitionPersist(memcached, new Fields("geoLocationMSE", "mac_src_mse"), new mseUpdater("mac_src_mse", "geoLocationMSE"));
 
         zkConfig.setTopicInt(RBEventType.FLOW);
 
@@ -239,7 +239,7 @@ public class TridentRedBorderTopologies {
                 .each(new Fields("mseMap"), new GetMSEdata(), new Fields("mac_src_mse", "geoLocationMSE"))
                 .project(new Fields("mac_src_mse", "geoLocationMSE"))
                 .partitionBy(new Fields("mac_src_mse"))
-                .partitionPersist(memcached, new Fields("geoLocationMSE", "mac_src_mse"), new mseUpdater());
+                .partitionPersist(memcached, new Fields("geoLocationMSE", "mac_src_mse"), new mseUpdater("mac_src_mse", "geoLocationMSE"));
 
         zkConfig.setTopicInt(RBEventType.FLOW);
 
@@ -251,8 +251,8 @@ public class TridentRedBorderTopologies {
 
         Stream locationStream = flowStream
                 .each(new Fields("flows"), new GetFieldFunction("client_mac"), new Fields("mac_src_flow"))
-                .stateQuery(mseState, new Fields("mac_src_flow"), new MseQuery("mac_src_flow"), new Fields("sta_mac_address_latlong"))
-                .project(new Fields("flows", "sta_mac_address_latlong"));
+                .stateQuery(mseState, new Fields("mac_src_flow"), new MseQuery("mac_src_flow"), new Fields("mseData"))
+                .project(new Fields("flows", "mseData"));
                 //.parallelismHint(5);
 
         Stream macVendorStream = flowStream
@@ -266,9 +266,9 @@ public class TridentRedBorderTopologies {
         keyFields.add(new Fields("flows"));
         keyFields.add(new Fields("flows"));
 
-        topology.join(joinStream, keyFields, new Fields("flows", "sta_mac_address_latlong", "client_mac_vendor"))
+        topology.join(joinStream, keyFields, new Fields("flows", "mseData", "client_mac_vendor"))
                 //topology.join(locationStream, new Fields("flows"), macVendorStream,new Fields("flows"), new Fields("flows", "sta_mac_address_latlong", "client_mac_vendor"))
-                .each(new Fields("flows", "sta_mac_address_latlong", "client_mac_vendor"), new JoinFlowFunction(), new Fields("finalMap"))
+                .each(new Fields("flows", "mseData", "client_mac_vendor"), new JoinFlowFunction(), new Fields("finalMap"))
                 .each(new Fields("finalMap"), new CorrelationTridentTopology.PrinterBolt("----"), new Fields("a"));
 
         return topology;
