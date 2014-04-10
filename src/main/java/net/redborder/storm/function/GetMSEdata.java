@@ -26,7 +26,7 @@ public class GetMSEdata extends BaseFunction {
 
         Map<String, Object> geoCoordinate = (Map<String, Object>) location.get("geoCoordinate");
         Map<String, Object> mapInfo = (Map<String, Object>) location.get("mapInfo");
-        String mapHierachy = mapInfo.get("mapHierachyString").toString();
+        String mapHierachy = mapInfo.get("mapHierarchyString").toString();
 
         Double lattitude = (Double) geoCoordinate.get("lattitude");
         lattitude = (double) Math.round(lattitude * 10000) / 10000;
