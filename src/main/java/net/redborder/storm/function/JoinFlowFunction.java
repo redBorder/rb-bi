@@ -6,6 +6,7 @@
 package net.redborder.storm.function;
 
 import backtype.storm.tuple.Values;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import storm.trident.operation.BaseFunction;
@@ -20,10 +21,10 @@ public class JoinFlowFunction extends BaseFunction {
 
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
-        List<Object> data = (List<Object>) tuple.getValues();
-        
+        List<Object> data = new LinkedList<>(tuple.getValues());
+               
         Map<String, Object> flow = (Map<String, Object>) data.get(0);
-        data.remove(flow);       
+        data.remove(flow);
                 
         for(Object value : data){
             Map<String, Object> valueMap = (Map<String, Object>) value;

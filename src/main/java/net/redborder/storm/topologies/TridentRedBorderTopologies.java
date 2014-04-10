@@ -18,6 +18,7 @@ import net.redborder.storm.CorrelationTridentTopology;
 import net.redborder.storm.filter.MSEenrichedFilter;
 import net.redborder.storm.filter.SleepFilter;
 import net.redborder.storm.function.EventBuilderFunction;
+import net.redborder.storm.function.GeoIpFunction;
 import net.redborder.storm.function.GetFieldFunction;
 import net.redborder.storm.function.GetMSEdata;
 import net.redborder.storm.function.JoinFlowFunction;
@@ -244,6 +245,8 @@ public class TridentRedBorderTopologies {
                 .partitionPersist(memcached, new Fields("geoLocationMSE", "mac_src_mse"), new mseUpdater("mac_src_mse", "geoLocationMSE"));
 
         zkConfig.setTopicInt(RBEventType.FLOW);
+        
+        StateFactory druidStateFlow = new TridentBeamStateFactory<>(new MyBeamFactoryMapFlow(zkConfig));
 
         Stream flowStream = topology.newStream("rb_flow", new TridentKafkaSpout().builder(
                 zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
@@ -253,26 +256,33 @@ public class TridentRedBorderTopologies {
 
         Stream locationStream = flowStream
                 .each(new Fields("flows"), new GetFieldFunction("client_mac"), new Fields("mac_src_flow"))
-                .stateQuery(mseState, new Fields("mac_src_flow"), new MseQuery("mac_src_flow"), new Fields("mseData"))
-                .project(new Fields("flows", "mseData"));
+                .stateQuery(mseState, new Fields("mac_src_flow"), new MseQuery("mac_src_flow"), new Fields("mseMap"))
+                .project(new Fields("flows", "mseMap"));
                 //.parallelismHint(5);
 
         Stream macVendorStream = flowStream
-                .each(new Fields("flows"), new MacVendorFunction(), new Fields("client_mac_vendor"));
+                .each(new Fields("flows"), new MacVendorFunction(), new Fields("macVendorMap"));
                        // .parallelismHint(5);
+        
+        Stream geoIPStream = flowStream
+                .each(new Fields("flows"), new GeoIpFunction(), new Fields("geoIPMap"));
+        
         List<Stream> joinStream = new ArrayList<>();
         joinStream.add(locationStream);
         joinStream.add(macVendorStream);
+        joinStream.add(geoIPStream);
 
         List<Fields> keyFields = new ArrayList<>();
         keyFields.add(new Fields("flows"));
         keyFields.add(new Fields("flows"));
+        keyFields.add(new Fields("flows"));
 
-        topology.join(joinStream, keyFields, new Fields("flows", "mseData", "client_mac_vendor"))
+        topology.join(joinStream, keyFields, new Fields("flows", "mseMap", "macVendorMap", "geoIPMap"))
                 //topology.join(locationStream, new Fields("flows"), macVendorStream,new Fields("flows"), new Fields("flows", "sta_mac_address_latlong", "client_mac_vendor"))
-                .each(new Fields("flows", "mseData", "client_mac_vendor"), new JoinFlowFunction(), new Fields("finalMap"))
-                .each(new Fields("finalMap"), new CorrelationTridentTopology.PrinterBolt("----"), new Fields("a"));
-
+                .each(new Fields("flows", "mseMap", "macVendorMap", "geoIPMap"), new JoinFlowFunction(), new Fields("finalMap"))
+                //.each(new Fields("finalMap"), new CorrelationTridentTopology.PrinterBolt("----"), new Fields("a"));
+                .partitionPersist(druidStateFlow, new Fields("finalMap"), new TridentBeamStateUpdater());
+        
         return topology;
     }
     

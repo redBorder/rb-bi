@@ -130,7 +130,7 @@ public class GeoIpFunction extends BaseFunction {
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
 
-        event = (Map<String, Object>) tuple.getValueByField("event");
+        event = (Map<String, Object>) tuple.getValueByField("flows");
         Map<String, Object> geoIPMap = new HashMap<>();
         Map<String, Object> aux;
         String ip;
