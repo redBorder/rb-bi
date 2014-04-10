@@ -18,6 +18,13 @@ import storm.trident.tuple.TridentTuple;
  * @author andresgomez
  */
 public class mseUpdater extends BaseStateUpdater<MapState<Map<String, Object>>> {
+    String _key;
+    String _value;
+    
+    public mseUpdater(String key, String value){
+        _key=key;
+        _value=value;
+    }
 
     @Override
     public void updateState(MapState<Map<String, Object>> state, List<TridentTuple> tuples, TridentCollector collector) {
@@ -25,10 +32,10 @@ public class mseUpdater extends BaseStateUpdater<MapState<Map<String, Object>>> 
         List<List<Object>> keys = Lists.newArrayList();
         for (TridentTuple t : tuples) {
             List<Object> l = Lists.newArrayList();
-            l.add(t.getValueByField("mac_src_mse"));
+            l.add(t.getValueByField(_key));
             //System.out.println("MAC-LOC: " + t.getValueByField("mac_src_mse"));
             keys.add(l);
-            events.add((Map<String, Object>) t.getValueByField("geoLocationMSE"));
+            events.add((Map<String, Object>) t.getValueByField(_value));
             //System.out.println(t.getValueByField("geoLocationMSE"));
         }
         state.multiPut(keys, events);
