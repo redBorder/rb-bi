@@ -8,8 +8,6 @@ package net.redborder.storm.function;
 import backtype.storm.tuple.Values;
 import com.maxmind.geoip.Location;
 import com.maxmind.geoip.LookupService;
-import com.maxmind.geoip.regionName;
-import com.maxmind.geoip.timeZone;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -114,7 +112,11 @@ public class GeoIpFunction extends BaseFunction {
             if (asnInfo != null) {
                 String[] asn = asnInfo.split(" ", 2);
                 // event.put("AsnNum" + where, asn[0]);
-                eventMap.put("asn_name", asn[1]);
+                if (asn.length > 1) {
+                    eventMap.put("asn_name", asn[1]);
+                } else {
+                    eventMap.put("asn_name", asn[0]);
+                }
             }
         }
 
