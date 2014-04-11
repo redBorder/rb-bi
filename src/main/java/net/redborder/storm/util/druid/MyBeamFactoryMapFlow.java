@@ -18,6 +18,7 @@ import com.metamx.tranquility.druid.DruidLocation;
 import com.metamx.tranquility.druid.DruidRollup;
 import com.metamx.tranquility.storm.BeamFactory;
 import com.metamx.tranquility.typeclass.Timestamper;
+import io.druid.data.input.impl.TimestampSpec;
 import net.redborder.storm.util.GetKafkaConfig;
 import io.druid.granularity.QueryGranularity;
 import io.druid.query.aggregation.AggregatorFactory;
@@ -105,8 +106,9 @@ public class MyBeamFactoryMapFlow implements BeamFactory<Map<String, Object>> {
                             )
                     )
                     .rollup(DruidRollup.create(DruidDimensions.schemalessWithExclusions(exclusions), aggregators, QueryGranularity.MINUTE))
-                    .tuning(ClusteredBeamTuning.create(Granularity.HOUR, new Period("PT0M"), new Period("PT30M"), 1, 1));
-
+                    .tuning(ClusteredBeamTuning.create(Granularity.HOUR, new Period("PT0M"), new Period("PT30M"), 1, 1))
+                    .timestampSpec(new TimestampSpec("timestamp", "posix"));
+            
             final Beam<Map<String, Object>> beam = builder.buildBeam();
 
             return beam;
