@@ -104,7 +104,7 @@ public class MyBeamFactoryMapFlow implements BeamFactory<Map<String, Object>> {
                                     ), dataSource
                             )
                     )
-                    .rollup(DruidRollup.create(DruidDimensions.schemalessWithExclusions(exclusions), aggregators, QueryGranularity.NONE))
+                    .rollup(DruidRollup.create(DruidDimensions.schemalessWithExclusions(exclusions), aggregators, QueryGranularity.MINUTE))
                     .tuning(ClusteredBeamTuning.create(Granularity.HOUR, new Period("PT0M"), new Period("PT30M"), 1, 1));
 
             final Beam<Map<String, Object>> beam = builder.buildBeam();
