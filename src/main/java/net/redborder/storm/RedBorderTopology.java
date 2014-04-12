@@ -6,7 +6,7 @@ import backtype.storm.StormSubmitter;
 import backtype.storm.generated.AlreadyAliveException;
 import backtype.storm.generated.InvalidTopologyException;
 import backtype.storm.tuple.Values;
-import net.redborder.storm.topologies.TridentRedBorderTopologies;
+import net.redborder.storm.topologies.RedBorderTopologies;
 import net.redborder.storm.util.CreateConfig;
 import java.io.FileNotFoundException;
 import java.util.List;
@@ -17,7 +17,7 @@ import storm.trident.operation.BaseFunction;
 import storm.trident.operation.TridentCollector;
 import storm.trident.tuple.TridentTuple;
 
-public class CorrelationTridentTopology {
+public class RedBorderTopology {
 
     public static void main(String[] args) throws AlreadyAliveException, InvalidTopologyException, FileNotFoundException {
 
@@ -25,7 +25,7 @@ public class CorrelationTridentTopology {
         if (args.length != 1) {
             System.out.println("./storm jar {name_jar} {main_class} {local|cluster}");
         } else {
-            TridentRedBorderTopologies topologies = new TridentRedBorderTopologies();             
+            RedBorderTopologies topologies = new RedBorderTopologies();             
             TridentTopology topology = topologies.Test();         
 
             if (args[0].equalsIgnoreCase("local")) {

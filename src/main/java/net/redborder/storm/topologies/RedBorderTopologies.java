@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
-import net.redborder.storm.CorrelationTridentTopology;
+import net.redborder.storm.RedBorderTopology;
 import net.redborder.storm.function.EventBuilderFunction;
 import net.redborder.storm.function.GeoIpFunction;
 import net.redborder.storm.function.GetFieldFunction;
@@ -51,7 +51,7 @@ import storm.trident.state.StateFactory;
  *
  * @author andresgomez
  */
-public class TridentRedBorderTopologies {
+public class RedBorderTopologies {
 
     public TridentTopology twitterTopology() throws FileNotFoundException {
         TridentTopology topology = new TridentTopology();
