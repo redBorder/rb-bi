@@ -6,7 +6,7 @@ import backtype.storm.StormSubmitter;
 import backtype.storm.generated.AlreadyAliveException;
 import backtype.storm.generated.InvalidTopologyException;
 import backtype.storm.tuple.Values;
-import net.redborder.storm.topologies.TridentRedBorderTopologies;
+import net.redborder.storm.topologies.RedBorderTopologies;
 import net.redborder.storm.util.CreateConfig;
 import java.io.FileNotFoundException;
 import java.util.List;
@@ -17,54 +17,7 @@ import storm.trident.operation.BaseFunction;
 import storm.trident.operation.TridentCollector;
 import storm.trident.tuple.TridentTuple;
 
-public class CorrelationTridentTopology {
-
-    public static class PrinterBolt extends BaseFunction {
-
-        String _str = "";
-
-        public PrinterBolt(String str) {
-            _str = str;
-        }
-
-        @Override
-        public void execute(TridentTuple tuple, TridentCollector collector) {
-            List<Object> list = tuple.getValues();
-            for (Object o : list) {
-                System.out.println( _str + " " + o.toString());
-            }
-
-        }
-
-    }
-
-    public static class GetTweetID extends BaseFunction {
-
-        @Override
-        public void execute(TridentTuple tuple, TridentCollector collector) {
-            Map<String, Object> tweet = (Map<String, Object>) tuple.getValueByField("tweetMap");
-            Map<String, Object> user = (Map<String, Object>) tweet.get("user");
-            String id = String.valueOf(user.get("id"));
-            collector.emit(new Values(id));
-
-        }
-
-    }
-
-    public static class GetID extends BaseFunction {
-
-        @Override
-        public void execute(TridentTuple tuple, TridentCollector collector) {
-            Map<String, Object> event = (Map<String, Object>) tuple.getValue(0);
-            String id = String.valueOf(event.get("userid"));
-            if (id != null) {
-                collector.emit(new Values(id));
-            } else {
-                collector.emit(new Values("-"));
-            }
-        }
-
-    }
+public class RedBorderTopology {
 
     public static void main(String[] args) throws AlreadyAliveException, InvalidTopologyException, FileNotFoundException {
 
@@ -72,7 +25,7 @@ public class CorrelationTridentTopology {
         if (args.length != 1) {
             System.out.println("./storm jar {name_jar} {main_class} {local|cluster}");
         } else {
-            TridentRedBorderTopologies topologies = new TridentRedBorderTopologies();             
+            RedBorderTopologies topologies = new RedBorderTopologies();             
             TridentTopology topology = topologies.Test();         
 
             if (args[0].equalsIgnoreCase("local")) {

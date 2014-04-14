@@ -14,22 +14,20 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
-import net.redborder.storm.CorrelationTridentTopology;
-import net.redborder.storm.filter.FieldFilter;
-import net.redborder.storm.filter.MSEenrichedFilter;
-import net.redborder.storm.filter.SleepFilter;
+import net.redborder.storm.function.MapperFunction;
 import net.redborder.storm.function.GeoIpFunction;
 import net.redborder.storm.function.GetFieldFunction;
+import net.redborder.storm.function.GetID;
 import net.redborder.storm.function.GetMSEdata;
+import net.redborder.storm.function.GetTweetID;
 import net.redborder.storm.function.JoinFlowFunction;
 import net.redborder.storm.function.MacVendorFunction;
 import net.redborder.storm.function.MapToJSONFunction;
-import net.redborder.storm.function.MapperFunction;
 import net.redborder.storm.function.MobileBuilderFunction;
+import net.redborder.storm.function.PrinterFunction;
 import net.redborder.storm.function.ProducerKafkaFunction;
 import net.redborder.storm.spout.TridentKafkaSpout;
 import net.redborder.storm.spout.TwitterStreamTridentSpout;
-import net.redborder.storm.state.MemcachedMultipleState;
 import net.redborder.storm.state.MemcachedState;
 import net.redborder.storm.state.query.MseQuery;
 import net.redborder.storm.state.query.TwitterQuery;
@@ -52,21 +50,20 @@ import storm.trident.state.StateFactory;
  *
  * @author andresgomez
  */
-public class TridentRedBorderTopologies {
+public class RedBorderTopologies {
 
     public TridentTopology twitterTopology() throws FileNotFoundException {
         TridentTopology topology = new TridentTopology();
         GetKafkaConfig zkConfig = new GetKafkaConfig();
         int PORT = 52030;
 
-        MemcachedMultipleState.Options twitterOpts = new MemcachedMultipleState.Options();
+        MemcachedState.Options twitterOpts = new MemcachedState.Options();
         twitterOpts.expiration = 10000;
-        twitterOpts.keyBuilder = new ConcatKeyBuilder("Twitter");
-        StateFactory memcached = MemcachedMultipleState.transactional(Arrays.asList(new InetSocketAddress("localhost", PORT)), twitterOpts);
+        StateFactory memcached = MemcachedState.transactional(Arrays.asList(new InetSocketAddress("localhost", PORT)), twitterOpts);
         TridentState tweetState = topology.newStream("twitterStream", new TwitterStreamTridentSpout())
                 .each(new Fields("tweet"), new MapperFunction(), new Fields("tweetMap"))
                 .project(new Fields("tweetMap"))
-                .each(new Fields("tweetMap"), new CorrelationTridentTopology.GetTweetID(), new Fields("userTwitterID"))
+                .each(new Fields("tweetMap"), new GetTweetID(), new Fields("userTwitterID"))
                 .partitionBy(new Fields("userTwitterID"))
                 .partitionPersist(memcached, new Fields("tweetMap", "userTwitterID"), new twitterUpdater());
 
@@ -74,10 +71,10 @@ public class TridentRedBorderTopologies {
         topology.newStream("rb_monitor", new TridentKafkaSpout().builder(
                 zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
                 .each(new Fields("str"), new MapperFunction(), new Fields("event"))
-                .each(new Fields("event"), new CorrelationTridentTopology.GetID(), new Fields("id"))
+                .each(new Fields("event"), new GetID(), new Fields("id"))
                 .stateQuery(tweetState, new Fields("id", "event"), new TwitterQuery(), new Fields("eventTwitter"))
                 .project(new Fields("eventTwitter"))
-                .each(new Fields("eventTwitter"), new CorrelationTridentTopology.PrinterBolt("----"), new Fields("a"));
+                .each(new Fields("eventTwitter"), new PrinterFunction("----"), new Fields("a"));
 
         return topology;
     }
@@ -119,10 +116,9 @@ public class TridentRedBorderTopologies {
 
         int PORT = 52030;
 
-        MemcachedMultipleState.Options mseOpts = new MemcachedMultipleState.Options();
+        MemcachedState.Options mseOpts = new MemcachedState.Options();
         mseOpts.expiration = 20000;
-        mseOpts.keyBuilder = new ConcatKeyBuilder("MSE");
-        StateFactory memcached = MemcachedMultipleState.transactional(Arrays.asList(new InetSocketAddress("localhost", PORT)), mseOpts);
+        StateFactory memcached = MemcachedState.transactional(Arrays.asList(new InetSocketAddress("localhost", PORT)), mseOpts);
 
         zkConfig.setTopicInt(RBEventType.MSE);
         TridentState mseState = topology.newStream("rb_mse", new TridentKafkaSpout().builder(
@@ -157,7 +153,7 @@ public class TridentRedBorderTopologies {
 
         flowsMse
                 .project(new Fields("flowMseKO"))
-                .each(new Fields("flowMseKO"), new MSEenrichedFilter("KO"))
+                .each(new Fields("flowMseKO"),  new FilterNull())
                 .each(new Fields("flowMseKO"), new MapToJSONFunction(), new Fields("jsonFlowMseKO"))
                 .project(new Fields("jsonFlowMseKO"))
                 .each(new Fields("jsonFlowMseKO"), new ProducerKafkaFunction(props, "rb_delay"), new Fields("sendOK"));
@@ -171,19 +167,19 @@ public class TridentRedBorderTopologies {
         tranquilityStream
                 .project(new Fields("flowsTranquilityOK"))
                 .each(new Fields("flowsTranquilityOK"), new FilterNull())
-                .each(new Fields("flowsTranquilityOK"), new CorrelationTridentTopology.PrinterBolt("----"), new Fields("a"));
+                .each(new Fields("flowsTranquilityOK"), new PrinterFunction("----"), new Fields("a"));
         //.partitionPersist(druidStateFlow, new Fields("flowsTranquility"), new TridentBeamStateUpdater());
 
         tranquilityStream
                 .project(new Fields("flowsTranquilityKO"))
                 .each(new Fields("flowsTranquilityKO"), new FilterNull())
-                .each(new Fields("flowsTranquilityKO"), new CorrelationTridentTopology.PrinterBolt("----"), new Fields("b"));
+                .each(new Fields("flowsTranquilityKO"), new PrinterFunction("----"), new Fields("b"));
         //.partitionPersist(druidStateFlow, new Fields("flowsTranquility"), new TridentBeamStateUpdater());
 
         flowsMse
                 .project(new Fields("flowMseOK"))
-                .each(new Fields("flowMseOK"), new MSEenrichedFilter("OK"))
-                .each(new Fields("flowMseOK"), new CorrelationTridentTopology.PrinterBolt("----"), new Fields("a"));;
+                .each(new Fields("flowMseOK"), new FilterNull())
+                .each(new Fields("flowMseOK"), new PrinterFunction("----"), new Fields("a"));;
 
         //.partitionPersist(druidStateFlow, new Fields("flowMseOK"), new TridentBeamStateUpdater());
         return topology;
@@ -196,10 +192,9 @@ public class TridentRedBorderTopologies {
 
         int PORT = 52030;
 
-        MemcachedMultipleState.Options mseOpts = new MemcachedMultipleState.Options();
+        MemcachedState.Options mseOpts = new MemcachedState.Options();
         mseOpts.expiration = 20000;
-        mseOpts.keyBuilder = new ConcatKeyBuilder("MSE");
-        StateFactory memcached = MemcachedMultipleState.transactional(Arrays.asList(new InetSocketAddress("localhost", PORT)), mseOpts);
+        StateFactory memcached = MemcachedState.transactional(Arrays.asList(new InetSocketAddress("localhost", PORT)), mseOpts);
 
         zkConfig.setTopicInt(RBEventType.MSE);
         TridentState mseState = topology.newStream("rb_mse", new TridentKafkaSpout().builder(
@@ -218,7 +213,7 @@ public class TridentRedBorderTopologies {
                 .each(new Fields("str"), new MapperFunction(), new Fields("flowsMap"))
                 .each(new Fields("flowsMap"), new GetFieldFunction("client_mac"), new Fields("mac_src_flow"))
                 .stateQuery(mseState, new Fields("mac_src_flow", "flowsMap"), new MseQuery("mac_src_flow"), new Fields("flowMSE"))
-                .each(new Fields("flowMSE"), new CorrelationTridentTopology.PrinterBolt("----"), new Fields("a"));;
+                .each(new Fields("flowMSE"), new PrinterFunction("----"), new Fields("a"));;
 
         return topology;
     }
@@ -279,7 +274,7 @@ public class TridentRedBorderTopologies {
 
         topology.join(joinStream, keyFields, new Fields("flows", "mseMap", "macVendorMap", "geoIPMap"))
                 .each(new Fields("flows", "mseMap", "macVendorMap", "geoIPMap"), new JoinFlowFunction(), new Fields("finalMap"))
-                .each(new Fields("finalMap"), new CorrelationTridentTopology.PrinterBolt("----"), new Fields("a"))
+                .each(new Fields("finalMap"), new PrinterFunction("----"), new Fields(""))
                 //.partitionPersist(druidStateFlow, new Fields("finalMap"), new TridentBeamStateUpdater())
                 .parallelismHint(2);
         
@@ -295,7 +290,7 @@ public class TridentRedBorderTopologies {
         topology.newStream("rb_mobile", new TridentKafkaSpout().builder(
                 zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
                 .each(new Fields("str"), new MobileBuilderFunction(), new Fields("mobile"))
-                .each(new Fields("mobile"), new CorrelationTridentTopology.PrinterBolt("----"), new Fields("a"));
+                .each(new Fields("mobile"), new PrinterFunction("----"), new Fields("a"));
                 //.parallelismHint(5);
 
         return topology;
