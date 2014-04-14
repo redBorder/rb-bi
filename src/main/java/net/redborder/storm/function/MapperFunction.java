@@ -20,7 +20,7 @@ import storm.trident.tuple.TridentTuple;
  *
  * @author andresgomez
  */
-public class EventBuilderFunction extends BaseFunction {
+public class MapperFunction extends BaseFunction {
 
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
@@ -31,7 +31,7 @@ public class EventBuilderFunction extends BaseFunction {
             try {
                 event = mapper.readValue(jsonEvent, Map.class);
             } catch (IOException ex) {
-                Logger.getLogger(EventBuilderFunction.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(MapperFunction.class.getName()).log(Level.SEVERE, null, ex);
             }
 
             collector.emit(new Values(event));

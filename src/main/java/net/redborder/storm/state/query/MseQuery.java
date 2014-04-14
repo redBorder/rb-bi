@@ -30,35 +30,37 @@ public class MseQuery extends BaseQueryFunction<MapState<Map<String, Object>>, M
 
     @Override
     public List<Map<String, Object>> batchRetrieve(MapState<Map<String, Object>> state, List<TridentTuple> tuples) {
-        int tupleSize = tuples.size();
-        List<Map<String, Object>> mseFlows = new ArrayList<Map<String, Object>>();
+        List<Map<String, Object>> mseFlows = new ArrayList<>();
         List<List<Object>> keys = Lists.newArrayList();
+        
         for (TridentTuple t : tuples) {
-            List<Object> l = Lists.newArrayList();
-            l.add(t.getValueByField(_key));
-            keys.add(l);
-        }
-
-        List<Map<String, Object>> memcached = state.multiGet(keys);
-        System.out.println("tupleSize " + tupleSize + " MAP: " + memcached.toString());
-        if (memcached != null && !memcached.isEmpty()) {
-            for (Map<String, Object> event : memcached) {
-                if (event == null) {
-                    mseFlows.add(null);
-                    tupleSize--;
-                } else {
-                    mseFlows.add(event);
-                    tupleSize--;
-                }
-            }
-            if (tupleSize != 0) {
-                for (int i = 0; i < tupleSize; i++) {
-                    mseFlows.add(null);
-                }
-            }
-        } else {
-            for (int i = 0; i < tuples.size(); i++) {
+            String key = (String) t.getValueByField(_key);
+            
+            if (key.equals("null")) {
                 mseFlows.add(null);
+            } else {
+                List<Object> l = Lists.newArrayList();
+                l.add(key);
+                keys.add(l);
+            }
+        }
+        
+        System.out.println("BatchSize " + tuples.size() +
+                    " RequestedToMemcached: " + keys.size());
+        
+        if (!keys.isEmpty()) {
+            List<Map<String, Object>> memcached = state.multiGet(keys);
+
+            if (memcached != null && !memcached.isEmpty()) {
+                System.out.println("MemcachedResponse: " + memcached.toString());
+
+                for (Map<String, Object> event : memcached) {
+                    mseFlows.add(event);
+                }
+            } else {
+                for (int i = 0; i < keys.size(); i++) {
+                    mseFlows.add(null);
+                }
             }
         }
 

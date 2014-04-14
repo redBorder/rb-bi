@@ -32,7 +32,7 @@ public class GetMSEdata extends BaseFunction {
         lattitude = (double) Math.round(lattitude * 10000) / 10000;
 
         Double longitude = (Double) geoCoordinate.get("longitude");
-        longitude = (double) Math.round(lattitude * 10000) / 10000;
+        longitude = (double) Math.round(longitude * 10000) / 10000;
         String locationFormat = lattitude.toString() + "," + longitude.toString();
 
         Map<String, Object> mseData = new HashMap<>();
