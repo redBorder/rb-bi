@@ -33,10 +33,11 @@ public class MemcachedUpdater extends BaseStateUpdater<MapState<Map<String, Obje
         for (TridentTuple t : tuples) {
             List<Object> l = Lists.newArrayList();
             l.add(t.getValueByField(_key));
-            System.out.println("MAC-LOC: " + t.getValueByField(_key));
             keys.add(l);
             events.add((Map<String, Object>) t.getValueByField(_value));
-            System.out.println(t.getValueByField(_value));
+            
+            System.out.println("SAVED TO MEMCACHED KEY: " + t.getValueByField(_key) +
+                    " VALUE: " + t.getValueByField(_value));
         }
         state.multiPut(keys, events);
     }

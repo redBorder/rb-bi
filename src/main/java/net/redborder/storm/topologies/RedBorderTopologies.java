@@ -29,9 +29,9 @@ import net.redborder.storm.function.ProducerKafkaFunction;
 import net.redborder.storm.spout.TridentKafkaSpout;
 import net.redborder.storm.spout.TwitterStreamTridentSpout;
 import net.redborder.storm.state.MemcachedState;
-import net.redborder.storm.state.query.MseQuery;
+import net.redborder.storm.state.query.MemcachedQuery;
 import net.redborder.storm.state.query.TwitterQuery;
-import net.redborder.storm.state.updater.mseUpdater;
+import net.redborder.storm.state.updater.MemcachedUpdater;
 import net.redborder.storm.state.updater.twitterUpdater;
 import net.redborder.storm.util.GetKafkaConfig;
 import net.redborder.storm.util.GetMemcachedConfig;
@@ -128,7 +128,7 @@ public class RedBorderTopologies {
                 .each(new Fields("mseMap"), new GetMSEdata(), new Fields("mac_src_mse", "geoLocationMSE"))
                 .project(new Fields("mac_src_mse", "geoLocationMSE"))
                 .partitionBy(new Fields("mac_src_mse"))
-                .partitionPersist(memcached, new Fields("geoLocationMSE", "mac_src_mse"), new mseUpdater("mac_src_mse", "geoLocationMSE"));
+                .partitionPersist(memcached, new Fields("geoLocationMSE", "mac_src_mse"), new MemcachedUpdater("mac_src_mse", "geoLocationMSE"));
 
         zkConfig.setTopicInt(RBEventType.FLOW);
         // MemcachedMultipleState.Options flowOpts = new MemcachedMultipleState.Options();
@@ -140,7 +140,7 @@ public class RedBorderTopologies {
                 zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
                 .each(new Fields("str"), new MapperFunction(), new Fields("flowsMap"))
                 .each(new Fields("flowsMap"), new GetFieldFunction("mac_src"), new Fields("mac_src_flow"))
-                .stateQuery(mseState, new Fields("mac_src_flow"), new MseQuery("mac_src_flow"), new Fields("flowMseOK", "flowMseKO"));
+                .stateQuery(mseState, new Fields("mac_src_flow"), new MemcachedQuery("mac_src_flow"), new Fields("flowMseOK", "flowMseKO"));
 
         zkConfig.setTopicInt(RBEventType.FLOW);
         StateFactory druidStateFlow = new TridentBeamStateFactory<>(new MyBeamFactoryMapFlow(zkConfig));
@@ -162,7 +162,7 @@ public class RedBorderTopologies {
                 "localhost:2181", "rb_delay", "kafkaStorm"))
                 .each(new Fields("str"), new MapperFunction(), new Fields("flowMseKO"))
                 .each(new Fields("flowMseKO"), new GetFieldFunction("mac_src"), new Fields("mac_src_flow_KO"))
-                .stateQuery(mseState, new Fields("mac_src_flow_KO", "flowMseKO"), new MseQuery("mac_src_flow_KO"), new Fields("flowsTranquilityOK", "flowsTranquilityKO"));
+                .stateQuery(mseState, new Fields("mac_src_flow_KO", "flowMseKO"), new MemcachedQuery("mac_src_flow_KO"), new Fields("flowsTranquilityOK", "flowsTranquilityKO"));
 
         tranquilityStream
                 .project(new Fields("flowsTranquilityOK"))
@@ -204,7 +204,7 @@ public class RedBorderTopologies {
                 .each(new Fields("mseMap"), new GetMSEdata(), new Fields("mac_src_mse", "geoLocationMSE"))
                 .project(new Fields("mac_src_mse", "geoLocationMSE"))
                 .partitionBy(new Fields("mac_src_mse"))
-                .partitionPersist(memcached, new Fields("geoLocationMSE", "mac_src_mse"), new mseUpdater("mac_src_mse", "geoLocationMSE"));
+                .partitionPersist(memcached, new Fields("geoLocationMSE", "mac_src_mse"), new MemcachedUpdater("mac_src_mse", "geoLocationMSE"));
 
         zkConfig.setTopicInt(RBEventType.FLOW);
 
@@ -212,7 +212,7 @@ public class RedBorderTopologies {
                 zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
                 .each(new Fields("str"), new MapperFunction(), new Fields("flowsMap"))
                 .each(new Fields("flowsMap"), new GetFieldFunction("client_mac"), new Fields("mac_src_flow"))
-                .stateQuery(mseState, new Fields("mac_src_flow", "flowsMap"), new MseQuery("mac_src_flow"), new Fields("flowMSE"))
+                .stateQuery(mseState, new Fields("mac_src_flow", "flowsMap"), new MemcachedQuery("mac_src_flow"), new Fields("flowMSE"))
                 .each(new Fields("flowMSE"), new PrinterFunction("----"), new Fields("a"));;
 
         return topology;
@@ -235,9 +235,18 @@ public class RedBorderTopologies {
                 zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
                 .each(new Fields("str"), new MapperFunction(), new Fields("mse_map"))
                 .each(new Fields("mse_map"), new GetMSEdata(), new Fields("src_mac", "mse_data"))
-                .partitionPersist(memcached, new Fields("src_mac", "mse_data"), new mseUpdater("src_mac", "mse_data"))
+                .partitionPersist(memcached, new Fields("src_mac", "mse_data"), new MemcachedUpdater("src_mac", "mse_data"))
                 .parallelismHint(2);
 
+        zkConfig.setTopicInt(RBEventType.MOBILE);
+        
+        TridentState mobileState = topology.newStream("rb_mobile", new TridentKafkaSpout().builder(
+                zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
+                .each(new Fields("str"), new MobileBuilderFunction(), new Fields("ip_addr", "mobile"))
+                .partitionPersist(memcached, new Fields("ip_addr", "mobile"), new MemcachedUpdater("ip_addr", "mobile"))
+                //.each(new Fields("mobile"), new PrinterFunction("----"), new Fields("a"));
+                .parallelismHint(2);
+        
         zkConfig.setTopicInt(RBEventType.FLOW);
         
         //StateFactory druidStateFlow = new TridentBeamStateFactory<>(new MyBeamFactoryMapFlow(zkConfig));
@@ -250,7 +259,7 @@ public class RedBorderTopologies {
 
         Stream locationStream = flowStream
                 .each(new Fields("flows"), new GetFieldFunction("client_mac"), new Fields("mac_src_flow"))
-                .stateQuery(mseState, new Fields("mac_src_flow"), new MseQuery("mac_src_flow"), new Fields("mseMap"))
+                .stateQuery(mseState, new Fields("mac_src_flow"), new MemcachedQuery("mac_src_flow"), new Fields("mseMap"))
                 .project(new Fields("flows", "mseMap"))
                 .parallelismHint(2);
 
@@ -262,18 +271,26 @@ public class RedBorderTopologies {
                 .each(new Fields("flows"), new GeoIpFunction(), new Fields("geoIPMap"))
                 .parallelismHint(2);
         
+        Stream imsiStream = flowStream
+                .each(new Fields("flows"), new GetFieldFunction("src"), new Fields("src_ip_addr"))
+                .stateQuery(mobileState, new Fields("src_ip_addr"), new MemcachedQuery("src_ip_addr"), new Fields("mobileMap"))
+                .project(new Fields("flows", "mobileMap"))
+                .parallelismHint(2);
+                
         List<Stream> joinStream = new ArrayList<>();
         joinStream.add(locationStream);
         joinStream.add(macVendorStream);
         joinStream.add(geoIPStream);
+        joinStream.add(imsiStream);
 
         List<Fields> keyFields = new ArrayList<>();
         keyFields.add(new Fields("flows"));
         keyFields.add(new Fields("flows"));
         keyFields.add(new Fields("flows"));
+        keyFields.add(new Fields("flows"));
 
-        topology.join(joinStream, keyFields, new Fields("flows", "mseMap", "macVendorMap", "geoIPMap"))
-                .each(new Fields("flows", "mseMap", "macVendorMap", "geoIPMap"), new JoinFlowFunction(), new Fields("finalMap"))
+        topology.join(joinStream, keyFields, new Fields("flows", "mseMap", "macVendorMap", "geoIPMap", "mobileMap"))
+                .each(new Fields("flows", "mseMap", "macVendorMap", "geoIPMap", "mobileMap"), new JoinFlowFunction(), new Fields("finalMap"))
                 .each(new Fields("finalMap"), new PrinterFunction("----"), new Fields(""))
                 //.partitionPersist(druidStateFlow, new Fields("finalMap"), new TridentBeamStateUpdater())
                 .parallelismHint(2);
@@ -290,8 +307,8 @@ public class RedBorderTopologies {
         topology.newStream("rb_mobile", new TridentKafkaSpout().builder(
                 zkConfig.getZkConnect(), zkConfig.getTopic(), "kafkaStorm"))
                 .each(new Fields("str"), new MobileBuilderFunction(), new Fields("mobile"))
-                .each(new Fields("mobile"), new PrinterFunction("----"), new Fields("a"));
-                //.parallelismHint(5);
+                //.each(new Fields("mobile"), new PrinterFunction("----"), new Fields("a"));
+                .parallelismHint(2);
 
         return topology;
     }
