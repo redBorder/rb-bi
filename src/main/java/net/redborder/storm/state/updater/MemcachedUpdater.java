@@ -17,11 +17,11 @@ import storm.trident.tuple.TridentTuple;
  *
  * @author andresgomez
  */
-public class mseUpdater extends BaseStateUpdater<MapState<Map<String, Object>>> {
+public class MemcachedUpdater extends BaseStateUpdater<MapState<Map<String, Object>>> {
     String _key;
     String _value;
     
-    public mseUpdater(String key, String value){
+    public MemcachedUpdater(String key, String value){
         _key=key;
         _value=value;
     }

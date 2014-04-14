@@ -20,11 +20,11 @@ import storm.trident.tuple.TridentTuple;
  *
  * @author andresgomez
  */
-public class MseQuery extends BaseQueryFunction<MapState<Map<String, Object>>, Map<String, Object>> {
+public class MemcachedQuery extends BaseQueryFunction<MapState<Map<String, Object>>, Map<String, Object>> {
 
     String _key;
 
-    public MseQuery(String key) {
+    public MemcachedQuery(String key) {
         _key = key;
     }
 
