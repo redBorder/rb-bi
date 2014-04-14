@@ -68,7 +68,7 @@ public class MobileBuilderFunction extends BaseFunction {
         event.put("ipAddress", ipAddress);
         event.put("rat", rat);
 
-        collector.emit(new Values(event));
+        collector.emit(new Values(ipAddress, event));
         
     }
 
