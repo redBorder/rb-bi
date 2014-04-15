@@ -20,7 +20,7 @@ public class RedBorderTopology {
             System.out.println("./storm jar {name_jar} {main_class} {local|cluster}");
         } else {
             RedBorderTopologies topologies = new RedBorderTopologies();             
-            TridentTopology topology = topologies.Test();         
+            TridentTopology topology = topologies.Rssi();         
 
             if (args[0].equalsIgnoreCase("local")) {
                 Config conf = new CreateConfig(args[0]).makeConfig();

@@ -272,15 +272,15 @@ public class RedBorderTopologies {
                 .each(new Fields("rssi"), new GetRSSIdata(), new Fields("rssiKey", "rssiValue"))
                 .partitionPersist(memcached, new Fields("rssiKey", "rssiValue"), new MemcachedUpdater("rssiKey", "rssiValue"));
 
-        Stream flowStream = topology.newStream("rb_flow", new TridentKafkaSpout("traffics").builder())
+        Stream flowStream = topology.newStream("rb_flow", new TridentKafkaSpout("location").builder())
                 .each(new Fields("str"), new MapperFunction(), new Fields("flows"))
                 .project(new Fields("flows"))
-                .parallelismHint(2);
+                ;
 
         Stream locationStream = flowStream
                 .each(new Fields("flows"), new GetFieldFunction("client_mac"), new Fields("mac_src_flow"))
                 .stateQuery(rssiState, new Fields("mac_src_flow"), new MemcachedQuery("mac_src_flow"), new Fields("rssiMap"))
-                .each(new Fields("mobile"), new PrinterFunction("----"), new Fields("a"));
+                .each(new Fields("rssiMap"), new PrinterFunction("----"), new Fields("a"));
 
 
         return topology;
