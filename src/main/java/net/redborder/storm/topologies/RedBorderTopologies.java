@@ -32,7 +32,7 @@ import net.redborder.storm.state.query.MemcachedQuery;
 import net.redborder.storm.state.query.TwitterQuery;
 import net.redborder.storm.state.updater.MemcachedUpdater;
 import net.redborder.storm.state.updater.twitterUpdater;
-import net.redborder.storm.util.MemcachedConfig;
+import net.redborder.storm.util.MemcachedConfigFile;
 import net.redborder.storm.util.druid.MyBeamFactoryMapEvent;
 import net.redborder.storm.util.druid.MyBeamFactoryMapFlow;
 import net.redborder.storm.util.druid.MyBeamFactoryMapMonitor;
@@ -48,10 +48,10 @@ import storm.trident.state.StateFactory;
  */
 public class RedBorderTopologies {
 
-    MemcachedConfig _memConfig;
+    MemcachedConfigFile _memConfig;
 
     public RedBorderTopologies() throws FileNotFoundException {
-        _memConfig = new MemcachedConfig();
+        _memConfig = new MemcachedConfigFile();
     }
 
     public TridentTopology twitterTopology() throws FileNotFoundException {

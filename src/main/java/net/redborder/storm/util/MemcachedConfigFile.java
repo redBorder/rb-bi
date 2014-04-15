@@ -19,11 +19,11 @@ import org.ho.yaml.Yaml;
  *
  * @author andresgomez
  */
-public class MemcachedConfig {
+public class MemcachedConfigFile {
 
     List<InetSocketAddress> memcachedServer = null;
 
-    public MemcachedConfig() throws FileNotFoundException {
+    public MemcachedConfigFile() throws FileNotFoundException {
 
         Object object = Yaml.load(new File("/opt/rb/etc/redBorder-BI/memcached_config.yml"));
         Map<String, Object> map = (Map<String, Object>) object;
@@ -39,13 +39,13 @@ public class MemcachedConfig {
                 memcachedServer.add(new InetSocketAddress(iPort[0], Integer.parseInt(iPort[1])));
             }
         } else {
-            Logger.getLogger(MemcachedConfig.class.getName()).log(Level.SEVERE, "Servers not found.");
+            Logger.getLogger(MemcachedConfigFile.class.getName()).log(Level.SEVERE, "Servers not found.");
         }
     }
 
     public List<InetSocketAddress> getConfig() {
         if (memcachedServer == null) {
-            Logger.getLogger(MemcachedConfig.class.getName()).log(Level.SEVERE, "First call builder() method, "
+            Logger.getLogger(MemcachedConfigFile.class.getName()).log(Level.SEVERE, "First call builder() method, "
                     + "default: {localhost:11211}");
             memcachedServer = new ArrayList<InetSocketAddress>();
             memcachedServer.add(new InetSocketAddress("localhost",11211));
