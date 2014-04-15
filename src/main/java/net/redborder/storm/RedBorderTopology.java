@@ -5,17 +5,11 @@ import backtype.storm.LocalCluster;
 import backtype.storm.StormSubmitter;
 import backtype.storm.generated.AlreadyAliveException;
 import backtype.storm.generated.InvalidTopologyException;
-import backtype.storm.tuple.Values;
 import net.redborder.storm.topologies.RedBorderTopologies;
 import net.redborder.storm.util.CreateConfig;
 import java.io.FileNotFoundException;
-import java.util.List;
-import java.util.Map;
 import storm.trident.TridentTopology;
 
-import storm.trident.operation.BaseFunction;
-import storm.trident.operation.TridentCollector;
-import storm.trident.tuple.TridentTuple;
 
 public class RedBorderTopology {
 

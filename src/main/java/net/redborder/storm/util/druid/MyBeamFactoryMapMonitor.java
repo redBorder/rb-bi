@@ -18,7 +18,7 @@ import com.metamx.tranquility.druid.DruidLocation;
 import com.metamx.tranquility.druid.DruidRollup;
 import com.metamx.tranquility.storm.BeamFactory;
 import com.metamx.tranquility.typeclass.Timestamper;
-import net.redborder.storm.util.GetKafkaConfig;
+import net.redborder.storm.util.KafkaConfigFile;
 import io.druid.data.input.impl.TimestampSpec;
 import io.druid.granularity.QueryGranularity;
 import io.druid.query.aggregation.AggregatorFactory;
@@ -26,6 +26,7 @@ import io.druid.query.aggregation.CountAggregatorFactory;
 import io.druid.query.aggregation.DoubleSumAggregatorFactory;
 import io.druid.query.aggregation.MaxAggregatorFactory;
 import io.druid.query.aggregation.MinAggregatorFactory;
+import java.io.FileNotFoundException;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.joda.time.DateTime;
@@ -41,18 +42,14 @@ import org.apache.curator.retry.RetryOneTime;
  */
 public class MyBeamFactoryMapMonitor implements BeamFactory<Map<String, Object>> {
 
-    String _zkConnect;
-    String _topic;
+    KafkaConfigFile _configFile;
 
     /**
-     * Consturctor.
-     *
-     * @param zkConfig Class GetKafkaConfig with the selected topic.
+     * Constructor.
+     * @throws java.io.FileNotFoundException
      */
-    public MyBeamFactoryMapMonitor(GetKafkaConfig zkConfig) {
-        _zkConnect = zkConfig.getZkConnect();
-        _topic = zkConfig.getTopic();
-
+    public MyBeamFactoryMapMonitor() throws FileNotFoundException {
+        _configFile = new KafkaConfigFile("monitor");
     }
 
     @Override
@@ -62,13 +59,13 @@ public class MyBeamFactoryMapMonitor implements BeamFactory<Map<String, Object>>
            //         _zkConnect, new BoundedExponentialBackoffRetry(100, 1000, 5));
             final CuratorFramework curator = CuratorFrameworkFactory
                     .builder()
-                    .connectString(_zkConnect)
+                    .connectString(_configFile.getZkHost())
                     .retryPolicy(new RetryOneTime(1000))
                     .build();
             
             curator.start();
 
-            final String dataSource = _topic;
+            final String dataSource = _configFile.getTopic();
             final List<String> dimensions = ImmutableList.of(
                     "sensor_name", "monitor", "value", "type", "unit");
             final List<String> exclusions = ImmutableList.of(

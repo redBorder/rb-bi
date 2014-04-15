@@ -19,13 +19,11 @@ import com.metamx.tranquility.druid.DruidRollup;
 import com.metamx.tranquility.storm.BeamFactory;
 import com.metamx.tranquility.typeclass.Timestamper;
 import io.druid.data.input.impl.TimestampSpec;
-import net.redborder.storm.util.GetKafkaConfig;
+import net.redborder.storm.util.KafkaConfigFile;
 import io.druid.granularity.QueryGranularity;
 import io.druid.query.aggregation.AggregatorFactory;
 import io.druid.query.aggregation.CountAggregatorFactory;
-import io.druid.query.aggregation.DoubleSumAggregatorFactory;
-import io.druid.query.aggregation.MaxAggregatorFactory;
-import io.druid.query.aggregation.MinAggregatorFactory;
+import java.io.FileNotFoundException;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.joda.time.DateTime;
@@ -33,7 +31,6 @@ import org.joda.time.Period;
 
 import java.util.List;
 import java.util.Map;
-import org.apache.curator.retry.BoundedExponentialBackoffRetry;
 import org.apache.curator.retry.RetryOneTime;
 
 /**
@@ -43,18 +40,14 @@ import org.apache.curator.retry.RetryOneTime;
  */
 public class MyBeamFactoryMapEvent implements BeamFactory<Map<String, Object>> {
 
-    String _zkConnect;
-    String _topic;
+    KafkaConfigFile _configFile;
 
     /**
-     * Consturctor.
-     *
-     * @param zkConfig Class GetKafkaConfig with the selected topic.
+     * Constructor.
+     * @throws java.io.FileNotFoundException
      */
-    public MyBeamFactoryMapEvent(GetKafkaConfig zkConfig) {
-        _zkConnect = zkConfig.getZkConnect();
-        _topic = zkConfig.getTopic();
-
+    public MyBeamFactoryMapEvent() throws FileNotFoundException {
+        _configFile = new KafkaConfigFile("events");
     }
 
     @Override
@@ -62,13 +55,13 @@ public class MyBeamFactoryMapEvent implements BeamFactory<Map<String, Object>> {
         try {
             final CuratorFramework curator = CuratorFrameworkFactory
                     .builder()
-                    .connectString(_zkConnect)
+                    .connectString(_configFile.getZkHost())
                     .retryPolicy(new RetryOneTime(1000))
                     .build();
             
             curator.start();
 
-            final String dataSource = _topic;
+            final String dataSource = _configFile.getTopic();
             final List<String> exclusions = ImmutableList.of("payload", "id",
                     "tcpseq", "tcpack", "tcplen", "tcpwindow", "icmpid",
                     "icmpseq", "dgmlen", "vlan_priority", "vlan_drop",
