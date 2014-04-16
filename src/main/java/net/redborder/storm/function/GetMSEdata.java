@@ -21,7 +21,8 @@ public class GetMSEdata extends BaseFunction {
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
         Map<String, Object> mseEvent = (Map<String, Object>) tuple.get(0);
-        Map<String, Object> location = (Map<String, Object>) mseEvent.get("location");
+        Map<String, Object> mseEventContent = (Map<String, Object>) mseEvent.get("StreamingNotification");
+        Map<String, Object> location = (Map<String, Object>) mseEventContent.get("location");
         String macAddress = location.get("macAddress").toString();
 
         Map<String, Object> geoCoordinate = (Map<String, Object>) location.get("geoCoordinate");
