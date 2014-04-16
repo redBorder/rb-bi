@@ -266,10 +266,9 @@ public class RedBorderTopologies {
                 .each(new Fields("rssi"), new GetRSSIdata(), new Fields("rssiKey", "rssiValue"))
                 .partitionPersist(memcached, new Fields("rssiKey", "rssiValue"), new MemcachedUpdater("rssiKey", "rssiValue"));
 
-        Stream flowStream = topology.newStream("rb_flow", new TridentKafkaSpout("location").builder())
+        Stream flowStream = topology.newStream("rb_flow", new TridentKafkaSpout("traffics").builder())
                 .each(new Fields("str"), new MapperFunction(), new Fields("flows"))
-                .project(new Fields("flows"))
-                ;
+                .project(new Fields("flows"));
 
         Stream locationStream = flowStream
                 .each(new Fields("flows"), new GetFieldFunction("client_mac"), new Fields("mac_src_flow"))
