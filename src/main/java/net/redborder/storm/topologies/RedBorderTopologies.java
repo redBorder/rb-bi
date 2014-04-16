@@ -49,17 +49,19 @@ import storm.trident.state.StateFactory;
 public class RedBorderTopologies {
 
     MemcachedConfigFile _memConfig;
+    MemcachedState.Options _mseOpts;
 
     public RedBorderTopologies() throws FileNotFoundException {
         _memConfig = new MemcachedConfigFile();
+        
+        _mseOpts = new MemcachedState.Options();
+        _mseOpts.expiration = 60000;
     }
 
     public TridentTopology twitterTopology() throws FileNotFoundException {
         TridentTopology topology = new TridentTopology();
-        MemcachedState.Options twitterOpts = new MemcachedState.Options();
-        twitterOpts.expiration = 10000;
 
-        StateFactory memcached = MemcachedState.transactional(_memConfig.getConfig(), twitterOpts);
+        StateFactory memcached = MemcachedState.transactional(_memConfig.getConfig(), _mseOpts);
 
         TridentState tweetState = topology.newStream("twitterStream", new TwitterStreamTridentSpout())
                 .each(new Fields("tweet"), new MapperFunction(), new Fields("tweetMap"))
@@ -104,10 +106,8 @@ public class RedBorderTopologies {
 
     public TridentTopology flowMSEtopologyDelay() throws FileNotFoundException {
         TridentTopology topology = new TridentTopology();
-        MemcachedState.Options mseOpts = new MemcachedState.Options();
-        mseOpts.expiration = 20000;
 
-        StateFactory memcached = MemcachedState.transactional(_memConfig.getConfig(), mseOpts);
+        StateFactory memcached = MemcachedState.transactional(_memConfig.getConfig(), _mseOpts);
 
         TridentState mseState = topology.newStream("rb_mse", new TridentKafkaSpout("location").builder())
                 .each(new Fields("str"), new MapperFunction(), new Fields("mseMap"))
@@ -165,10 +165,8 @@ public class RedBorderTopologies {
 
     public TridentTopology flowMSEtopology() throws FileNotFoundException {
         TridentTopology topology = new TridentTopology();
-        MemcachedState.Options mseOpts = new MemcachedState.Options();
-        mseOpts.expiration = 20000;
 
-        StateFactory memcached = MemcachedState.transactional(_memConfig.getConfig(), mseOpts);
+        StateFactory memcached = MemcachedState.transactional(_memConfig.getConfig(), _mseOpts);
 
         TridentState mseState = topology.newStream("rb_mse", new TridentKafkaSpout("location").builder())
                 .each(new Fields("str"), new MapperFunction(), new Fields("mseMap"))
@@ -186,9 +184,7 @@ public class RedBorderTopologies {
 
     public TridentTopology Test() throws FileNotFoundException {
         TridentTopology topology = new TridentTopology();
-        MemcachedState.Options mseOpts = new MemcachedState.Options();
-        mseOpts.expiration = 60000;
-        StateFactory memcached = MemcachedState.transactional(_memConfig.getConfig(), mseOpts);
+        StateFactory memcached = MemcachedState.transactional(_memConfig.getConfig(), _mseOpts);
 
         TridentState mseState = topology.newStream("rb_mse", new TridentKafkaSpout("location").builder())
                 .each(new Fields("str"), new MapperFunction(), new Fields("mse_map"))
@@ -262,10 +258,8 @@ public class RedBorderTopologies {
     public TridentTopology Rssi() throws FileNotFoundException {
 
         TridentTopology topology = new TridentTopology();
-        MemcachedState.Options mseOpts = new MemcachedState.Options();
-        mseOpts.expiration = 60000;
 
-        StateFactory memcached = MemcachedState.transactional(_memConfig.getConfig(), mseOpts);
+        StateFactory memcached = MemcachedState.transactional(_memConfig.getConfig(), _mseOpts);
 
         TridentState rssiState = topology.newStream("rb_rssi", new TridentKafkaSpout("snmp").builder())
                 .each(new Fields("str"), new MapperFunction(), new Fields("rssi"))
