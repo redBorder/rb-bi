@@ -38,7 +38,7 @@ public class TridentKafkaSpout {
     
     /**
      * Build the trindetKafkaSpout.
-     * @return Trindet spout of kafka.
+     * @return Trident spout of kafka.
      */
     public TransactionalTridentKafkaSpout builder(){
         Logger.getLogger(KafkaConfigFile.class.getName()).log(Level.INFO, "Reading from topic " + _configFile.getTopic());

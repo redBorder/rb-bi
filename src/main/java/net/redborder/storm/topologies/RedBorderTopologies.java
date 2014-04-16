@@ -373,7 +373,7 @@ public class RedBorderTopologies {
         
         topology.join(joinStream, keyFields, new Fields("flows", "mseMap", "macVendorMap", "geoIPMap", "mobileMap", "rssiMap", "httpUrlMap"))
                 .each(new Fields("flows", "mseMap", "macVendorMap", "geoIPMap", "mobileMap", "rssiMap", "httpUrlMap"), new JoinFlowFunction(), new Fields("finalMap"))
-                .each(new Fields("finalMap"), new PrinterFunction("----"), new Fields(""))
+                //.each(new Fields("finalMap"), new PrinterFunction("----"), new Fields(""))
                 .partitionPersist(druidStateFlow, new Fields("finalMap"), new TridentBeamStateUpdater())
                 .parallelismHint(6);
 
