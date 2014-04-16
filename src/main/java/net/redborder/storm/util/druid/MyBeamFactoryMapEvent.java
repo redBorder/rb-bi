@@ -40,28 +40,20 @@ import org.apache.curator.retry.RetryOneTime;
  */
 public class MyBeamFactoryMapEvent implements BeamFactory<Map<String, Object>> {
 
-    KafkaConfigFile _configFile;
-
-    /**
-     * Constructor.
-     * @throws java.io.FileNotFoundException
-     */
-    public MyBeamFactoryMapEvent() throws FileNotFoundException {
-        _configFile = new KafkaConfigFile("events");
-    }
-
     @Override
     public Beam<Map<String, Object>> makeBeam(Map<?, ?> conf, IMetricsContext metrics) {
         try {
+            KafkaConfigFile configFile = new KafkaConfigFile("events");
+            
             final CuratorFramework curator = CuratorFrameworkFactory
                     .builder()
-                    .connectString(_configFile.getZkHost())
+                    .connectString(configFile.getZkHost())
                     .retryPolicy(new RetryOneTime(1000))
                     .build();
             
             curator.start();
 
-            final String dataSource = _configFile.getTopic();
+            final String dataSource = configFile.getTopic();
             final List<String> exclusions = ImmutableList.of("payload", "id",
                     "tcpseq", "tcpack", "tcplen", "tcpwindow", "icmpid",
                     "icmpseq", "dgmlen", "vlan_priority", "vlan_drop",
