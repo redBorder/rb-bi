@@ -12,6 +12,7 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import net.redborder.storm.function.AnalizeHttpUrlFunction;
 import net.redborder.storm.function.GeoIpFunction;
 import net.redborder.storm.function.GetFieldFunction;
 import net.redborder.storm.function.GetID;
@@ -274,14 +275,113 @@ public class RedBorderTopologies {
 
         Stream flowStream = topology.newStream("rb_flow", new TridentKafkaSpout("location").builder())
                 .each(new Fields("str"), new MapperFunction(), new Fields("flows"))
-                .project(new Fields("flows"))
-                ;
+                .project(new Fields("flows"));
 
         Stream locationStream = flowStream
                 .each(new Fields("flows"), new GetFieldFunction("client_mac"), new Fields("mac_src_flow"))
                 .stateQuery(rssiState, new Fields("mac_src_flow"), new MemcachedQuery("mac_src_flow"), new Fields("rssiMap"))
                 .each(new Fields("rssiMap"), new PrinterFunction("----"), new Fields("a"));
 
+        return topology;
+    }
+
+    public TridentTopology all() throws FileNotFoundException {
+        TridentTopology topology = new TridentTopology();
+
+        MemcachedState.Options mseOpts = new MemcachedState.Options();
+        mseOpts.expiration = 60000;
+        mseOpts.globalKey = "location";
+        StateFactory memcachedLocation = MemcachedState.transactional(_memConfig.getConfig(), mseOpts);
+
+        MemcachedState.Options rssiOpts = new MemcachedState.Options();
+        mseOpts.expiration = 60000;
+        mseOpts.globalKey = "rssi";
+        StateFactory memcachedRssi = MemcachedState.transactional(_memConfig.getConfig(), mseOpts);
+
+        MemcachedState.Options mobileOpts = new MemcachedState.Options();
+        mseOpts.expiration = 60000;
+        mseOpts.globalKey = "mobile";
+        StateFactory memcachedMobile = MemcachedState.transactional(_memConfig.getConfig(), mseOpts);
+
+        /* LOCATION DATA */
+        TridentState mseState = topology.newStream("rb_mse", new TridentKafkaSpout("location").builder())
+                .each(new Fields("str"), new MapperFunction(), new Fields("mse_map"))
+                .each(new Fields("mse_map"), new GetMSEdata(), new Fields("src_mac", "mse_data"))
+                .partitionPersist(memcachedLocation, new Fields("src_mac", "mse_data"), new MemcachedUpdater("src_mac", "mse_data"))
+                .parallelismHint(2);
+
+        /* MOBILE DATA */
+        TridentState mobileState = topology.newStream("rb_mobile", new TridentKafkaSpout("mobile").builder())
+                .each(new Fields("str"), new MobileBuilderFunction(), new Fields("ip_addr", "mobile"))
+                .partitionPersist(memcachedMobile, new Fields("ip_addr", "mobile"), new MemcachedUpdater("ip_addr", "mobile"))
+                .parallelismHint(2);
+
+        /* RSSI DATA */
+        TridentState rssiState = topology.newStream("rb_rssi", new TridentKafkaSpout("snmp").builder())
+                .each(new Fields("str"), new MapperFunction(), new Fields("rssi"))
+                .each(new Fields("rssi"), new GetRSSIdata(), new Fields("rssiKey", "rssiValue"))
+                .partitionPersist(memcachedRssi, new Fields("rssiKey", "rssiValue"), new MemcachedUpdater("rssiKey", "rssiValue"))
+                .parallelismHint(2);
+
+        /* FLOW STREAM */
+        Stream flowStream = topology.newStream("rb_flow", new TridentKafkaSpout("traffics").builder())
+                .each(new Fields("str"), new MapperFunction(), new Fields("flows"))
+                .project(new Fields("flows"))
+                .parallelismHint(2);
+
+        Stream locationStream = flowStream
+                .each(new Fields("flows"), new GetFieldFunction("client_mac"), new Fields("mac_src_flow"))
+                .stateQuery(mseState, new Fields("mac_src_flow"), new MemcachedQuery("mac_src_flow"), new Fields("mseMap"))
+                .project(new Fields("flows", "mseMap"))
+                .parallelismHint(2);
+
+        Stream rssiStream = flowStream
+                .each(new Fields("flows"), new GetFieldFunction("client_mac"), new Fields("mac_src_flow"))
+                .stateQuery(rssiState, new Fields("mac_src_flow"), new MemcachedQuery("mac_src_flow"), new Fields("rssiMap"))
+                .project(new Fields("flows", "rssiMap"))
+                .parallelismHint(2);
+
+        Stream macVendorStream = flowStream
+                .each(new Fields("flows"), new MacVendorFunction(), new Fields("macVendorMap"))
+                .parallelismHint(2);
+
+        Stream geoIPStream = flowStream
+                .each(new Fields("flows"), new GeoIpFunction(), new Fields("geoIPMap"))
+                .parallelismHint(2);
+
+        Stream httpUrlStream = flowStream
+                .each(new Fields("flows"), new AnalizeHttpUrlFunction(), new Fields("httpUrlMap"))
+                .parallelismHint(2);
+
+        Stream imsiStream = flowStream
+                .each(new Fields("flows"), new GetFieldFunction("src"), new Fields("src_ip_addr"))
+                .stateQuery(mobileState, new Fields("src_ip_addr"), new MemcachedQuery("src_ip_addr"), new Fields("mobileMap"))
+                .project(new Fields("flows", "mobileMap"))
+                .parallelismHint(2);
+
+        List<Stream> joinStream = new ArrayList<>();
+        joinStream.add(locationStream);
+        joinStream.add(macVendorStream);
+        joinStream.add(geoIPStream);
+        joinStream.add(imsiStream);
+        joinStream.add(rssiStream);
+        joinStream.add(httpUrlStream);
+
+        List<Fields> keyFields = new ArrayList<>();
+        keyFields.add(new Fields("flows"));
+        keyFields.add(new Fields("flows"));
+        keyFields.add(new Fields("flows"));
+        keyFields.add(new Fields("flows"));
+        keyFields.add(new Fields("flows"));
+        keyFields.add(new Fields("flows"));
+
+        StateFactory druidStateFlow = new TridentBeamStateFactory<>(new MyBeamFactoryMapFlow());
+        
+        topology.join(joinStream, keyFields, new Fields("flows", "mseMap", "macVendorMap", "geoIPMap", "mobileMap", "rssiMap", "httpUrlMap"))
+                .each(new Fields("flows", "mseMap", "macVendorMap", "geoIPMap", "mobileMap", "rssiMap", "httpUrlMap"), new JoinFlowFunction(), new Fields("finalMap"))
+                .each(new Fields("finalMap"), new PrinterFunction("----"), new Fields(""))
+                .partitionPersist(druidStateFlow, new Fields("finalMap"), new TridentBeamStateUpdater())
+                .parallelismHint(6);
 
         return topology;
     }
