@@ -262,7 +262,7 @@ public class RedBorderTopologies {
 
         StateFactory memcached = MemcachedState.transactional(_memConfig.getConfig(), _mseOpts);
 
-        TridentState rssiState = topology.newStream("rb_rssi", new TridentKafkaSpout("snmp").builder())
+        TridentState rssiState = topology.newStream("rb_rssi", new TridentKafkaSpout("trap").builder())
                 .each(new Fields("str"), new MapperFunction(), new Fields("rssi"))
                 .each(new Fields("rssi"), new GetRSSIdata(), new Fields("rssiKey", "rssiValue"))
                 .partitionPersist(memcached, new Fields("rssiKey", "rssiValue"), new MemcachedUpdater("rssiKey", "rssiValue"));
@@ -298,9 +298,12 @@ public class RedBorderTopologies {
         StateFactory memcachedMobile = MemcachedState.transactional(_memConfig.getConfig(), mseOpts);
 
         /* LOCATION DATA */
-        TridentState mseState = topology.newStream("rb_mse", new TridentKafkaSpout("location").builder())
+        Stream mseStream = topology.newStream("rb_mse", new TridentKafkaSpout("location").builder())
                 .each(new Fields("str"), new MapperFunction(), new Fields("mse_map"))
-                .each(new Fields("mse_map"), new GetMSEdata(), new Fields("src_mac", "mse_data"))
+                .each(new Fields("mse_map"), new GetMSEdata(), new Fields("src_mac", "mse_data", "mse_data_druid"));
+        
+        TridentState mseState = mseStream
+                .project(new Fields("src_mac", "mse_data"))
                 .partitionPersist(memcachedLocation, new Fields("src_mac", "mse_data"), new MemcachedUpdater("src_mac", "mse_data"))
                 .parallelismHint(2);
 
@@ -311,7 +314,7 @@ public class RedBorderTopologies {
                 .parallelismHint(2);
 
         /* RSSI DATA */
-        TridentState rssiState = topology.newStream("rb_rssi", new TridentKafkaSpout("snmp").builder())
+        TridentState rssiState = topology.newStream("rb_rssi", new TridentKafkaSpout("trap").builder())
                 .each(new Fields("str"), new MapperFunction(), new Fields("rssi"))
                 .each(new Fields("rssi"), new GetRSSIdata(), new Fields("rssiKey", "rssiValue"))
                 .partitionPersist(memcachedRssi, new Fields("rssiKey", "rssiValue"), new MemcachedUpdater("rssiKey", "rssiValue"))
@@ -376,6 +379,10 @@ public class RedBorderTopologies {
                 //.each(new Fields("finalMap"), new PrinterFunction("----"), new Fields(""))
                 .partitionPersist(druidStateFlow, new Fields("finalMap"), new TridentBeamStateUpdater())
                 .parallelismHint(6);
+        
+        mseStream
+                .project(new Fields("mse_data_druid"))
+                .partitionPersist(druidStateFlow, new Fields("mse_data_druid"), new TridentBeamStateUpdater());
 
         return topology;
     }

@@ -38,6 +38,8 @@ public class GetMSEdata extends BaseFunction {
 
         Map<String, Object> mseData = new HashMap<>();
 
+        mseData.put("sta_mac_address_lat",lattitude.toString());
+        mseData.put("sta_mac_address_long", longitude.toString());
         mseData.put("sta_mac_address_latlong", locationFormat);
 
         String[] zone = mapHierachy.split(">");
@@ -45,8 +47,30 @@ public class GetMSEdata extends BaseFunction {
         mseData.put("sta_mac_address_campus", zone[0]);
         mseData.put("sta_mac_address_building", zone[1]);
         mseData.put("sta_mac_address_floor", zone[2]);
+        
+        Map<String,Object> mseDataDruid = new HashMap<>();
+        
+        mseDataDruid.putAll(mseData);
+        mseDataDruid.put("client-mac", macAddress);
+        mseDataDruid.put("bytes", 0);
+        mseDataDruid.put("pkts", 0);
+        
+        String state = location.get("dot11Status").toString();
+        
+        if(state.equals("ASSOCIATED")){
+            mseDataDruid.put("wlan_ssid", location.get("ssId").toString());
+            mseDataDruid.put("ap_mac", location.get("apMacAddress").toString());
+            mseDataDruid.put("band", location.get("band").toString());
+            
+            String [] ip = (String[]) location.get("ipAddress");
+            
+            mseDataDruid.put("src", ip[0]);
+            mseDataDruid.put("dot11_status", location.get("dot11Status"));
+        }else{
+            mseDataDruid.put("dot11_status", location.get("dot11Status"));
+        }
 
-        collector.emit(new Values(macAddress, mseData));
+        collector.emit(new Values(macAddress, mseData, mseDataDruid));
     }
 
 }
