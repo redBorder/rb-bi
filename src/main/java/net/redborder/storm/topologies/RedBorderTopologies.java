@@ -314,7 +314,7 @@ public class RedBorderTopologies {
                 .parallelismHint(2);
 
         /* RSSI DATA */
-        TridentState rssiState = topology.newStream("rb_rssi", new TridentKafkaSpout("trap").builder())
+        TridentState rssiState = topology.newStream("rb_trap", new TridentKafkaSpout("trap").builder())
                 .each(new Fields("str"), new MapperFunction(), new Fields("rssi"))
                 .each(new Fields("rssi"), new GetRSSIdata(), new Fields("rssiKey", "rssiValue"))
                 .partitionPersist(memcachedRssi, new Fields("rssiKey", "rssiValue"), new MemcachedUpdater("rssiKey", "rssiValue"))
