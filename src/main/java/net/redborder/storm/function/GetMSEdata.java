@@ -8,6 +8,8 @@ package net.redborder.storm.function;
 import backtype.storm.tuple.Values;
 import java.util.HashMap;
 import java.util.Map;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import storm.trident.operation.BaseFunction;
 import storm.trident.operation.TridentCollector;
 import storm.trident.tuple.TridentTuple;
@@ -54,6 +56,11 @@ public class GetMSEdata extends BaseFunction {
         mseDataDruid.put("client-mac", macAddress);
         mseDataDruid.put("bytes", 0);
         mseDataDruid.put("pkts", 0);
+        
+        DateTime date = new DateTime(mseEventContent.get("timestamp").toString());
+        System.out.println(date.withZone(DateTimeZone.UTC).getMillis()/1000);
+        
+        mseDataDruid.put("timestamp", zone);
         
         String state = location.get("dot11Status").toString();
         
