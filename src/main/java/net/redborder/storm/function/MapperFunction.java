@@ -33,9 +33,10 @@ public class MapperFunction extends BaseFunction {
             } catch (IOException ex) {
                 Logger.getLogger(MapperFunction.class.getName()).log(Level.SEVERE, null, ex);
             }
-
-            collector.emit(new Values(event));
+            if (event != null) {
+                collector.emit(new Values(event));
+            }
         }
     }
-    
+
 }

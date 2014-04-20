@@ -6,6 +6,7 @@
 package net.redborder.storm.function;
 
 import backtype.storm.tuple.Values;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import org.joda.time.DateTime;
@@ -69,9 +70,9 @@ public class GetMSEdata extends BaseFunction {
             mseDataDruid.put("ap_mac", location.get("apMacAddress").toString());
             mseDataDruid.put("band", location.get("band").toString());
             
-            String [] ip = (String[]) location.get("ipAddress");
+            ArrayList ip = (ArrayList) location.get("ipAddress");
             
-            mseDataDruid.put("src", ip[0]);
+            mseDataDruid.put("src", ip.get(0).toString());
             mseDataDruid.put("dot11_status", location.get("dot11Status"));
         }else{
             mseDataDruid.put("dot11_status", location.get("dot11Status"));

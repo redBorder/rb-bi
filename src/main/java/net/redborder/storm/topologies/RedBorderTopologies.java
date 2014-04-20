@@ -298,7 +298,7 @@ public class RedBorderTopologies {
         StateFactory memcachedMobile = MemcachedState.transactional(_memConfig.getConfig(), mseOpts);
 
         /* LOCATION DATA */
-        Stream mseStream = topology.newStream("rb_mse", new TridentKafkaSpout("location").builder())
+        Stream mseStream = topology.newStream("rb_loc", new TridentKafkaSpout("location").builder())
                 .each(new Fields("str"), new MapperFunction(), new Fields("mse_map"))
                 .each(new Fields("mse_map"), new GetMSEdata(), new Fields("src_mac", "mse_data", "mse_data_druid"));
         
