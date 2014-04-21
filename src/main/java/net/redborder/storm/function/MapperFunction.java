@@ -30,14 +30,11 @@ public class MapperFunction extends BaseFunction {
             Map<String, Object> event = null;
             try {
                 event = mapper.readValue(jsonEvent, Map.class);
-            } catch (IOException ex) {
+                collector.emit(new Values(event));
+            } catch (IOException | NullPointerException ex) {
                 Logger.getLogger(MapperFunction.class.getName()).log(Level.SEVERE, "Failed converting a JSON tuple to a Map class", ex);
             }
-            if (event != null) {
-                collector.emit(new Values(event));
-            } else {
-                Logger.getLogger(MapperFunction.class.getName()).log(Level.SEVERE, "Failed converting a JSON tuple to a Map class");
-            }
+
         }
     }
 
