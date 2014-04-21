@@ -54,8 +54,8 @@ public class MacVendorFunction extends BaseFunction {
         if (event.containsKey("client_mac")) {
             ouiSrc = buildOui(event.get("client_mac"));
             
-            if(ouiSrc!=null){
-                ouiSrc=_ouiMap.get(ouiSrc);
+            if(ouiSrc != null){
+                ouiSrc = _ouiMap.get(ouiSrc);
                 vendorMap.put("client_mac_vendor", ouiSrc);
             }            
         }

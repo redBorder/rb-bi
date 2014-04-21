@@ -27,14 +27,10 @@ import storm.trident.tuple.TridentTuple;
  */
 public class GeoIpFunction extends BaseFunction {
 
-    String _citydb;
-    String _countrydb;
-    String _asndb;
-    String _countryv6db;
-    String _asnv6db;
-    String _cityv6db;
-
-    Map<String, Object> event;
+    final String CITY_DB_PATH = "/opt/rb/share/GeoIP/city.dat";
+    final String CITY_V6_DB_PATH = "/opt/rb/share/GeoIP/cityv6.dat";
+    final String ASN_DB_PATH = "/opt/rb/share/GeoIP/asn.dat";
+    final String ASN_V6_DB_PATH = "/opt/rb/share/GeoIP/asnv6.dat";
 
     LookupService _city;
     LookupService _city6;
@@ -43,17 +39,11 @@ public class GeoIpFunction extends BaseFunction {
 
     @Override
     public void prepare(Map conf, TridentOperationContext context) {
-
-        _citydb = "/opt/rb/share/GeoIP/city.dat";
-        _asndb = "/opt/rb/share/GeoIP/asn.dat";
-        _asnv6db = "/opt/rb/share/GeoIP/asnv6.dat";
-        _cityv6db = "/opt/rb/share/GeoIP/cityv6.dat";
-
         try {
-            _city = new LookupService(_citydb, LookupService.GEOIP_MEMORY_CACHE);
-            _city6 = new LookupService(_cityv6db, LookupService.GEOIP_MEMORY_CACHE);
-            _asn = new LookupService(_asndb, LookupService.GEOIP_MEMORY_CACHE);
-            _asn6 = new LookupService(_asnv6db, LookupService.GEOIP_MEMORY_CACHE);
+            _city = new LookupService(CITY_DB_PATH, LookupService.GEOIP_MEMORY_CACHE);
+            _city6 = new LookupService(CITY_V6_DB_PATH, LookupService.GEOIP_MEMORY_CACHE);
+            _asn = new LookupService(ASN_DB_PATH, LookupService.GEOIP_MEMORY_CACHE);
+            _asn6 = new LookupService(ASN_V6_DB_PATH, LookupService.GEOIP_MEMORY_CACHE);
         } catch (IOException ex) {
             Logger.getLogger(GeoIpFunction.class.getName()).log(Level.SEVERE, ex.toString());
         }
@@ -132,7 +122,7 @@ public class GeoIpFunction extends BaseFunction {
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
 
-        event = (Map<String, Object>) tuple.getValueByField("flows");
+        Map<String, Object> event = (Map<String, Object>) tuple.getValue(0);
         Map<String, Object> geoIPMap = new HashMap<>();
         Map<String, Object> aux;
         String ip;
@@ -141,21 +131,21 @@ public class GeoIpFunction extends BaseFunction {
             ip = event.get("src").toString();
             aux = getIPData(ip);
             geoIPMap.put("src_country_code", aux.get("country_code"));
-            geoIPMap.put("src_as_name", aux.get("src_as_name"));
+            geoIPMap.put("src_as_name", aux.get("as_name"));
         }
         
         if(event.containsKey("dst")) {
             ip = event.get("dst").toString();
             aux = getIPData(ip);
             geoIPMap.put("dst_country_code", aux.get("country_code"));
-            geoIPMap.put("dst_as_name", aux.get("src_as_name"));
+            geoIPMap.put("dst_as_name", aux.get("as_name"));
         }
 
-        collector.emit(new Values(event));
+        collector.emit(new Values(geoIPMap));
     }
 
     @Override
-        public void cleanup() {
+    public void cleanup() {
         _city.close();
         _city6.close();
         _asn.close();
