@@ -31,7 +31,7 @@ public class MobileBuilderFunction extends BaseFunction {
 
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
-        
+
         String path, type, imsi, ipAddress, rat;
         DocumentBuilderFactory factory;
         DocumentBuilder builder;
@@ -41,35 +41,39 @@ public class MobileBuilderFunction extends BaseFunction {
         Map<String, Object> event = new HashMap<>();
 
         try {
-            factory = DocumentBuilderFactory.newInstance();
-            factory.setNamespaceAware(true);
-            builder = factory.newDocumentBuilder();
-            document = builder.parse(new ByteArrayInputStream(xml.getBytes()));
-            document.getDocumentElement().normalize();
-        } catch (ParserConfigurationException | SAXException | IOException ex) {
-            Logger.getLogger(MobileBuilderFunction.class.getName()).log(Level.SEVERE, ex.toString());
-            return;
-        }
-        
-        try {
-            path = ((Attr) document.getDocumentElement().getAttributes().getNamedItem("path")).getValue();
-            type = ((Attr) document.getDocumentElement().getAttributes().getNamedItem("type")).getValue();
-            imsi = document.getElementsByTagName("imsi").item(0).getTextContent();
-            ipAddress = document.getElementsByTagName("ipAddress").item(0).getTextContent();
-            rat = document.getElementsByTagName("rat").item(0).getTextContent();
-        } catch (NullPointerException ex) {
-            Logger.getLogger(MobileBuilderFunction.class.getName()).log(Level.SEVERE, ex.toString());
-            return;
-        }
+            try {
+                factory = DocumentBuilderFactory.newInstance();
+                factory.setNamespaceAware(true);
+                builder = factory.newDocumentBuilder();
+                document = builder.parse(new ByteArrayInputStream(xml.getBytes()));
+                document.getDocumentElement().normalize();
+            } catch (ParserConfigurationException | SAXException | IOException ex) {
+                Logger.getLogger(MobileBuilderFunction.class.getName()).log(Level.SEVERE, ex.toString());
+                return;
+            }
 
-        event.put("path", path);
-        event.put("type", type);
-        event.put("imsi", imsi);
-        event.put("ipAddress", ipAddress);
-        event.put("rat", rat);
+            try {
+                path = ((Attr) document.getDocumentElement().getAttributes().getNamedItem("path")).getValue();
+                type = ((Attr) document.getDocumentElement().getAttributes().getNamedItem("type")).getValue();
+                imsi = document.getElementsByTagName("imsi").item(0).getTextContent();
+                ipAddress = document.getElementsByTagName("ipAddress").item(0).getTextContent();
+                rat = document.getElementsByTagName("rat").item(0).getTextContent();
+            } catch (NullPointerException ex) {
+                Logger.getLogger(MobileBuilderFunction.class.getName()).log(Level.SEVERE, ex.toString());
+                return;
+            }
 
-        collector.emit(new Values(ipAddress, event));
-        
+            event.put("path", path);
+            event.put("type", type);
+            event.put("imsi", imsi);
+            event.put("ipAddress", ipAddress);
+            event.put("rat", rat);
+
+            collector.emit(new Values(ipAddress, event));
+
+        } catch (NullPointerException e) {
+            Logger.getLogger(GetMSEdata.class.getName()).log(Level.SEVERE, "Failed reading a Mobile XML tuple", e);
+        }
     }
 
 }

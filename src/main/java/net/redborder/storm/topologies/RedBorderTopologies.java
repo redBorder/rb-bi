@@ -17,7 +17,7 @@ import net.redborder.storm.function.GeoIpFunction;
 import net.redborder.storm.function.GetFieldFunction;
 import net.redborder.storm.function.GetID;
 import net.redborder.storm.function.GetMSEdata;
-import net.redborder.storm.function.GetRSSIdata;
+import net.redborder.storm.function.GetTRAPdata;
 import net.redborder.storm.function.GetTweetID;
 import net.redborder.storm.function.JoinFlowFunction;
 import net.redborder.storm.function.MacVendorFunction;
@@ -264,7 +264,7 @@ public class RedBorderTopologies {
 
         TridentState rssiState = topology.newStream("rb_rssi", new TridentKafkaSpout("trap").builder())
                 .each(new Fields("str"), new MapperFunction(), new Fields("rssi"))
-                .each(new Fields("rssi"), new GetRSSIdata(), new Fields("rssiKey", "rssiValue"))
+                .each(new Fields("rssi"), new GetTRAPdata(), new Fields("rssiKey", "rssiValue"))
                 .partitionPersist(memcached, new Fields("rssiKey", "rssiValue"), new MemcachedUpdater("rssiKey", "rssiValue"));
 
         Stream flowStream = topology.newStream("rb_flow", new TridentKafkaSpout("traffics").builder())
@@ -316,7 +316,7 @@ public class RedBorderTopologies {
         /* RSSI DATA */
         TridentState rssiState = topology.newStream("rb_trap", new TridentKafkaSpout("trap").builder())
                 .each(new Fields("str"), new MapperFunction(), new Fields("rssi"))
-                .each(new Fields("rssi"), new GetRSSIdata(), new Fields("rssiKey", "rssiValue"))
+                .each(new Fields("rssi"), new GetTRAPdata(), new Fields("rssiKey", "rssiValue"))
                 .partitionPersist(memcachedRssi, new Fields("rssiKey", "rssiValue"), new MemcachedUpdater("rssiKey", "rssiValue"))
                 .parallelismHint(2);
 

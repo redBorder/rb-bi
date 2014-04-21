@@ -18,7 +18,7 @@ import storm.trident.tuple.TridentTuple;
  *
  * @author andresgomez
  */
-public class GetRSSIdata extends BaseFunction {
+public class GetTRAPdata extends BaseFunction {
 
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
