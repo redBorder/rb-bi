@@ -62,7 +62,7 @@ public class RedBorderTopologies {
     public TridentTopology twitterTopology() throws FileNotFoundException {
         TridentTopology topology = new TridentTopology();
 
-        StateFactory memcached = MemcachedState.transactional(_memConfig.getConfig(), _mseOpts);
+        StateFactory memcached = MemcachedState.transactional(_memConfig.getServers(), _mseOpts);
 
         TridentState tweetState = topology.newStream("twitterStream", new TwitterStreamTridentSpout())
                 .each(new Fields("tweet"), new MapperFunction(), new Fields("tweetMap"))
@@ -108,7 +108,7 @@ public class RedBorderTopologies {
     public TridentTopology flowMSEtopologyDelay() throws FileNotFoundException {
         TridentTopology topology = new TridentTopology();
 
-        StateFactory memcached = MemcachedState.transactional(_memConfig.getConfig(), _mseOpts);
+        StateFactory memcached = MemcachedState.transactional(_memConfig.getServers(), _mseOpts);
 
         TridentState mseState = topology.newStream("rb_mse", new TridentKafkaSpout("location").builder())
                 .each(new Fields("str"), new MapperFunction(), new Fields("mseMap"))
@@ -167,7 +167,7 @@ public class RedBorderTopologies {
     public TridentTopology flowMSEtopology() throws FileNotFoundException {
         TridentTopology topology = new TridentTopology();
 
-        StateFactory memcached = MemcachedState.transactional(_memConfig.getConfig(), _mseOpts);
+        StateFactory memcached = MemcachedState.transactional(_memConfig.getServers(), _mseOpts);
 
         TridentState mseState = topology.newStream("rb_mse", new TridentKafkaSpout("location").builder())
                 .each(new Fields("str"), new MapperFunction(), new Fields("mseMap"))
@@ -185,7 +185,7 @@ public class RedBorderTopologies {
 
     public TridentTopology Test() throws FileNotFoundException {
         TridentTopology topology = new TridentTopology();
-        StateFactory memcached = MemcachedState.transactional(_memConfig.getConfig(), _mseOpts);
+        StateFactory memcached = MemcachedState.transactional(_memConfig.getServers(), _mseOpts);
 
         TridentState mseState = topology.newStream("rb_mse", new TridentKafkaSpout("location").builder())
                 .each(new Fields("str"), new MapperFunction(), new Fields("mse_map"))
@@ -260,7 +260,7 @@ public class RedBorderTopologies {
 
         TridentTopology topology = new TridentTopology();
 
-        StateFactory memcached = MemcachedState.transactional(_memConfig.getConfig(), _mseOpts);
+        StateFactory memcached = MemcachedState.transactional(_memConfig.getServers(), _mseOpts);
 
         TridentState rssiState = topology.newStream("rb_rssi", new TridentKafkaSpout("trap").builder())
                 .each(new Fields("str"), new MapperFunction(), new Fields("rssi"))
@@ -283,19 +283,19 @@ public class RedBorderTopologies {
         TridentTopology topology = new TridentTopology();
 
         MemcachedState.Options mseOpts = new MemcachedState.Options();
-        mseOpts.expiration = 60 * 60 * 1000;
+        mseOpts.expiration = _memConfig.getTimeOut();
         mseOpts.globalKey = "rbbi-location:";
-        StateFactory memcachedLocation = MemcachedState.transactional(_memConfig.getConfig(), mseOpts);
+        StateFactory memcachedLocation = MemcachedState.transactional(_memConfig.getServers(), mseOpts);
 
         MemcachedState.Options rssiOpts = new MemcachedState.Options();
-        mseOpts.expiration = 60 * 60 * 1000;
+        mseOpts.expiration = _memConfig.getTimeOut();
         mseOpts.globalKey = "rbbi-trap:";
-        StateFactory memcachedRssi = MemcachedState.transactional(_memConfig.getConfig(), mseOpts);
+        StateFactory memcachedRssi = MemcachedState.transactional(_memConfig.getServers(), mseOpts);
 
         MemcachedState.Options mobileOpts = new MemcachedState.Options();
-        mseOpts.expiration = 60 * 60 * 1000;
+        mseOpts.expiration = _memConfig.getTimeOut();
         mseOpts.globalKey = "rbbi-mobile:";
-        StateFactory memcachedMobile = MemcachedState.transactional(_memConfig.getConfig(), mseOpts);
+        StateFactory memcachedMobile = MemcachedState.transactional(_memConfig.getServers(), mseOpts);
 
         /* LOCATION DATA */
         Stream mseStream = topology.newStream("rb_loc", new TridentKafkaSpout("location").builder())
