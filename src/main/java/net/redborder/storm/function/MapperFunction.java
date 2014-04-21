@@ -35,6 +35,8 @@ public class MapperFunction extends BaseFunction {
             }
             if (event != null) {
                 collector.emit(new Values(event));
+            } else {
+                Logger.getLogger(MapperFunction.class.getName()).log(Level.SEVERE, "Failed converting a JSON tuple to a Map class");
             }
         }
     }
