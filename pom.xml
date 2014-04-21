@@ -17,7 +17,7 @@
         <druid.version>0.6.58</druid.version>
         <finagle.version>6.11.1</finagle.version>
         <jackson.version>2.2.2</jackson.version>
-        <tranquility.version>0.1.16</tranquility.version>
+        <tranquility.version>0.1.17</tranquility.version>
     </properties>
 
     <repositories>
