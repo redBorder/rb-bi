@@ -7,9 +7,6 @@
 package net.redborder.storm.state.updater;
 
 import com.google.common.collect.Lists;
-import net.redborder.storm.util.state.KeyUtils;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import storm.trident.operation.TridentCollector;

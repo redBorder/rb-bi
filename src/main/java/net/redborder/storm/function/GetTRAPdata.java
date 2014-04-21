@@ -35,7 +35,7 @@ public class GetTRAPdata extends BaseFunction {
 
             collector.emit(new Values(macAddress, rssiData));
         } catch (NullPointerException e) {
-            Logger.getLogger(GetMSEdata.class.getName()).log(Level.SEVERE, "Failed reading a TRAP JSON tuple", e);
+            Logger.getLogger(GetTRAPdata.class.getName()).log(Level.SEVERE, "Failed reading a TRAP JSON tuple", e);
         }
     }
 
