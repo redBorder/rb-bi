@@ -78,7 +78,6 @@ public class GetMSEdata extends BaseFunction {
                 mseDataDruid.put("band", location.get("band").toString());
                 mseDataDruid.put("src", ip.get(0).toString());
             }
-
             collector.emit(new Values(macAddress, mseData, mseDataDruid));
         } catch (NullPointerException e) {
             Logger.getLogger(GetMSEdata.class.getName()).log(Level.SEVERE, "Failed reading a MSE JSON tuple", e);

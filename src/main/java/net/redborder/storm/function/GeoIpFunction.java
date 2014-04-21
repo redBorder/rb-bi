@@ -55,7 +55,7 @@ public class GeoIpFunction extends BaseFunction {
         Map<String, Object> eventMap = new HashMap<>();
         Matcher match = CheckIp.VALID_IPV4_PATTERN.matcher(ip);
         String asnInfo;
-              
+
         if (match.matches()) {
             location = _city.getLocation(ip);
             asnInfo = _asn.getOrg(ip);
@@ -98,7 +98,7 @@ public class GeoIpFunction extends BaseFunction {
              if (location.dma_code != 0) {
              event.put("Dma_Code" + where, location.dma_code);
              } */
-            
+
             if (asnInfo != null) {
                 String[] asn = asnInfo.split(" ", 2);
                 // event.put("AsnNum" + where, asn[0]);
@@ -115,7 +115,6 @@ public class GeoIpFunction extends BaseFunction {
         //        event.put("Distance", locationSrc.distance(location));
         //     }
         //}
-        
         return eventMap;
     }
 
@@ -127,20 +126,19 @@ public class GeoIpFunction extends BaseFunction {
         Map<String, Object> aux;
         String ip;
 
-        if(event.containsKey("src")) {
+        if (event.containsKey("src")) {
             ip = event.get("src").toString();
             aux = getIPData(ip);
             geoIPMap.put("src_country_code", aux.get("country_code"));
-            geoIPMap.put("src_as_name", aux.get("as_name"));
+            geoIPMap.put("src_as_name", aux.get("asn_name"));
         }
-        
-        if(event.containsKey("dst")) {
+
+        if (event.containsKey("dst")) {
             ip = event.get("dst").toString();
             aux = getIPData(ip);
             geoIPMap.put("dst_country_code", aux.get("country_code"));
-            geoIPMap.put("dst_as_name", aux.get("as_name"));
+            geoIPMap.put("dst_as_name", aux.get("asn_name"));
         }
-
         collector.emit(new Values(geoIPMap));
     }
 
