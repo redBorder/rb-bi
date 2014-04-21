@@ -236,7 +236,7 @@
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
-                    <finalName>redBorder-BI-1.0-selfcontained</finalName>
+                    <finalName>${artifactId}-${version}-selfcontained</finalName>
                     <appendAssemblyId>false</appendAssemblyId>
                     <archive>
                         <manifest>
