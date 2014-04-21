@@ -31,7 +31,7 @@ public class MapperFunction extends BaseFunction {
             try {
                 event = mapper.readValue(jsonEvent, Map.class);
             } catch (IOException ex) {
-                Logger.getLogger(MapperFunction.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(MapperFunction.class.getName()).log(Level.SEVERE, "Failed reading a JSON tuple", ex);
             }
             if (event != null) {
                 collector.emit(new Values(event));

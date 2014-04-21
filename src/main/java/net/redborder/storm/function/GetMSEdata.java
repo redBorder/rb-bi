@@ -59,9 +59,9 @@ public class GetMSEdata extends BaseFunction {
         mseDataDruid.put("pkts", 0);
         
         DateTime date = new DateTime(mseEventContent.get("timestamp").toString());
-        System.out.println(date.withZone(DateTimeZone.UTC).getMillis()/1000);
+        //System.out.println(date.withZone(DateTimeZone.UTC).getMillis()/1000);
         
-        mseDataDruid.put("timestamp", zone);
+        mseDataDruid.put("timestamp", date.withZone(DateTimeZone.UTC).getMillis()/1000);
         
         String state = location.get("dot11Status").toString();
         
