@@ -37,10 +37,10 @@ public class MemcachedQuery extends BaseQueryFunction<MapState<Map<String, Objec
         
         for (TridentTuple t : tuples) {
             String key = (String) t.getValueByField(_key);
-            keysToAppend.add(key);
+            keysToAppend.add("rbbi:"+key);
             
             if(!key.equals("null") && !keysToRequest.contains(key)) {
-                keysToRequest.add(key);
+                keysToRequest.add("rbbi:"+key);
             }
         }
         

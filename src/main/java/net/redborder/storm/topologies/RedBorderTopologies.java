@@ -283,18 +283,18 @@ public class RedBorderTopologies {
         TridentTopology topology = new TridentTopology();
 
         MemcachedState.Options mseOpts = new MemcachedState.Options();
-        mseOpts.expiration = 60000;
-        mseOpts.globalKey = "location";
+        mseOpts.expiration = 60 * 60 * 1000;
+        mseOpts.globalKey = "rbbi-location:";
         StateFactory memcachedLocation = MemcachedState.transactional(_memConfig.getConfig(), mseOpts);
 
         MemcachedState.Options rssiOpts = new MemcachedState.Options();
-        mseOpts.expiration = 60000;
-        mseOpts.globalKey = "rssi";
+        mseOpts.expiration = 60 * 60 * 1000;
+        mseOpts.globalKey = "rbbi-trap:";
         StateFactory memcachedRssi = MemcachedState.transactional(_memConfig.getConfig(), mseOpts);
 
         MemcachedState.Options mobileOpts = new MemcachedState.Options();
-        mseOpts.expiration = 60000;
-        mseOpts.globalKey = "mobile";
+        mseOpts.expiration = 60 * 60 * 1000;
+        mseOpts.globalKey = "rbbi-mobile:";
         StateFactory memcachedMobile = MemcachedState.transactional(_memConfig.getConfig(), mseOpts);
 
         /* LOCATION DATA */
