@@ -61,7 +61,7 @@ public class GetMSEdata extends BaseFunction {
             mseData.put("sta_mac_address_floor", zone[2]);
 
             mseDataDruid.putAll(mseData);
-            mseDataDruid.put("client-mac", macAddress);
+            mseDataDruid.put("client_mac", macAddress);
             mseDataDruid.put("bytes", 0);
             mseDataDruid.put("pkts", 0);
 
