@@ -282,22 +282,6 @@ public class RedBorderTopologies {
 
     public TridentTopology all() throws FileNotFoundException {
         TridentTopology topology = new TridentTopology();
-
-        MemcachedState.Options mseOpts = new MemcachedState.Options();
-        mseOpts.expiration = _memConfig.getTimeOut();
-        mseOpts.globalKey = "rbbi-location";
-        StateFactory memcachedLocation = MemcachedState.transactional(_memConfig.getServers(), mseOpts);
-
-        MemcachedState.Options rssiOpts = new MemcachedState.Options();
-        mseOpts.expiration = _memConfig.getTimeOut();
-        mseOpts.globalKey = "rbbi-trap";
-        StateFactory memcachedRssi = MemcachedState.transactional(_memConfig.getServers(), mseOpts);
-
-        MemcachedState.Options mobileOpts = new MemcachedState.Options();
-        mseOpts.expiration = _memConfig.getTimeOut();
-        mseOpts.globalKey = "rbbi-mobile";
-        StateFactory memcachedMobile = MemcachedState.transactional(_memConfig.getServers(), mseOpts);
-
         
         MemoryMapState.Factory MapState = new MemoryMapState.Factory(); 
         
@@ -314,14 +298,14 @@ public class RedBorderTopologies {
         /* MOBILE DATA */
         TridentState mobileState = topology.newStream("rb_mobile", new TridentKafkaSpout("mobile").builder())
                 .each(new Fields("str"), new MobileBuilderFunction(), new Fields("ip_addr", "mobile"))
-                .partitionPersist(memcachedMobile, new Fields("ip_addr", "mobile"), new MemcachedUpdater("ip_addr", "mobile", "rb_mobile"))
+                .partitionPersist(MapState, new Fields("ip_addr", "mobile"), new MemcachedUpdater("ip_addr", "mobile", "rb_mobile"))
                 .parallelismHint(2);
 
         /* RSSI DATA */
         TridentState rssiState = topology.newStream("rb_trap", new TridentKafkaSpout("trap").builder())
                 .each(new Fields("str"), new MapperFunction(), new Fields("rssi"))
                 .each(new Fields("rssi"), new GetTRAPdata(), new Fields("rssiKey", "rssiValue"))
-                .partitionPersist(memcachedRssi, new Fields("rssiKey", "rssiValue"), new MemcachedUpdater("rssiKey", "rssiValue", "rb_trap"))
+                .partitionPersist(MapState, new Fields("rssiKey", "rssiValue"), new MemcachedUpdater("rssiKey", "rssiValue", "rb_trap"))
                 .parallelismHint(2);
 
         /* FLOW STREAM */
@@ -382,7 +366,7 @@ public class RedBorderTopologies {
                 .each(new Fields("flows", "mseMap", "macVendorMap", "geoIPMap", "mobileMap", "rssiMap", "httpUrlMap"), new JoinFlowFunction(), new Fields("finalMap"))
                 //.each(new Fields("finalMap"), new PrinterFunction("----"), new Fields(""))
                 .partitionPersist(druidStateFlow, new Fields("finalMap"), new TridentBeamStateUpdater())
-                .parallelismHint(6);
+                .parallelismHint(20);
         
         mseStream
                 .project(new Fields("mse_data_druid"))
