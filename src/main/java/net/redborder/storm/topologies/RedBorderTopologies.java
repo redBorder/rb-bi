@@ -42,6 +42,7 @@ import storm.trident.TridentState;
 import storm.trident.TridentTopology;
 import storm.trident.operation.builtin.FilterNull;
 import storm.trident.state.StateFactory;
+import storm.trident.testing.MemoryMapState;
 
 /**
  *
@@ -284,19 +285,22 @@ public class RedBorderTopologies {
 
         MemcachedState.Options mseOpts = new MemcachedState.Options();
         mseOpts.expiration = _memConfig.getTimeOut();
-        mseOpts.globalKey = "rbbi-location:";
+        mseOpts.globalKey = "rbbi-location";
         StateFactory memcachedLocation = MemcachedState.transactional(_memConfig.getServers(), mseOpts);
 
         MemcachedState.Options rssiOpts = new MemcachedState.Options();
         mseOpts.expiration = _memConfig.getTimeOut();
-        mseOpts.globalKey = "rbbi-trap:";
+        mseOpts.globalKey = "rbbi-trap";
         StateFactory memcachedRssi = MemcachedState.transactional(_memConfig.getServers(), mseOpts);
 
         MemcachedState.Options mobileOpts = new MemcachedState.Options();
         mseOpts.expiration = _memConfig.getTimeOut();
-        mseOpts.globalKey = "rbbi-mobile:";
+        mseOpts.globalKey = "rbbi-mobile";
         StateFactory memcachedMobile = MemcachedState.transactional(_memConfig.getServers(), mseOpts);
 
+        
+        //MemoryMapState.Factory MapState = new MemoryMapState.Factory(); 
+        
         /* LOCATION DATA */
         Stream mseStream = topology.newStream("rb_loc", new TridentKafkaSpout("location").builder())
                 .each(new Fields("str"), new MapperFunction(), new Fields("mse_map"))
