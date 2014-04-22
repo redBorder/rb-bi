@@ -20,10 +20,17 @@ import storm.trident.tuple.TridentTuple;
 public class MemcachedUpdater extends BaseStateUpdater<MapState<Map<String, Object>>> {
     String _key;
     String _value;
+    String _generalKey;
     
     public MemcachedUpdater(String key, String value){
         _key=key;
         _value=value;
+        _generalKey="rbbi:none:";
+    }
+    
+    public MemcachedUpdater(String key, String value, String generalKey){
+        this(key, value);
+        _generalKey="rbbi:" + generalKey + ":";
     }
 
     @Override
@@ -32,11 +39,11 @@ public class MemcachedUpdater extends BaseStateUpdater<MapState<Map<String, Obje
         List<List<Object>> keys = Lists.newArrayList();
         for (TridentTuple t : tuples) {
             List<Object> l = Lists.newArrayList();
-            l.add("rbbi:"+t.getValueByField(_key));
+            l.add(_generalKey+t.getValueByField(_key));
             keys.add(l);
             events.add((Map<String, Object>) t.getValueByField(_value));
             
-            System.out.println("SAVED TO MEMCACHED KEY: " + "rbbi:"+t.getValueByField(_key) +
+            System.out.println("SAVED TO MEMCACHED KEY: " + _generalKey +t.getValueByField(_key) +
                     " VALUE: " + t.getValueByField(_value));
         }
         state.multiPut(keys, events);

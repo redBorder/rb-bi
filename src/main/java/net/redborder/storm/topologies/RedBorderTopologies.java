@@ -304,20 +304,20 @@ public class RedBorderTopologies {
         
         TridentState mseState = mseStream
                 .project(new Fields("src_mac", "mse_data"))
-                .partitionPersist(memcachedLocation, new Fields("src_mac", "mse_data"), new MemcachedUpdater("src_mac", "mse_data"))
+                .partitionPersist(memcachedLocation, new Fields("src_mac", "mse_data"), new MemcachedUpdater("src_mac", "mse_data", "rb_loc"))
                 .parallelismHint(2);
 
         /* MOBILE DATA */
         TridentState mobileState = topology.newStream("rb_mobile", new TridentKafkaSpout("mobile").builder())
                 .each(new Fields("str"), new MobileBuilderFunction(), new Fields("ip_addr", "mobile"))
-                .partitionPersist(memcachedMobile, new Fields("ip_addr", "mobile"), new MemcachedUpdater("ip_addr", "mobile"))
+                .partitionPersist(memcachedMobile, new Fields("ip_addr", "mobile"), new MemcachedUpdater("ip_addr", "mobile", "rb_mobile"))
                 .parallelismHint(2);
 
         /* RSSI DATA */
         TridentState rssiState = topology.newStream("rb_trap", new TridentKafkaSpout("trap").builder())
                 .each(new Fields("str"), new MapperFunction(), new Fields("rssi"))
                 .each(new Fields("rssi"), new GetTRAPdata(), new Fields("rssiKey", "rssiValue"))
-                .partitionPersist(memcachedRssi, new Fields("rssiKey", "rssiValue"), new MemcachedUpdater("rssiKey", "rssiValue"))
+                .partitionPersist(memcachedRssi, new Fields("rssiKey", "rssiValue"), new MemcachedUpdater("rssiKey", "rssiValue", "rb_trap"))
                 .parallelismHint(2);
 
         /* FLOW STREAM */
@@ -328,13 +328,13 @@ public class RedBorderTopologies {
 
         Stream locationStream = flowStream
                 .each(new Fields("flows"), new GetFieldFunction("client_mac"), new Fields("mac_src_flow"))
-                .stateQuery(mseState, new Fields("mac_src_flow"), new MemcachedQuery("mac_src_flow"), new Fields("mseMap"))
+                .stateQuery(mseState, new Fields("mac_src_flow"), new MemcachedQuery("mac_src_flow", "rb_loc"), new Fields("mseMap"))
                 .project(new Fields("flows", "mseMap"))
                 .parallelismHint(2);
 
-        Stream rssiStream = flowStream
+        Stream trapStream = flowStream
                 .each(new Fields("flows"), new GetFieldFunction("client_mac"), new Fields("mac_src_flow"))
-                .stateQuery(rssiState, new Fields("mac_src_flow"), new MemcachedQuery("mac_src_flow"), new Fields("rssiMap"))
+                .stateQuery(rssiState, new Fields("mac_src_flow"), new MemcachedQuery("mac_src_flow", "rb_trap"), new Fields("rssiMap"))
                 .project(new Fields("flows", "rssiMap"))
                 .parallelismHint(2);
 
@@ -350,9 +350,9 @@ public class RedBorderTopologies {
                 .each(new Fields("flows"), new AnalizeHttpUrlFunction(), new Fields("httpUrlMap"))
                 .parallelismHint(2);
 
-        Stream imsiStream = flowStream
+        Stream mobileStream = flowStream
                 .each(new Fields("flows"), new GetFieldFunction("src"), new Fields("src_ip_addr"))
-                .stateQuery(mobileState, new Fields("src_ip_addr"), new MemcachedQuery("src_ip_addr"), new Fields("mobileMap"))
+                .stateQuery(mobileState, new Fields("src_ip_addr"), new MemcachedQuery("src_ip_addr", "rb_mobile"), new Fields("mobileMap"))
                 .project(new Fields("flows", "mobileMap"))
                 .parallelismHint(2);
 
@@ -360,8 +360,8 @@ public class RedBorderTopologies {
         joinStream.add(locationStream);
         joinStream.add(macVendorStream);
         joinStream.add(geoIPStream);
-        joinStream.add(imsiStream);
-        joinStream.add(rssiStream);
+        joinStream.add(mobileStream);
+        joinStream.add(trapStream);
         joinStream.add(httpUrlStream);
 
         List<Fields> keyFields = new ArrayList<>();

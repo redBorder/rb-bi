@@ -23,9 +23,16 @@ import storm.trident.tuple.TridentTuple;
 public class MemcachedQuery extends BaseQueryFunction<MapState<Map<String, Object>>, Map<String, Object>> {
 
     String _key;
+    String _generalkey;
 
     public MemcachedQuery(String key) {
         _key = key;
+        _generalkey = "rbbi:none:";
+    }
+    
+    public MemcachedQuery(String key, String generalKey) {
+        this(key);
+        _generalkey="rbbi:"+generalKey+":";
     }
 
     @Override
@@ -37,10 +44,10 @@ public class MemcachedQuery extends BaseQueryFunction<MapState<Map<String, Objec
         
         for (TridentTuple t : tuples) {
             String key = (String) t.getValueByField(_key);
-            keysToAppend.add("rbbi:"+key);
+            keysToAppend.add(_generalkey+key);
             
             if(!key.equals("null") && !keysToRequest.contains(key)) {
-                keysToRequest.add("rbbi:"+key);
+                keysToRequest.add(_generalkey+key);
             }
         }
         
