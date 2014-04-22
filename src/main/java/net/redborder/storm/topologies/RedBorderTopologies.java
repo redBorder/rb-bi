@@ -299,7 +299,7 @@ public class RedBorderTopologies {
         StateFactory memcachedMobile = MemcachedState.transactional(_memConfig.getServers(), mseOpts);
 
         
-        //MemoryMapState.Factory MapState = new MemoryMapState.Factory(); 
+        MemoryMapState.Factory MapState = new MemoryMapState.Factory(); 
         
         /* LOCATION DATA */
         Stream mseStream = topology.newStream("rb_loc", new TridentKafkaSpout("location").builder())
@@ -308,7 +308,7 @@ public class RedBorderTopologies {
         
         TridentState mseState = mseStream
                 .project(new Fields("src_mac", "mse_data"))
-                .partitionPersist(memcachedLocation, new Fields("src_mac", "mse_data"), new MemcachedUpdater("src_mac", "mse_data", "rb_loc"))
+                .partitionPersist(MapState, new Fields("src_mac", "mse_data"), new MemcachedUpdater("src_mac", "mse_data", "rb_loc"))
                 .parallelismHint(2);
 
         /* MOBILE DATA */
