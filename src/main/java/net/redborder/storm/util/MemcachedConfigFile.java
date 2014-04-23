@@ -44,9 +44,16 @@ public class MemcachedConfigFile {
             Logger.getLogger(MemcachedConfigFile.class.getName()).log(Level.SEVERE, "Servers not found.");
         }
 
-        Long timeoutLong = new Long((Integer) production.get("timeout"));
-        this.timeout = timeoutLong;
-        
+        try {
+            Long timeoutLong = new Long((Integer) production.get("timeout"));
+
+            if (timeoutLong != null) {
+                this.timeout = timeoutLong;
+            }
+        } catch (NullPointerException ex) {
+            Logger.getLogger(MemcachedConfigFile.class.getName()).log(Level.SEVERE, "Timeout not found. Default: 5 min");
+        }
+
     }
 
     public List<InetSocketAddress> getServers() {

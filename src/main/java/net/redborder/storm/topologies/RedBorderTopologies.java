@@ -293,56 +293,56 @@ public class RedBorderTopologies {
         TridentState mseState = mseStream
                 .project(new Fields("src_mac", "mse_data"))
                 .partitionPersist(MapState, new Fields("src_mac", "mse_data"), new MemcachedUpdater("src_mac", "mse_data", "rb_loc"))
-                .parallelismHint(2);
+                .parallelismHint(6);
 
         /* MOBILE DATA */
         TridentState mobileState = topology.newStream("rb_mobile", new TridentKafkaSpout("mobile").builder())
                 .each(new Fields("str"), new MobileBuilderFunction(), new Fields("ip_addr", "mobile"))
                 .partitionPersist(MapState, new Fields("ip_addr", "mobile"), new MemcachedUpdater("ip_addr", "mobile", "rb_mobile"))
-                .parallelismHint(2);
+                .parallelismHint(6);
 
         /* RSSI DATA */
         TridentState rssiState = topology.newStream("rb_trap", new TridentKafkaSpout("trap").builder())
                 .each(new Fields("str"), new MapperFunction(), new Fields("rssi"))
                 .each(new Fields("rssi"), new GetTRAPdata(), new Fields("rssiKey", "rssiValue"))
                 .partitionPersist(MapState, new Fields("rssiKey", "rssiValue"), new MemcachedUpdater("rssiKey", "rssiValue", "rb_trap"))
-                .parallelismHint(2);
+                .parallelismHint(6);
 
         /* FLOW STREAM */
         Stream flowStream = topology.newStream("rb_flow", new TridentKafkaSpout("traffics").builder())
                 .each(new Fields("str"), new MapperFunction(), new Fields("flows"))
                 .project(new Fields("flows"))
-                .parallelismHint(2);
+                .parallelismHint(6);
 
         Stream locationStream = flowStream
                 .each(new Fields("flows"), new GetFieldFunction("client_mac"), new Fields("mac_src_flow"))
                 .stateQuery(mseState, new Fields("mac_src_flow"), new MemcachedQuery("mac_src_flow", "rb_loc"), new Fields("mseMap"))
                 .project(new Fields("flows", "mseMap"))
-                .parallelismHint(2);
+                .parallelismHint(6);
 
         Stream trapStream = flowStream
                 .each(new Fields("flows"), new GetFieldFunction("client_mac"), new Fields("mac_src_flow"))
                 .stateQuery(rssiState, new Fields("mac_src_flow"), new MemcachedQuery("mac_src_flow", "rb_trap"), new Fields("rssiMap"))
                 .project(new Fields("flows", "rssiMap"))
-                .parallelismHint(2);
+                .parallelismHint(6);
 
         Stream macVendorStream = flowStream
                 .each(new Fields("flows"), new MacVendorFunction(), new Fields("macVendorMap"))
-                .parallelismHint(2);
+                .parallelismHint(6);
 
         Stream geoIPStream = flowStream
                 .each(new Fields("flows"), new GeoIpFunction(), new Fields("geoIPMap"))
-                .parallelismHint(2);
+                .parallelismHint(6);
 
         Stream httpUrlStream = flowStream
                 .each(new Fields("flows"), new AnalizeHttpUrlFunction(), new Fields("httpUrlMap"))
-                .parallelismHint(2);
+                .parallelismHint(6);
 
         Stream mobileStream = flowStream
                 .each(new Fields("flows"), new GetFieldFunction("src"), new Fields("src_ip_addr"))
                 .stateQuery(mobileState, new Fields("src_ip_addr"), new MemcachedQuery("src_ip_addr", "rb_mobile"), new Fields("mobileMap"))
                 .project(new Fields("flows", "mobileMap"))
-                .parallelismHint(2);
+                .parallelismHint(6);
 
         List<Stream> joinStream = new ArrayList<>();
         joinStream.add(locationStream);
@@ -366,7 +366,7 @@ public class RedBorderTopologies {
                 .each(new Fields("flows", "mseMap", "macVendorMap", "geoIPMap", "mobileMap", "rssiMap", "httpUrlMap"), new JoinFlowFunction(), new Fields("finalMap"))
                 //.each(new Fields("finalMap"), new PrinterFunction("----"), new Fields(""))
                 .partitionPersist(druidStateFlow, new Fields("finalMap"), new TridentBeamStateUpdater())
-                .parallelismHint(20);
+                .parallelismHint(30);
         
         mseStream
                 .project(new Fields("mse_data_druid"))
