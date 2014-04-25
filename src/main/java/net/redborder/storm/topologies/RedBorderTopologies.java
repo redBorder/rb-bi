@@ -366,7 +366,7 @@ public class RedBorderTopologies {
                 .each(new Fields("flows", "mseMap", "macVendorMap", "geoIPMap", "mobileMap", "rssiMap", "httpUrlMap"), new JoinFlowFunction(), new Fields("finalMap"))
                 //.each(new Fields("finalMap"), new PrinterFunction("----"), new Fields(""))
                 .partitionPersist(druidStateFlow, new Fields("finalMap"), new TridentBeamStateUpdater())
-                .parallelismHint(30);
+                .parallelismHint(6);
         
         mseStream
                 .project(new Fields("mse_data_druid"))

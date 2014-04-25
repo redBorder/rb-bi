@@ -33,6 +33,8 @@ public class JoinFlowFunction extends BaseFunction {
             }
         }
 
+        flow.put("dot11_status", "ASSOCIATED");
+        
         collector.emit(new Values(flow));
     }
 
