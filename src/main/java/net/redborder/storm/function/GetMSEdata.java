@@ -44,10 +44,10 @@ public class GetMSEdata extends BaseFunction {
             mapHierachy = mapInfo.get("mapHierarchyString").toString();
 
             lattitude = (Double) geoCoordinate.get("lattitude");
-            lattitude = (double) Math.round(lattitude * 10000) / 10000;
+            lattitude = (double) Math.round(lattitude * 100000) / 100000;
 
             longitude = (Double) geoCoordinate.get("longitude");
-            longitude = (double) Math.round(longitude * 10000) / 10000;
+            longitude = (double) Math.round(longitude * 100000) / 100000;
             locationFormat = lattitude.toString() + "," + longitude.toString();        
 
             mseData.put("sta_mac_address_lat", lattitude.toString());

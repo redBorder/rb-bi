@@ -12,6 +12,7 @@ import java.util.logging.Logger;
 import net.redborder.storm.util.KafkaConfigFile;
 import storm.kafka.StringScheme;
 import storm.kafka.ZkHosts;
+import storm.kafka.trident.OpaqueTridentKafkaSpout;
 import storm.kafka.trident.TransactionalTridentKafkaSpout;
 import storm.kafka.trident.TridentKafkaConfig;
 

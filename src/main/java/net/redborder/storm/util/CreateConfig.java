@@ -56,7 +56,7 @@ public class CreateConfig {
             conf.setMaxTaskParallelism(1);
             conf.setDebug(false);
         } else if (_mode.equals("cluster")) {
-            // ...
+            conf.put(Config.TOPOLOGY_WORKERS, 3);
         }
     }
 
