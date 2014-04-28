@@ -82,8 +82,10 @@ public class MemcachedQuery extends BaseQueryFunction<MapState<Map<String, Objec
     public void execute(TridentTuple tuple, Map<String, Object> result, TridentCollector collector) {
         if (result == null) {
             Map<String,Object> empty = new HashMap<>();
+            empty.put("dot11_status", "ASSOCIATED");
             collector.emit(new Values(empty));
         } else {
+            result.put("dot11_status", "ASSOCIATED");
             collector.emit(new Values(result));
         }
     }

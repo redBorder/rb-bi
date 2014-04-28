@@ -32,8 +32,6 @@ public class JoinFlowFunction extends BaseFunction {
                 flow.putAll(valueMap);
             }
         }
-
-        flow.put("dot11_status", "ASSOCIATED");
         
         collector.emit(new Values(flow));
     }
