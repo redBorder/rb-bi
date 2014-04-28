@@ -57,7 +57,7 @@ public class CreateConfig {
             conf.setDebug(false);
         } else if (_mode.equals("cluster")) {
             conf.put(Config.TOPOLOGY_WORKERS, 3);
-            conf.put(Config.TOPOLOGY_MAX_SPOUT_PENDING, 10);
+            //conf.put(Config.TOPOLOGY_MAX_SPOUT_PENDING, 10);
         }
     }
 

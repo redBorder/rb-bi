@@ -26,11 +26,12 @@ public class TridentKafkaSpout {
     /**
      * Constructor
      *
+     * @param config
      * @param section Section of the kafka config file to read properties from.
      * @throws java.io.FileNotFoundException
      */
-    public TridentKafkaSpout(String section) throws FileNotFoundException {
-        _configFile = new KafkaConfigFile(section);
+    public TridentKafkaSpout(KafkaConfigFile config, String section) throws FileNotFoundException {
+        _configFile = config;
         _kafkaConfig = new TridentKafkaConfig(new ZkHosts(_configFile.getZkHost()), _configFile.getTopic(), "stormKafka");
         _kafkaConfig.scheme = new SchemeAsMultiScheme(new StringScheme());
         _kafkaConfig.forceFromStart = false;

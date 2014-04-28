@@ -20,6 +20,7 @@ public class KafkaConfigFile {
 
     String _topic;
     String _zkHost;
+    String _outputTopic;
     Map<String, Object> _data;
     
     final String CONFIG_FILE_PATH = "/opt/rb/etc/redBorder-BI/zk_config.yml";
@@ -55,8 +56,14 @@ public class KafkaConfigFile {
         Map<String, Object> config = (Map<String, Object>) _data.get(section);
 
         if (config != null) {
-            _topic = config.get("datasource").toString();
+            Object outputTopic = config.get("output_topic");
+            _topic = config.get("input_topic").toString();
             _zkHost = config.get("zk_connect").toString();
+            if (outputTopic != null) {
+                _outputTopic = outputTopic.toString();
+            } else {
+                _outputTopic = null;
+            }
         } else {
             Logger.getLogger(KafkaConfigFile.class.getName()).log(Level.SEVERE, "Section not found");
             _zkHost = "localhost";
@@ -80,5 +87,14 @@ public class KafkaConfigFile {
      */
     public String getZkHost() {
         return _zkHost;
+    }
+    
+    /**
+     * Getter.
+     *
+     * @return output topic name
+     */
+    public String getOutputTopic() {
+        return _outputTopic;
     }
 }

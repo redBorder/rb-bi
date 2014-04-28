@@ -33,6 +33,7 @@ import net.redborder.storm.state.query.MemcachedQuery;
 import net.redborder.storm.state.query.TwitterQuery;
 import net.redborder.storm.state.updater.MemcachedUpdater;
 import net.redborder.storm.state.updater.twitterUpdater;
+import net.redborder.storm.util.KafkaConfigFile;
 import net.redborder.storm.util.MemcachedConfigFile;
 import net.redborder.storm.util.druid.MyBeamFactoryMapEvent;
 import net.redborder.storm.util.druid.MyBeamFactoryMapFlow;
@@ -52,12 +53,15 @@ public class RedBorderTopologies {
 
     MemcachedConfigFile _memConfig;
     MemcachedState.Options _mseOpts;
+    KafkaConfigFile _kafkaConfig;
 
     public RedBorderTopologies() throws FileNotFoundException {
         _memConfig = new MemcachedConfigFile();
-        
+
         _mseOpts = new MemcachedState.Options();
         _mseOpts.expiration = 60000;
+
+        _kafkaConfig = new KafkaConfigFile("traffics");
     }
 
     public TridentTopology twitterTopology() throws FileNotFoundException {
@@ -72,7 +76,7 @@ public class RedBorderTopologies {
                 .partitionBy(new Fields("userTwitterID"))
                 .partitionPersist(memcached, new Fields("tweetMap", "userTwitterID"), new twitterUpdater());
 
-        topology.newStream("rb_monitor", new TridentKafkaSpout("monitor").builder())
+        topology.newStream("rb_monitor", new TridentKafkaSpout(_kafkaConfig, "monitor").builder())
                 .each(new Fields("str"), new MapperFunction(), new Fields("event"))
                 .each(new Fields("event"), new GetID(), new Fields("id"))
                 .stateQuery(tweetState, new Fields("id", "event"), new TwitterQuery(), new Fields("eventTwitter"))
@@ -87,19 +91,19 @@ public class RedBorderTopologies {
 
         StateFactory druidStateMonitor = new TridentBeamStateFactory<>(new MyBeamFactoryMapMonitor());
 
-        topology.newStream("rb_monitor", new TridentKafkaSpout("mobile").builder())
+        topology.newStream("rb_monitor", new TridentKafkaSpout(_kafkaConfig, "mobile").builder())
                 .each(new Fields("str"), new MapperFunction(), new Fields("event"))
                 .partitionPersist(druidStateMonitor, new Fields("event"), new TridentBeamStateUpdater());
 
         StateFactory druidStateEvent = new TridentBeamStateFactory<>(new MyBeamFactoryMapEvent());
 
-        topology.newStream("rb_event", new TridentKafkaSpout("events").builder())
+        topology.newStream("rb_event", new TridentKafkaSpout(_kafkaConfig, "events").builder())
                 .each(new Fields("str"), new MapperFunction(), new Fields("event"))
                 .partitionPersist(druidStateEvent, new Fields("event"), new TridentBeamStateUpdater());
 
         StateFactory druidStateFlow = new TridentBeamStateFactory<>(new MyBeamFactoryMapFlow());
 
-        topology.newStream("rb_flow", new TridentKafkaSpout("traffics").builder())
+        topology.newStream("rb_flow", new TridentKafkaSpout(_kafkaConfig, "traffics").builder())
                 .each(new Fields("str"), new MapperFunction(), new Fields("event"))
                 .partitionPersist(druidStateFlow, new Fields("event"), new TridentBeamStateUpdater());
 
@@ -111,7 +115,7 @@ public class RedBorderTopologies {
 
         StateFactory memcached = MemcachedState.transactional(_memConfig.getServers(), _mseOpts);
 
-        TridentState mseState = topology.newStream("rb_mse", new TridentKafkaSpout("location").builder())
+        TridentState mseState = topology.newStream("rb_mse", new TridentKafkaSpout(_kafkaConfig, "location").builder())
                 .each(new Fields("str"), new MapperFunction(), new Fields("mseMap"))
                 .each(new Fields("mseMap"), new GetMSEdata(), new Fields("mac_src_mse", "geoLocationMSE"))
                 .partitionPersist(memcached, new Fields("geoLocationMSE", "mac_src_mse"), new MemcachedUpdater("mac_src_mse", "geoLocationMSE"));
@@ -120,26 +124,20 @@ public class RedBorderTopologies {
         // flowOpts.expiration = 20000;
         // flowOpts.keyBuilder = new ConcatKeyBuilder("flowsNOenriched");
         // StateFactory flowsNoMemcached = MemcachedMultipleState.transactional(Arrays.asList(new InetSocketAddress("localhost", PORT)), flowOpts);
-        Stream flowsMse = topology.newStream("rb_flow", new TridentKafkaSpout("traffics").builder())
+        Stream flowsMse = topology.newStream("rb_flow", new TridentKafkaSpout(_kafkaConfig, "traffics").builder())
                 .each(new Fields("str"), new MapperFunction(), new Fields("flowsMap"))
                 .each(new Fields("flowsMap"), new GetFieldFunction("mac_src"), new Fields("mac_src_flow"))
                 .stateQuery(mseState, new Fields("mac_src_flow"), new MemcachedQuery("mac_src_flow"), new Fields("flowMseOK", "flowMseKO"));
 
         StateFactory druidStateFlow = new TridentBeamStateFactory<>(new MyBeamFactoryMapFlow());
 
-        Properties props = new Properties();
-
-        props.put("metadata.broker.list", "localhost:9092");
-        props.put("serializer.class", "kafka.serializer.StringEncoder");
-        props.put("request.required.acks", "1");
-
         flowsMse.project(new Fields("flowMseKO"))
                 .each(new Fields("flowMseKO"), new FilterNull())
                 .each(new Fields("flowMseKO"), new MapToJSONFunction(), new Fields("jsonFlowMseKO"))
                 .project(new Fields("jsonFlowMseKO"))
-                .each(new Fields("jsonFlowMseKO"), new ProducerKafkaFunction(props, "rb_delay"), new Fields("sendOK"));
+                .each(new Fields("jsonFlowMseKO"), new ProducerKafkaFunction(_kafkaConfig, "rb_delay"), new Fields("sendOK"));
 
-        Stream tranquilityStream = topology.newStream("rb_delay", new TridentKafkaSpout("delay").builder())
+        Stream tranquilityStream = topology.newStream("rb_delay", new TridentKafkaSpout(_kafkaConfig, "delay").builder())
                 .each(new Fields("str"), new MapperFunction(), new Fields("flowMseKO"))
                 .each(new Fields("flowMseKO"), new GetFieldFunction("mac_src"), new Fields("mac_src_flow_KO"))
                 .stateQuery(mseState, new Fields("mac_src_flow_KO", "flowMseKO"), new MemcachedQuery("mac_src_flow_KO"), new Fields("flowsTranquilityOK", "flowsTranquilityKO"));
@@ -170,12 +168,12 @@ public class RedBorderTopologies {
 
         StateFactory memcached = MemcachedState.transactional(_memConfig.getServers(), _mseOpts);
 
-        TridentState mseState = topology.newStream("rb_mse", new TridentKafkaSpout("location").builder())
+        TridentState mseState = topology.newStream("rb_mse", new TridentKafkaSpout(_kafkaConfig, "location").builder())
                 .each(new Fields("str"), new MapperFunction(), new Fields("mseMap"))
                 .each(new Fields("mseMap"), new GetMSEdata(), new Fields("mac_src_mse", "geoLocationMSE"))
                 .partitionPersist(memcached, new Fields("geoLocationMSE", "mac_src_mse"), new MemcachedUpdater("mac_src_mse", "geoLocationMSE"));
 
-        Stream flowsMse = topology.newStream("rb_flow", new TridentKafkaSpout("traffics").builder())
+        Stream flowsMse = topology.newStream("rb_flow", new TridentKafkaSpout(_kafkaConfig, "traffics").builder())
                 .each(new Fields("str"), new MapperFunction(), new Fields("flowsMap"))
                 .each(new Fields("flowsMap"), new GetFieldFunction("client_mac"), new Fields("mac_src_flow"))
                 .stateQuery(mseState, new Fields("mac_src_flow", "flowsMap"), new MemcachedQuery("mac_src_flow"), new Fields("flowMSE"))
@@ -188,19 +186,19 @@ public class RedBorderTopologies {
         TridentTopology topology = new TridentTopology();
         StateFactory memcached = MemcachedState.transactional(_memConfig.getServers(), _mseOpts);
 
-        TridentState mseState = topology.newStream("rb_mse", new TridentKafkaSpout("location").builder())
+        TridentState mseState = topology.newStream("rb_mse", new TridentKafkaSpout(_kafkaConfig, "location").builder())
                 .each(new Fields("str"), new MapperFunction(), new Fields("mse_map"))
                 .each(new Fields("mse_map"), new GetMSEdata(), new Fields("src_mac", "mse_data"))
                 .partitionPersist(memcached, new Fields("src_mac", "mse_data"), new MemcachedUpdater("src_mac", "mse_data"))
                 .parallelismHint(2);
 
-        TridentState mobileState = topology.newStream("rb_mobile", new TridentKafkaSpout("mobile").builder())
+        TridentState mobileState = topology.newStream("rb_mobile", new TridentKafkaSpout(_kafkaConfig, "mobile").builder())
                 .each(new Fields("str"), new MobileBuilderFunction(), new Fields("ip_addr", "mobile"))
                 .partitionPersist(memcached, new Fields("ip_addr", "mobile"), new MemcachedUpdater("ip_addr", "mobile"))
                 .parallelismHint(2);
 
         //StateFactory druidStateFlow = new TridentBeamStateFactory<>(new MyBeamFactoryMapFlow(zkConfig));
-        Stream flowStream = topology.newStream("rb_flow", new TridentKafkaSpout("traffics").builder())
+        Stream flowStream = topology.newStream("rb_flow", new TridentKafkaSpout(_kafkaConfig, "traffics").builder())
                 .each(new Fields("str"), new MapperFunction(), new Fields("flows"))
                 .project(new Fields("flows"))
                 .parallelismHint(2);
@@ -249,7 +247,7 @@ public class RedBorderTopologies {
     public TridentTopology Mobile() throws FileNotFoundException {
         TridentTopology topology = new TridentTopology();
 
-        topology.newStream("rb_mobile", new TridentKafkaSpout("mobile").builder())
+        topology.newStream("rb_mobile", new TridentKafkaSpout(_kafkaConfig, "mobile").builder())
                 .each(new Fields("str"), new MobileBuilderFunction(), new Fields("mobile"))
                 //.each(new Fields("mobile"), new PrinterFunction("----"), new Fields("a"));
                 .parallelismHint(2);
@@ -263,12 +261,12 @@ public class RedBorderTopologies {
 
         StateFactory memcached = MemcachedState.transactional(_memConfig.getServers(), _mseOpts);
 
-        TridentState rssiState = topology.newStream("rb_rssi", new TridentKafkaSpout("trap").builder())
+        TridentState rssiState = topology.newStream("rb_rssi", new TridentKafkaSpout(_kafkaConfig, "trap").builder())
                 .each(new Fields("str"), new MapperFunction(), new Fields("rssi"))
                 .each(new Fields("rssi"), new GetTRAPdata(), new Fields("rssiKey", "rssiValue"))
                 .partitionPersist(memcached, new Fields("rssiKey", "rssiValue"), new MemcachedUpdater("rssiKey", "rssiValue"));
 
-        Stream flowStream = topology.newStream("rb_flow", new TridentKafkaSpout("traffics").builder())
+        Stream flowStream = topology.newStream("rb_flow", new TridentKafkaSpout(_kafkaConfig, "traffics").builder())
                 .each(new Fields("str"), new MapperFunction(), new Fields("flows"))
                 .project(new Fields("flows"));
 
@@ -282,31 +280,31 @@ public class RedBorderTopologies {
 
     public TridentTopology all() throws FileNotFoundException {
         TridentTopology topology = new TridentTopology();
-        
-        MemoryMapState.Factory MapState = new MemoryMapState.Factory(); 
-        
+        MemoryMapState.Factory MapState = new MemoryMapState.Factory();
+        String outputTopic = _kafkaConfig.getOutputTopic();
+
         // LOCATION DATA
-        Stream mseStream = topology.newStream("rb_loc", new TridentKafkaSpout("location").builder())
+        Stream mseStream = topology.newStream("rb_loc", new TridentKafkaSpout(_kafkaConfig, "location").builder())
                 .each(new Fields("str"), new MapperFunction(), new Fields("mse_map"))
                 .each(new Fields("mse_map"), new GetMSEdata(), new Fields("src_mac", "mse_data", "mse_data_druid"));
-        
+
         TridentState mseState = mseStream
                 .project(new Fields("src_mac", "mse_data"))
                 .partitionPersist(MapState, new Fields("src_mac", "mse_data"), new MemcachedUpdater("src_mac", "mse_data", "rb_loc"));
 
         // MOBILE DATA
-        TridentState mobileState = topology.newStream("rb_mobile", new TridentKafkaSpout("mobile").builder())
+        TridentState mobileState = topology.newStream("rb_mobile", new TridentKafkaSpout(_kafkaConfig, "mobile").builder())
                 .each(new Fields("str"), new MobileBuilderFunction(), new Fields("ip_addr", "mobile"))
                 .partitionPersist(MapState, new Fields("ip_addr", "mobile"), new MemcachedUpdater("ip_addr", "mobile", "rb_mobile"));
 
         // RSSI DATA
-        TridentState rssiState = topology.newStream("rb_trap", new TridentKafkaSpout("trap").builder())
+        TridentState rssiState = topology.newStream("rb_trap", new TridentKafkaSpout(_kafkaConfig, "trap").builder())
                 .each(new Fields("str"), new MapperFunction(), new Fields("rssi"))
                 .each(new Fields("rssi"), new GetTRAPdata(), new Fields("rssiKey", "rssiValue"))
                 .partitionPersist(MapState, new Fields("rssiKey", "rssiValue"), new MemcachedUpdater("rssiKey", "rssiValue", "rb_trap"));
 
         // FLOW STREAM
-        Stream flowStream = topology.newStream("rb_flow", new TridentKafkaSpout("traffics").builder())
+        Stream flowStream = topology.newStream("rb_flow", new TridentKafkaSpout(_kafkaConfig, "traffics").builder())
                 .parallelismHint(6)
                 .shuffle()
                 .each(new Fields("str"), new MapperFunction(), new Fields("flows"))
@@ -352,18 +350,30 @@ public class RedBorderTopologies {
         keyFields.add(new Fields("flows"));
         keyFields.add(new Fields("flows"));
 
-        StateFactory druidStateFlow = new TridentBeamStateFactory<>(new MyBeamFactoryMapFlow());
+        if (outputTopic != null) {            
+            topology.join(joinStream, keyFields, new Fields("flows", "mseMap", "macVendorMap", "geoIPMap", "mobileMap", "rssiMap", "httpUrlMap"))
+                    .each(new Fields("flows", "mseMap", "macVendorMap", "geoIPMap", "mobileMap", "rssiMap", "httpUrlMap"), new JoinFlowFunction(), new Fields("finalMap"))
+                    .each(new Fields("finalMap"), new MapToJSONFunction(), new Fields("jsonString"))
+                    .each(new Fields("jsonString"), new ProducerKafkaFunction(_kafkaConfig, outputTopic), new Fields("a"))
+                    .parallelismHint(6);
+
+            mseStream
+                    .each(new Fields("mse_data_druid"), new MapToJSONFunction(), new Fields("jsonString"))
+                    .each(new Fields("jsonString"), new ProducerKafkaFunction(_kafkaConfig, outputTopic), new Fields("a"));
+        } else {
+            StateFactory druidStateFlow = new TridentBeamStateFactory<>(new MyBeamFactoryMapFlow());
         
-        topology.join(joinStream, keyFields, new Fields("flows", "mseMap", "macVendorMap", "geoIPMap", "mobileMap", "rssiMap", "httpUrlMap"))
-                .each(new Fields("flows", "mseMap", "macVendorMap", "geoIPMap", "mobileMap", "rssiMap", "httpUrlMap"), new JoinFlowFunction(), new Fields("finalMap"))
-                //.each(new Fields("finalMap"), new PrinterFunction("----"), new Fields(""))
-                .partitionPersist(druidStateFlow, new Fields("finalMap"), new TridentBeamStateUpdater())
-                .parallelismHint(6);
-        
-        mseStream
-                .project(new Fields("mse_data_druid"))
-                .partitionPersist(druidStateFlow, new Fields("mse_data_druid"), new TridentBeamStateUpdater());
-                
+            topology.join(joinStream, keyFields, new Fields("flows", "mseMap", "macVendorMap", "geoIPMap", "mobileMap", "rssiMap", "httpUrlMap"))
+                    .each(new Fields("flows", "mseMap", "macVendorMap", "geoIPMap", "mobileMap", "rssiMap", "httpUrlMap"), new JoinFlowFunction(), new Fields("finalMap"))
+                    //.each(new Fields("finalMap"), new PrinterFunction("----"), new Fields(""))
+                    .partitionPersist(druidStateFlow, new Fields("finalMap"), new TridentBeamStateUpdater())
+                    .parallelismHint(6);
+
+            mseStream
+                    .project(new Fields("mse_data_druid"))
+                    .partitionPersist(druidStateFlow, new Fields("mse_data_druid"), new TridentBeamStateUpdater());
+        }
+
         return topology;
     }
 }
