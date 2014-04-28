@@ -51,8 +51,8 @@ public class MemcachedQuery extends BaseQueryFunction<MapState<Map<String, Objec
             }
         }
         
-        System.out.println("BatchSize " + tuples.size() +
-                    " RequestedToMemcached: " + keysToRequest.size());
+        //System.out.println("BatchSize " + tuples.size() +
+        //            " RequestedToMemcached: " + keysToRequest.size());
         
         if (!keysToRequest.isEmpty()) {
             List<List<Object>> keysToMemcached = Lists.newArrayList();
@@ -64,7 +64,7 @@ public class MemcachedQuery extends BaseQueryFunction<MapState<Map<String, Objec
             }
             
             memcachedData = state.multiGet(keysToMemcached);
-            System.out.println("MemcachedResponse: " + memcachedData.toString());
+            //System.out.println("MemcachedResponse: " + memcachedData.toString());
         }
         
         for (String key : keysToAppend) {

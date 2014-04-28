@@ -7,12 +7,9 @@ package net.redborder.storm.spout;
 
 import backtype.storm.spout.SchemeAsMultiScheme;
 import java.io.FileNotFoundException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import net.redborder.storm.util.KafkaConfigFile;
 import storm.kafka.StringScheme;
 import storm.kafka.ZkHosts;
-import storm.kafka.trident.OpaqueTridentKafkaSpout;
 import storm.kafka.trident.TransactionalTridentKafkaSpout;
 import storm.kafka.trident.TridentKafkaConfig;
 
@@ -45,7 +42,7 @@ public class TridentKafkaSpout {
      * @return Trident spout of kafka.
      */
     public TransactionalTridentKafkaSpout builder() {
-        Logger.getLogger(KafkaConfigFile.class.getName()).log(Level.INFO, "Reading from topic " + _configFile.getTopic());
+        //Logger.getLogger(KafkaConfigFile.class.getName()).log(Level.INFO, "Reading from topic " + _configFile.getTopic());
         return new TransactionalTridentKafkaSpout(_kafkaConfig);
     }
 

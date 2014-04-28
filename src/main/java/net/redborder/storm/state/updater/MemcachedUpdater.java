@@ -43,8 +43,8 @@ public class MemcachedUpdater extends BaseStateUpdater<MapState<Map<String, Obje
             keys.add(l);
             events.add((Map<String, Object>) t.getValueByField(_value));
             
-            System.out.println("SAVED TO MEMCACHED KEY: " + _generalKey +t.getValueByField(_key) +
-                    " VALUE: " + t.getValueByField(_value));
+            //System.out.println("SAVED TO MEMCACHED KEY: " + _generalKey +t.getValueByField(_key) +
+            //        " VALUE: " + t.getValueByField(_value));
         }
         state.multiPut(keys, events);
     }
