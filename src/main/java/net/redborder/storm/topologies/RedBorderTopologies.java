@@ -11,33 +11,13 @@ import com.metamx.tranquility.storm.TridentBeamStateUpdater;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
-import net.redborder.storm.function.AnalizeHttpUrlFunction;
-import net.redborder.storm.function.GeoIpFunction;
-import net.redborder.storm.function.GetFieldFunction;
-import net.redborder.storm.function.GetID;
-import net.redborder.storm.function.GetMSEdata;
-import net.redborder.storm.function.GetTRAPdata;
-import net.redborder.storm.function.GetTweetID;
-import net.redborder.storm.function.JoinFlowFunction;
-import net.redborder.storm.function.MacVendorFunction;
-import net.redborder.storm.function.MapToJSONFunction;
-import net.redborder.storm.function.MapperFunction;
-import net.redborder.storm.function.MobileBuilderFunction;
-import net.redborder.storm.function.PrinterFunction;
-import net.redborder.storm.function.ProducerKafkaFunction;
-import net.redborder.storm.spout.TridentKafkaSpout;
-import net.redborder.storm.spout.TwitterStreamTridentSpout;
-import net.redborder.storm.state.MemcachedState;
-import net.redborder.storm.state.query.MemcachedQuery;
-import net.redborder.storm.state.query.TwitterQuery;
-import net.redborder.storm.state.updater.MemcachedUpdater;
-import net.redborder.storm.state.updater.twitterUpdater;
-import net.redborder.storm.util.KafkaConfigFile;
-import net.redborder.storm.util.MemcachedConfigFile;
-import net.redborder.storm.util.druid.MyBeamFactoryMapEvent;
-import net.redborder.storm.util.druid.MyBeamFactoryMapFlow;
-import net.redborder.storm.util.druid.MyBeamFactoryMapMonitor;
+import net.redborder.storm.function.*;
+import net.redborder.storm.spout.*;
+import net.redborder.storm.state.*;
+import net.redborder.storm.state.updater.*;
+import net.redborder.storm.state.query.*;
+import net.redborder.storm.util.*;
+import net.redborder.storm.util.druid.*;
 import storm.trident.Stream;
 import storm.trident.TridentState;
 import storm.trident.TridentTopology;
@@ -61,7 +41,7 @@ public class RedBorderTopologies {
         _mseOpts = new MemcachedState.Options();
         _mseOpts.expiration = 60000;
 
-        _kafkaConfig = new KafkaConfigFile("traffics");
+        _kafkaConfig = new KafkaConfigFile();
     }
 
     public TridentTopology twitterTopology() throws FileNotFoundException {
@@ -281,8 +261,9 @@ public class RedBorderTopologies {
     public TridentTopology all() throws FileNotFoundException {
         TridentTopology topology = new TridentTopology();
         MemoryMapState.Factory MapState = new MemoryMapState.Factory();
-        String outputTopic = _kafkaConfig.getOutputTopic();
 
+        _kafkaConfig.setSection("location");
+        
         // LOCATION DATA
         Stream mseStream = topology.newStream("rb_loc", new TridentKafkaSpout(_kafkaConfig, "location").builder())
                 .each(new Fields("str"), new MapperFunction(), new Fields("mse_map"))
@@ -292,17 +273,24 @@ public class RedBorderTopologies {
                 .project(new Fields("src_mac", "mse_data"))
                 .partitionPersist(MapState, new Fields("src_mac", "mse_data"), new MemcachedUpdater("src_mac", "mse_data", "rb_loc"));
 
+        _kafkaConfig.setSection("mobile");
+        
         // MOBILE DATA
         TridentState mobileState = topology.newStream("rb_mobile", new TridentKafkaSpout(_kafkaConfig, "mobile").builder())
                 .each(new Fields("str"), new MobileBuilderFunction(), new Fields("ip_addr", "mobile"))
                 .partitionPersist(MapState, new Fields("ip_addr", "mobile"), new MemcachedUpdater("ip_addr", "mobile", "rb_mobile"));
 
+        _kafkaConfig.setSection("trap");
+        
         // RSSI DATA
         TridentState rssiState = topology.newStream("rb_trap", new TridentKafkaSpout(_kafkaConfig, "trap").builder())
                 .each(new Fields("str"), new MapperFunction(), new Fields("rssi"))
                 .each(new Fields("rssi"), new GetTRAPdata(), new Fields("rssiKey", "rssiValue"))
                 .partitionPersist(MapState, new Fields("rssiKey", "rssiValue"), new MemcachedUpdater("rssiKey", "rssiValue", "rb_trap"));
 
+        _kafkaConfig.setSection("traffics");
+        String outputTopic = _kafkaConfig.getOutputTopic();
+        
         // FLOW STREAM
         Stream flowStream = topology.newStream("rb_flow", new TridentKafkaSpout(_kafkaConfig, "traffics").builder())
                 .parallelismHint(6)
