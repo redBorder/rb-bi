@@ -20,7 +20,6 @@ import storm.kafka.trident.TridentKafkaConfig;
  */
 public class TridentKafkaSpout {
 
-    KafkaConfigFile _configFile;
     TridentKafkaConfig _kafkaConfig;
 
     /**
@@ -31,8 +30,8 @@ public class TridentKafkaSpout {
      * @throws java.io.FileNotFoundException
      */
     public TridentKafkaSpout(KafkaConfigFile config, String section) throws FileNotFoundException {
-        _configFile = config;
-        _kafkaConfig = new TridentKafkaConfig(new ZkHosts(_configFile.getZkHost()), _configFile.getTopic(), "stormKafka");
+        config.setSection(section);
+        _kafkaConfig = new TridentKafkaConfig(new ZkHosts(config.getZkHost()), config.getTopic(), "stormKafka");
         _kafkaConfig.scheme = new SchemeAsMultiScheme(new StringScheme());
         _kafkaConfig.forceFromStart = false;
     }

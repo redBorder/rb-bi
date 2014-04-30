@@ -29,50 +29,97 @@ import storm.trident.tuple.TridentTuple;
  */
 public class MobileBuilderFunction extends BaseFunction {
 
+    private Map<String, Object> hnb_register(Document document) {
+        Map<String, Object> event = new HashMap<>();
+        
+        try {
+            String hnbid = document.getElementsByTagName("hnbid").item(0).getTextContent();
+            String location = document.getElementsByTagName("location").item(0).getTextContent();
+            String hnbGeoLocation = document.getElementsByTagName("hnbGeoLocation").item(0).getTextContent();
+            event.put("hnbid", hnbid);
+            event.put("hnblocation", location);
+            event.put("hnbgeolocation", hnbGeoLocation);
+        } catch (NullPointerException ex) {
+            Logger.getLogger(GetMSEdata.class.getName()).log(Level.SEVERE, "Failed reading a UE IP Assign message", ex);
+        }
+        
+        return event;
+    }
+    
+    private Map<String, Object> ue_register(Document document) {
+        Map<String, Object> event = new HashMap<>();
+        
+        try {
+            String imsi = document.getElementsByTagName("imsi").item(0).getTextContent();
+            event.put("imsi", imsi);
+        } catch (NullPointerException ex) {
+            Logger.getLogger(GetMSEdata.class.getName()).log(Level.SEVERE, "Failed reading a UE Register message", ex);
+        }
+        
+        return event;
+    }
+    
+    private Map<String, Object> ue_ip_assign(Document document) {
+        Map<String, Object> event = new HashMap<>();
+        
+        try {
+            String imsi = document.getElementsByTagName("imsi").item(0).getTextContent();
+            String apn = document.getElementsByTagName("apn").item(0).getTextContent();
+            String ipAddress = document.getElementsByTagName("ipAddress").item(0).getTextContent();
+            String rat = document.getElementsByTagName("rat").item(0).getTextContent();
+            event.put("imsi", imsi);
+            event.put("apn", apn);
+            event.put("ip", ipAddress);
+            event.put("rat", rat);
+        } catch (NullPointerException ex) {
+            Logger.getLogger(GetMSEdata.class.getName()).log(Level.SEVERE, "Failed reading a UE IP Assign message", ex);
+        }
+        
+        return event;
+    }    
+    
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
 
-        String path, type, imsi, ipAddress, rat;
+        String type, tag, path;
+        String key = null;
         DocumentBuilderFactory factory;
         DocumentBuilder builder;
         Document document;
 
         String xml = (String) tuple.getValue(0);
-        Map<String, Object> event = new HashMap<>();
+        Map<String, Object> event = null;
 
         try {
-            try {
-                factory = DocumentBuilderFactory.newInstance();
-                factory.setNamespaceAware(true);
-                builder = factory.newDocumentBuilder();
-                document = builder.parse(new ByteArrayInputStream(xml.getBytes()));
-                document.getDocumentElement().normalize();
-            } catch (ParserConfigurationException | SAXException | IOException ex) {
-                Logger.getLogger(MobileBuilderFunction.class.getName()).log(Level.SEVERE, ex.toString());
-                return;
-            }
+            factory = DocumentBuilderFactory.newInstance();
+            factory.setNamespaceAware(true);
+            builder = factory.newDocumentBuilder();
+            document = builder.parse(new ByteArrayInputStream(xml.getBytes()));
+            document.getDocumentElement().normalize();
 
-            try {
-                path = ((Attr) document.getDocumentElement().getAttributes().getNamedItem("path")).getValue();
-                type = ((Attr) document.getDocumentElement().getAttributes().getNamedItem("type")).getValue();
-                imsi = document.getElementsByTagName("imsi").item(0).getTextContent();
-                ipAddress = document.getElementsByTagName("ipAddress").item(0).getTextContent();
-                rat = document.getElementsByTagName("rat").item(0).getTextContent();
-            } catch (NullPointerException ex) {
-                Logger.getLogger(MobileBuilderFunction.class.getName()).log(Level.SEVERE, ex.toString());
-                return;
-            }
+            tag = document.getDocumentElement().getNodeName();
+            type = ((Attr) document.getDocumentElement().getAttributes().getNamedItem("type")).getValue();
+            path = ((Attr) document.getDocumentElement().getAttributes().getNamedItem("path")).getValue();
 
-            event.put("path", path);
-            event.put("type", type);
-            event.put("imsi", imsi);
-            event.put("ipAddress", ipAddress);
-            event.put("rat", rat);
+            if (tag.equals("feed") && type.equals("add")) {
+                if (document.getElementsByTagName("hnbid").getLength() > 0) {
+                    event = hnb_register(document);
+                    key = path;
+                } else {
+                    event = ue_ip_assign(document);
+                    key = (String) event.get("ip");
+                }
+            } else if (tag.equals("notify") && type.equals("add")) {
+                event = ue_register(document);
+                event.put("path", path);
+                key = (String) event.get("imsi");
+            }              
+        } catch (ParserConfigurationException | SAXException | IOException | NullPointerException ex) {
+            Logger.getLogger(GetMSEdata.class.getName()).log(Level.SEVERE, "Failed reading a Mobile XML tuple", ex);
+        }
 
-            collector.emit(new Values(ipAddress, event));
-
-        } catch (NullPointerException e) {
-            Logger.getLogger(GetMSEdata.class.getName()).log(Level.SEVERE, "Failed reading a Mobile XML tuple", e);
+        if (event != null && key != null) {
+            collector.emit(new Values(key, event));
         }
     }
 

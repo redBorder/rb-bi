@@ -25,12 +25,12 @@ public class GetTRAPdata extends BaseFunction {
         Map<String, Object> rssi = (Map<String, Object>) tuple.getValue(0);
 
         try {
-            String macAux = rssi.get("iso.3.6.1.4.1.9.9.599.1.2.32.0").toString();
+            String macAux = rssi.get(".1.3.6.1.4.1.9.9.599.1.2.32.0").toString();
             String macAddress = macAux.split("/")[1];
 
             Map<String, Object> rssiData = new HashMap<>();
 
-            rssiData.put("rssi", rssi.get("iso.3.6.1.4.1.9.9.599.1.2.1.0"));
+            rssiData.put("rssi", rssi.get(".1.3.6.1.4.1.9.9.599.1.2.1.0"));
             //rssiData.put("location_floor", rssi.get("SNMPv2-SMI-v1::enterprises.9.9.513.1.1.1.1.49.0"));
 
             collector.emit(new Values(macAddress, rssiData));

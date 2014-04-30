@@ -60,6 +60,14 @@ public class GetMSEdata extends BaseFunction {
             mseData.put("sta_mac_address_building", zone[1]);
             mseData.put("sta_mac_address_floor", zone[2]);
 
+            state = location.get("dot11Status").toString();
+            if(state.equals("ASSOCIATED")){
+                ArrayList ip = (ArrayList) location.get("ipAddress");
+                mseData.put("wlan_ssid", location.get("ssId").toString());
+                mseData.put("ap_mac", location.get("apMacAddress").toString());
+                mseDataDruid.put("src", ip.get(0).toString());
+            }
+            
             mseDataDruid.putAll(mseData);
             mseDataDruid.put("sensor_name", mseEventContent.get("mseUdi"));
             mseDataDruid.put("client_mac", macAddress);
@@ -68,17 +76,8 @@ public class GetMSEdata extends BaseFunction {
 
             date = new DateTime(mseEventContent.get("timestamp").toString());
             mseDataDruid.put("timestamp", date.withZone(DateTimeZone.UTC).getMillis()/1000);
-
-            state = location.get("dot11Status").toString();
             mseDataDruid.put("dot11_status", state);
-
-            if(state.equals("ASSOCIATED")){
-                ArrayList ip = (ArrayList) location.get("ipAddress");
-                mseDataDruid.put("wlan_ssid", location.get("ssId").toString());
-                mseDataDruid.put("ap_mac", location.get("apMacAddress").toString());
-                mseDataDruid.put("band", location.get("band").toString());
-                mseDataDruid.put("src", ip.get(0).toString());
-            }
+            
             collector.emit(new Values(macAddress, mseData, mseDataDruid));
         } catch (NullPointerException e) {
             Logger.getLogger(GetMSEdata.class.getName()).log(Level.SEVERE, "Failed reading a MSE JSON tuple", e);
