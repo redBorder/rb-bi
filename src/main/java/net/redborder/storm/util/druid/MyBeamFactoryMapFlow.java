@@ -62,7 +62,8 @@ public class MyBeamFactoryMapFlow implements BeamFactory<Map<String, Object>> {
                     "tcp_flags", "srv_port_name", "type", "src_country", "dst_country",
                     "sta_mac_address_unit", "application_id", "engine_id", "src_as",
                     "dst_as", "second", "bytes", "pkts", "sta_mac_address_lat",
-                    "sta_mac_address_long", "src_net", "dst_net");
+                    "sta_mac_address_long", "src_net", "dst_net",
+                    "first_switched", "last_switched");
             final List<AggregatorFactory> aggregators = ImmutableList.<AggregatorFactory>of(
                     new CountAggregatorFactory("events"),
                     new LongSumAggregatorFactory("sum_bytes", "bytes"),
@@ -91,7 +92,7 @@ public class MyBeamFactoryMapFlow implements BeamFactory<Map<String, Object>> {
                             )
                     )
                     .rollup(DruidRollup.create(DruidDimensions.schemalessWithExclusions(exclusions), aggregators, QueryGranularity.MINUTE))
-                    .tuning(ClusteredBeamTuning.create(Granularity.HOUR, new Period("PT0M"), new Period("PT15M"), 4, 1))
+                    .tuning(ClusteredBeamTuning.create(Granularity.HOUR, new Period("PT0M"), new Period("PT15M"), 2, 2))
                     .timestampSpec(new TimestampSpec("timestamp", "posix"));
             
             final Beam<Map<String, Object>> beam = builder.buildBeam();
