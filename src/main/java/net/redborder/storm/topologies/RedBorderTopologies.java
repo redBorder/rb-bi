@@ -299,7 +299,7 @@ public class RedBorderTopologies {
         
         // FLOW STREAM
         Stream flowStream = topology.newStream("rb_flow", new TridentKafkaSpout(kafkaConfig, "traffics").builder())
-                .parallelismHint(4)
+                .parallelismHint(2)
                 .shuffle()
                 .each(new Fields("str"), new MapperFunction(), new Fields("flows"))
                 .project(new Fields("flows"));
@@ -348,14 +348,15 @@ public class RedBorderTopologies {
         keyFields.add(new Fields("flows"));
         keyFields.add(new Fields("flows"));
         keyFields.add(new Fields("flows"));
+        
+        Stream joinedStream = topology.join(joinStream, keyFields, new Fields("flows", "mseMap", "macVendorMap", "geoIPMap", "mobileMap", "rssiMap", "httpUrlMap"))
+                    .each(new Fields("flows", "mseMap", "macVendorMap", "geoIPMap", "mobileMap", "rssiMap", "httpUrlMap"), new JoinFlowFunction(), new Fields("finalMap"));
 
         String outputTopic = kafkaConfig.getOutputTopic();
         if (outputTopic != null) {            
-            topology.join(joinStream, keyFields, new Fields("flows", "mseMap", "macVendorMap", "geoIPMap", "mobileMap", "rssiMap", "httpUrlMap"))
-                    .each(new Fields("flows", "mseMap", "macVendorMap", "geoIPMap", "mobileMap", "rssiMap", "httpUrlMap"), new JoinFlowFunction(), new Fields("finalMap"))
-                    .each(new Fields("finalMap"), new MapToJSONFunction(), new Fields("jsonString"))
+            joinedStream.each(new Fields("finalMap"), new MapToJSONFunction(), new Fields("jsonString"))
                     .each(new Fields("jsonString"), new ProducerKafkaFunction(kafkaConfig, outputTopic), new Fields("a"))
-                    .parallelismHint(4);
+                    .parallelismHint(2);
 
             mseStream
                     .each(new Fields("mse_data_druid"), new MapToJSONFunction(), new Fields("jsonString"))
@@ -363,11 +364,9 @@ public class RedBorderTopologies {
         } else {
             StateFactory druidStateFlow = new TridentBeamStateFactory<>(new MyBeamFactoryMapFlow());
         
-            topology.join(joinStream, keyFields, new Fields("flows", "mseMap", "macVendorMap", "geoIPMap", "mobileMap", "rssiMap", "httpUrlMap"))
-                    .each(new Fields("flows", "mseMap", "macVendorMap", "geoIPMap", "mobileMap", "rssiMap", "httpUrlMap"), new JoinFlowFunction(), new Fields("finalMap"))
-                    //.each(new Fields("finalMap"), new PrinterFunction("----"), new Fields(""))
+            joinedStream//.each(new Fields("finalMap"), new PrinterFunction("----"), new Fields(""))
                     .partitionPersist(druidStateFlow, new Fields("finalMap"), new TridentBeamStateUpdater())
-                    .parallelismHint(4);
+                    .parallelismHint(2);
 
             mseStream
                     .project(new Fields("mse_data_druid"))
