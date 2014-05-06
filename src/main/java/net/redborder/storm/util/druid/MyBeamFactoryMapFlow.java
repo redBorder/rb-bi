@@ -24,7 +24,6 @@ import io.druid.granularity.QueryGranularity;
 import io.druid.query.aggregation.AggregatorFactory;
 import io.druid.query.aggregation.CountAggregatorFactory;
 import io.druid.query.aggregation.LongSumAggregatorFactory;
-import java.io.FileNotFoundException;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.joda.time.DateTime;
@@ -92,7 +91,7 @@ public class MyBeamFactoryMapFlow implements BeamFactory<Map<String, Object>> {
                             )
                     )
                     .rollup(DruidRollup.create(DruidDimensions.schemalessWithExclusions(exclusions), aggregators, QueryGranularity.MINUTE))
-                    .tuning(ClusteredBeamTuning.create(Granularity.HOUR, new Period("PT0M"), new Period("PT15M"), 2, 2))
+                    .tuning(ClusteredBeamTuning.create(Granularity.HOUR, new Period("PT0M"), new Period("PT15M"), 4, 1))
                     .timestampSpec(new TimestampSpec("timestamp", "posix"));
             
             final Beam<Map<String, Object>> beam = builder.buildBeam();

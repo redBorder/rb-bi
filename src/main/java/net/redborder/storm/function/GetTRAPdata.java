@@ -25,15 +25,17 @@ public class GetTRAPdata extends BaseFunction {
         Map<String, Object> rssi = (Map<String, Object>) tuple.getValue(0);
 
         try {
-            String macAux = rssi.get(".1.3.6.1.4.1.9.9.599.1.2.32.0").toString();
-            String macAddress = macAux.split("/")[1];
+            if (rssi.containsKey(".1.3.6.1.4.1.9.9.599.1.2.32.0") && rssi.containsKey(".1.3.6.1.4.1.9.9.599.1.2.1.0")) {
+                String macAux = rssi.get(".1.3.6.1.4.1.9.9.599.1.2.32.0").toString();
+                String macAddress = macAux.split("/")[1];
 
-            Map<String, Object> rssiData = new HashMap<>();
+                Map<String, Object> rssiData = new HashMap<>();
 
-            rssiData.put("rssi", rssi.get(".1.3.6.1.4.1.9.9.599.1.2.1.0"));
-            //rssiData.put("location_floor", rssi.get("SNMPv2-SMI-v1::enterprises.9.9.513.1.1.1.1.49.0"));
+                rssiData.put("rssi", rssi.get(".1.3.6.1.4.1.9.9.599.1.2.1.0"));
+                //rssiData.put("location_floor", rssi.get("SNMPv2-SMI-v1::enterprises.9.9.513.1.1.1.1.49.0"));
 
-            collector.emit(new Values(macAddress, rssiData));
+                collector.emit(new Values(macAddress, rssiData));
+            }
         } catch (NullPointerException e) {
             Logger.getLogger(GetTRAPdata.class.getName()).log(Level.SEVERE, "Failed reading a TRAP JSON tuple", e);
         }
