@@ -5,7 +5,10 @@
  */
 package net.redborder.storm.function;
 
+import java.io.UnsupportedEncodingException;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import storm.trident.operation.BaseFunction;
 import storm.trident.operation.TridentCollector;
 import storm.trident.tuple.TridentTuple;
@@ -26,6 +29,7 @@ public class PrinterFunction extends BaseFunction {
     public void execute(TridentTuple tuple, TridentCollector collector) {
         List<Object> list = tuple.getValues();
         for (Object o : list) {
+
             System.out.println(_str + " " + o.toString());
         }
 

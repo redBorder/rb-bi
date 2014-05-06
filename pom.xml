@@ -54,7 +54,25 @@
 
     
     <dependencies>
-                            
+                  
+        <dependency>
+            <groupId>nl.minvenj.nfi.storm</groupId>
+            <artifactId>kafka-spout</artifactId>
+            <version>0.2-SNAPSHOT</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-compiler</artifactId>
+            <version>${scala.version}</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-library</artifactId>
+            <version>${scala.version}</version>
+        </dependency>
+        
         <!-- GeoIP -->    
         <dependency>
             <groupId>com.maxmind.geoip</groupId>
@@ -131,7 +149,7 @@
         <dependency>
             <groupId>org.clojars.brenden</groupId>
             <artifactId>storm-kafka-0.8-plus</artifactId>
-             <version>0.2.11</version>
+            <version>0.2.11</version>
         </dependency>
         
         <!-- Memcached dependency -->
