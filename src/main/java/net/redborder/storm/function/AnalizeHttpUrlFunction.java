@@ -57,6 +57,7 @@ public class AnalizeHttpUrlFunction extends BaseFunction {
     
     private void dropboxUser() {
         String url = event.get("http_url").toString();
+        System.out.println("Dropbox user found.");
         if (url.contains("user_id")) {
             int start = url.indexOf("user_id") + "user_id".length();
             int end1 = url.indexOf("?", start);
@@ -65,6 +66,7 @@ public class AnalizeHttpUrlFunction extends BaseFunction {
             int end = compareLess(end1, compareLess(end2, end3));
             
             if (end != 0) {
+                System.out.println("Dropbox user is: " + url.substring(start, end));
                 result.put("http_social_user", url.substring(start, end));
             }
         }
