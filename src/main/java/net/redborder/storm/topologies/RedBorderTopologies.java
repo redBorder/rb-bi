@@ -236,6 +236,8 @@ public class RedBorderTopologies {
 
         String outputTopic = kafkaConfig.getOutputTopic();
         if (outputTopic != null) {
+
+            System.out.println("Flows send to: " + outputTopic);
             joinedStream.each(new Fields("finalMap"), new MapToJSONFunction(), new Fields("jsonString"))
                     .each(new Fields("jsonString"), new ProducerKafkaFunction(kafkaConfig, outputTopic), new Fields("a"))
                     .parallelismHint(2);
@@ -244,6 +246,9 @@ public class RedBorderTopologies {
                     .each(new Fields("mse_data_druid"), new MapToJSONFunction(), new Fields("jsonString"))
                     .each(new Fields("jsonString"), new ProducerKafkaFunction(kafkaConfig, outputTopic), new Fields("a"));
         } else {
+
+            System.out.println("Flows send to indexing service.");
+
             StateFactory druidStateFlow = new TridentBeamStateFactory<>(new MyBeamFactoryMapFlow());
 
             joinedStream//.each(new Fields("finalMap"), new PrinterFunction("----"), new Fields(""))

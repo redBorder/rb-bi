@@ -22,13 +22,13 @@ public class KafkaConfigFile {
     String _zkHost;
     String _outputTopic;
     Map<String, Object> _data;
-    
+
     final String CONFIG_FILE_PATH = "/opt/rb/etc/redBorder-BI/zk_config.yml";
     // final String CONFIG_FILE_PATH = "/Users/andresgomez/rbdruid_config.yml"
 
     /**
      * Constructor.
-     * 
+     *
      * @throws FileNotFoundException
      */
     public KafkaConfigFile() throws FileNotFoundException {
@@ -39,8 +39,9 @@ public class KafkaConfigFile {
 
     /**
      * Constructor
+     *
      * @param section Section to read from the config file
-     * 
+     *
      * @throws FileNotFoundException
      */
     public KafkaConfigFile(String section) throws FileNotFoundException {
@@ -50,26 +51,31 @@ public class KafkaConfigFile {
 
     /**
      * Get the zookeeper setting of the topic indicated.
+     *
      * @param section Section to read from the config file
      */
     public final void setSection(String section) {
         Map<String, Object> config = (Map<String, Object>) _data.get(section);
-
+        System.out.println("Select section: " + section);
         if (config != null) {
             Object outputTopic = config.get("output_topic");
             _topic = config.get("input_topic").toString();
             _zkHost = config.get("zk_connect").toString();
+
             if (outputTopic != null) {
                 _outputTopic = outputTopic.toString();
             } else {
                 _outputTopic = null;
             }
+            
+            System.out.println("  - inputTopic: [" + _topic + "]");
+            System.out.println("  - outputTopic: [" + _outputTopic + "]");
+            System.out.println("  - zkConnect: [" + _zkHost + "]");
         } else {
             Logger.getLogger(KafkaConfigFile.class.getName()).log(Level.SEVERE, "Section not found");
             _zkHost = "localhost";
         }
     }
-
 
     /**
      * Getter.
@@ -88,7 +94,7 @@ public class KafkaConfigFile {
     public String getZkHost() {
         return _zkHost;
     }
-    
+
     /**
      * Getter.
      *

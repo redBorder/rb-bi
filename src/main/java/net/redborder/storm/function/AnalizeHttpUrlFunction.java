@@ -28,7 +28,7 @@ public class AnalizeHttpUrlFunction extends BaseFunction {
         
         if (event.containsValue("http_host")) {
             String httpHost = event.get("http_host").toString();
-            
+            System.out.println("http_host is: " + httpHost);
             if (httpHost.contains("dropbox.com")) {
                 dropboxUser();
             } else if (httpHost.contains("www.facebook.com")) {
@@ -57,7 +57,7 @@ public class AnalizeHttpUrlFunction extends BaseFunction {
     
     private void dropboxUser() {
         String url = event.get("http_url").toString();
-        System.out.println("Dropbox user found.");
+        System.out.println("Dropbox user found. URL is: " + url);
         if (url.contains("user_id")) {
             int start = url.indexOf("user_id") + "user_id".length();
             int end1 = url.indexOf("?", start);
