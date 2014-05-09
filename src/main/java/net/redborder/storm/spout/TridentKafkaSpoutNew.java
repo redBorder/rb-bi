@@ -9,6 +9,7 @@ import backtype.storm.spout.SchemeAsMultiScheme;
 import java.io.FileNotFoundException;
 import net.redborder.storm.util.KafkaConfigFile;
 import nl.minvenj.nfi.storm.kafka.KafkaSpout;
+import nl.minvenj.nfi.storm.kafka.util.KafkaConfig;
 import storm.kafka.StringScheme;
 import storm.kafka.ZkHosts;
 import storm.kafka.trident.TransactionalTridentKafkaSpout;
@@ -22,10 +23,11 @@ import storm.kafka.trident.TridentKafkaConfig;
 public class TridentKafkaSpoutNew {
 
     TridentKafkaConfig _kafkaConfig;
-    
+
     String _topic;
     String _zkConnect;
     String _groupId;
+    KafkaConfig _config;
 
     /**
      * Constructor
@@ -39,6 +41,15 @@ public class TridentKafkaSpoutNew {
         _topic = config.getTopic();
         _zkConnect = config.getZkHost();
         _groupId = "rb-storm-consumer";
+        _config = new KafkaConfig();
+    }
+
+    public TridentKafkaSpoutNew(KafkaConfigFile config, String section, KafkaConfig configConsumer) throws FileNotFoundException {
+        config.setSection(section);
+        _topic = config.getTopic();
+        _zkConnect = config.getZkHost();
+        _groupId = "rb-storm-consumer";
+        _config = configConsumer;
     }
 
     /**
@@ -48,7 +59,7 @@ public class TridentKafkaSpoutNew {
      */
     public KafkaSpout builder() {
         //Logger.getLogger(KafkaConfigFile.class.getName()).log(Level.INFO, "Reading from topic " + _configFile.getTopic());
-        return new KafkaSpout(_zkConnect, _topic, _groupId);
+        return new KafkaSpout(_zkConnect, _topic, _groupId, _config);
     }
 
 }
