@@ -69,7 +69,7 @@ public class RedBorderTopologies {
 
         // FLOW STREAM
         Stream flowStream = topology.newStream("rb_flow", new TridentKafkaSpoutNew(kafkaConfig, "traffics").builder())
-                .parallelismHint(4)
+                .parallelismHint(2)
                 .shuffle()
                 .each(new Fields("bytes"), new MapperFunction(), new Fields("flows"))
                 .project(new Fields("flows"));
