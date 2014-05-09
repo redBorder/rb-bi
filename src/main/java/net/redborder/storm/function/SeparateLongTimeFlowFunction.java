@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
 import storm.trident.operation.BaseFunction;
@@ -21,113 +23,88 @@ import storm.trident.tuple.TridentTuple;
  * @author andresgomez
  */
 public class SeparateLongTimeFlowFunction extends BaseFunction {
-
-    private class PacketData {
-        long first_timestamp;
-        long second_timestamp;
-        int secs_first;
-        int secs_second;
-        int secs_total;
-        int first_bytes;
-        int first_pkts;
-        int second_bytes;
-        int second_pkts;
-    };
     
-    private List<Map<String, Object>> dividePkts(PacketData info, Map<String, Object> event) {
-        List<Map<String, Object>> ret = new ArrayList<>();
-        
-        Map<String, Object> first = new HashMap<>();
-        first.putAll(event);
-        first.put("timestamp", info.first_timestamp);
-        first.put("bytes", info.first_bytes);
-        first.put("pkts", info.first_pkts);
-        ret.add(first);
-                    
-        Map<String, Object> second = new HashMap<>();
-        second.putAll(event);
-        second.put("timestamp", info.second_timestamp);
-        second.put("bytes", info.second_bytes);
-        second.put("pkts", info.second_pkts);
-        ret.add(second);
-        
-        return ret;
-    }
+    public final int DELAYED_REALTIME_TIME = 15;
     
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
         Map<String, Object> event = (Map<String, Object>) tuple.getValue(0);
-        List<Map<String, Object>> listToSend = new ArrayList<>();
+        List<Map<String, Object>> generatedPackets = new ArrayList<>();
         
         if (event.containsKey("first_switched") && event.containsKey("last_switched")) {
-            DateTime start = new DateTime(Long.parseLong(event.get("first_switched").toString()));
-            DateTime end = new DateTime(Long.parseLong(event.get("last_switched").toString()));
-            Seconds diff = Seconds.secondsBetween(start, end);
+            DateTime packet_start = new DateTime(Long.parseLong(event.get("first_switched").toString()) * 1000);
+            DateTime packet_end = new DateTime(Long.parseLong(event.get("last_switched").toString()) * 1000);
+            DateTime limit = new DateTime().withMinuteOfHour(0);
+            DateTime now = new DateTime();
+            int now_hour = now.getHourOfDay();
+            int packet_end_hour = packet_end.getHourOfDay();
+            
+            //System.out.println("Separation packet " + event);
+            
+            if (packet_end.isAfter(now)) {
+                Logger.getLogger(SeparateLongTimeFlowFunction.class.getName()).log(Level.WARNING, 
+                    "Dropped packet {0} because it ended in the future.", event);
+                return;
+            } else if (now_hour != packet_end_hour) {
+                int now_minutes = now.getMinuteOfHour();
+                if (now_minutes > DELAYED_REALTIME_TIME) {
+                    Logger.getLogger(SeparateLongTimeFlowFunction.class.getName()).log(Level.WARNING, 
+                        "Dropped packet {0} because its realtime processor is already shutdown.", event);
+                    return;
+                }
+            }
+            
+            if (packet_start.isBefore(limit)) {
+                packet_start = limit;
+            }
+            
+            DateTime this_start;
+            DateTime this_end = packet_start;
             int bytes = Integer.parseInt(event.get("bytes").toString());
             int pkts = Integer.parseInt(event.get("pkts").toString());
+            int totalDiff = Seconds.secondsBetween(packet_start, packet_end).getSeconds();
+            int diff, this_bytes, this_pkts;
+            int bytes_count = 0;
+            int pkts_count = 0;
             
-            PacketData info = new PacketData();
-            info.first_timestamp = start.getMillis() / 1000;
-            info.second_timestamp = end.getMillis() / 1000;
-            info.secs_first = 60 - start.getSecondOfMinute();
-            info.secs_second = end.getSecondOfMinute();
-            info.secs_total = info.secs_first + info.secs_second;
-            info.first_bytes = info.secs_first * bytes / info.secs_total;
-            info.first_pkts = info.secs_first * pkts / info.secs_total;
-            info.second_bytes = bytes - info.first_bytes;
-            info.second_pkts = pkts - info.first_pkts;
+            do {
+                this_start = this_end;
+                this_end = this_start.plusSeconds(60 - this_start.getSecondOfMinute());
+                if (this_end.isAfter(packet_end)) this_end = packet_end;
+                diff = Seconds.secondsBetween(this_start, this_end).getSeconds();
+                this_bytes = (int) Math.ceil(bytes * diff / totalDiff);
+                if (this_bytes < 1) this_bytes = 1;
+                this_pkts = (int) Math.ceil(pkts * diff / totalDiff);
+                if (this_pkts < 1) this_pkts = 1;
+                bytes_count += this_bytes;
+                pkts_count += this_pkts;
+                
+                Map<String, Object> to_send = new HashMap<>();
+                to_send.putAll(event);
+                to_send.put("timestamp", this_end.getMillis() / 1000);
+                to_send.put("bytes", this_bytes);
+                to_send.put("pkts", this_pkts);
+                generatedPackets.add(to_send);
+            } while (this_end.isBefore(packet_end));
             
-            if (diff.getSeconds() < 60) {
-                int min_start = start.getMinuteOfDay();
-                int min_end = end.getMinuteOfDay();
+            if (bytes != bytes_count || pkts != pkts_count) {
+                int last_index = generatedPackets.size() - 1;
+                Map<String, Object> last = generatedPackets.get(last_index);
+                int new_pkts = ((int) last.get("pkts")) + (pkts - pkts_count);
+                int new_bytes = ((int) last.get("bytes")) + (bytes - bytes_count);
                 
-                if (min_start == min_end) {
-                    // No dividir
-                    event.put("timestamp", event.get("last_switched"));
-                    listToSend.add(event);
-                    System.out.println("This packet wasnt divided" + event);
-                } else {
-                    // Dividir en dos paquetes            
-                    listToSend.addAll(dividePkts(info, event));
-                    System.out.println("This packet was divided into two: " + event);
-                }
-            } else {
-                int intervals = diff.getSeconds() / 60;
-                int total_bytes = bytes - info.first_bytes - info.second_bytes;
-                int total_pkts = pkts - info.first_pkts - info.second_pkts;
-                int remain_bytes = total_bytes;
-                int remain_pkts = total_pkts;
-                int bytes_per_interval = total_bytes / 60;
-                int pkts_per_interval = total_pkts / 60;
-                                
-                for (int i = 0; i < intervals; i++) {
-                    remain_bytes -= bytes_per_interval;
-                    remain_pkts -= pkts_per_interval;
-                    
-                    Map<String, Object> to_send = new HashMap<>();
-                    to_send.putAll(event);
-                    to_send.put("timestamp", info.first_timestamp + i * 60);
-                    to_send.put("bytes", bytes_per_interval);
-                    to_send.put("pkts", pkts_per_interval);
-                    listToSend.add(to_send);
-                }
+                if (new_pkts > 0) last.put("pkts", new_pkts);
+                if (new_bytes > 0) last.put("bytes", new_pkts);
                 
-                if (remain_bytes > 0) info.second_bytes += remain_bytes;
-                if (remain_pkts > 0) info.second_pkts += remain_pkts;
-                
-                listToSend.addAll(dividePkts(info, event));
-                System.out.println("This packet was divided into " + listToSend.size() + " packets: " + event);
+                generatedPackets.set(last_index, last);
             }
             
-            System.out.println("-------------------------------");
-            for (Map<String, Object> e : listToSend) {
+            //System.out.println("-------------------------------");
+            for (Map<String, Object> e : generatedPackets) {
                 collector.emit(new Values(e));
-                System.out.println(e);
+                //System.out.println(e);
             }
-            System.out.println("-------------------------------");
-        } else {
-            collector.emit(new Values(event));
+            //System.out.println("-------------------------------");
         }
     }
-
 }
