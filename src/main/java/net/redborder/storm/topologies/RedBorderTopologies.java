@@ -18,6 +18,7 @@ import net.redborder.storm.state.query.*;
 import net.redborder.storm.state.updater.*;
 import net.redborder.storm.util.*;
 import net.redborder.storm.util.druid.*;
+import nl.minvenj.nfi.storm.kafka.util.KafkaConfig;
 import storm.trident.Stream;
 import storm.trident.TridentState;
 import storm.trident.TridentTopology;
@@ -31,6 +32,7 @@ public class RedBorderTopologies {
 
     public TridentTopology newKafka() throws FileNotFoundException {
         KafkaConfigFile kafkaConfig = new KafkaConfigFile();
+        KafkaConfig configConsumer = new KafkaConfig();
         MemcachedConfigFile memConfig = new MemcachedConfigFile();
         TridentTopology topology = new TridentTopology();
         MemcachedState.Options mseOpts = new MemcachedState.Options();
@@ -42,7 +44,7 @@ public class RedBorderTopologies {
         StateFactory memcachedMobile = MemcachedState.transactional(memConfig.getServers(), mobileOpts);
 
         // LOCATION DATA
-        Stream mseStream = topology.newStream("rb_loc", new TridentKafkaSpoutNew(kafkaConfig, "location").builder())
+        Stream mseStream = topology.newStream("rb_loc", new TridentKafkaSpoutNew(kafkaConfig, "location", configConsumer).builder())
                 .parallelismHint(2)
                 .shuffle()
                 .each(new Fields("bytes"), new MapperFunction(), new Fields("mse_map"))
@@ -53,14 +55,14 @@ public class RedBorderTopologies {
                 .partitionPersist(memcached, new Fields("src_mac", "mse_data"), new MemcachedUpdater("src_mac", "mse_data", "rb_loc"));
 
         // MOBILE DATA
-        TridentState mobileState = topology.newStream("rb_mobile", new TridentKafkaSpoutNew(kafkaConfig, "mobile").builder())
+        TridentState mobileState = topology.newStream("rb_mobile", new TridentKafkaSpoutNew(kafkaConfig, "mobile", configConsumer).builder())
                 .parallelismHint(2)
                 .shuffle()
                 .each(new Fields("bytes"), new MobileBuilderFunction(), new Fields("key", "mobileMap"))
                 .partitionPersist(memcachedMobile, new Fields("key", "mobileMap"), new MemcachedUpdater("key", "mobileMap", "rb_mobile"));
 
         // RSSI DATA
-        TridentState rssiState = topology.newStream("rb_trap", new TridentKafkaSpoutNew(kafkaConfig, "trap").builder())
+        TridentState rssiState = topology.newStream("rb_trap", new TridentKafkaSpoutNew(kafkaConfig, "trap", configConsumer).builder())
                 .parallelismHint(2)
                 .shuffle()
                 .each(new Fields("bytes"), new MapperFunction(), new Fields("rssi"))
@@ -68,7 +70,7 @@ public class RedBorderTopologies {
                 .partitionPersist(memcached, new Fields("rssiKey", "rssiValue"), new MemcachedUpdater("rssiKey", "rssiValue", "rb_trap"));
 
         // FLOW STREAM
-        Stream flowStream = topology.newStream("rb_flow", new TridentKafkaSpoutNew(kafkaConfig, "traffics").builder())
+        Stream flowStream = topology.newStream("rb_flow", new TridentKafkaSpoutNew(kafkaConfig, "traffics", configConsumer).builder())
                 .parallelismHint(2)
                 .shuffle()
                 .each(new Fields("bytes"), new MapperFunction(), new Fields("flows"))
