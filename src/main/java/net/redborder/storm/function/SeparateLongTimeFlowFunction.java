@@ -105,6 +105,8 @@ public class SeparateLongTimeFlowFunction extends BaseFunction {
                 //System.out.println(e);
             }
             //System.out.println("-------------------------------");
+        } else {
+            collector.emit(new Values(event));
         }
     }
 }
