@@ -36,12 +36,12 @@ public class TridentKafkaSpoutNew {
      * @param section Section of the kafka config file to read properties from.
      * @throws java.io.FileNotFoundException
      */
-    public TridentKafkaSpoutNew(KafkaConfigFile config, String section, KafkaConfig configConsumer) throws FileNotFoundException {
+    public TridentKafkaSpoutNew(KafkaConfigFile config, String section) throws FileNotFoundException {
         config.setSection(section);
         _topic = config.getTopic();
         _zkConnect = config.getZkHost();
         _groupId = "rb-storm-consumer";
-        _config = configConsumer;
+        
     }
 
     /**
@@ -49,7 +49,8 @@ public class TridentKafkaSpoutNew {
      *
      * @return Trident spout of kafka.
      */
-    public KafkaSpout builder() {
+    public KafkaSpout builder(KafkaConfig configConsumer) {
+        _config=configConsumer;
         //Logger.getLogger(KafkaConfigFile.class.getName()).log(Level.INFO, "Reading from topic " + _configFile.getTopic());
         return new KafkaSpout(_zkConnect, _topic, _groupId, _config);
     }

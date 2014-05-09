@@ -44,7 +44,7 @@ public class RedBorderTopologies {
         StateFactory memcachedMobile = MemcachedState.transactional(memConfig.getServers(), mobileOpts);
 
         // LOCATION DATA
-        Stream mseStream = topology.newStream("rb_loc", new TridentKafkaSpoutNew(kafkaConfig, "location", configConsumer).builder())
+        Stream mseStream = topology.newStream("rb_loc", new TridentKafkaSpoutNew(kafkaConfig, "location").builder(configConsumer))
                 .parallelismHint(2)
                 .shuffle()
                 .each(new Fields("bytes"), new MapperFunction(), new Fields("mse_map"))
@@ -55,14 +55,14 @@ public class RedBorderTopologies {
                 .partitionPersist(memcached, new Fields("src_mac", "mse_data"), new MemcachedUpdater("src_mac", "mse_data", "rb_loc"));
 
         // MOBILE DATA
-        TridentState mobileState = topology.newStream("rb_mobile", new TridentKafkaSpoutNew(kafkaConfig, "mobile", configConsumer).builder())
+        TridentState mobileState = topology.newStream("rb_mobile", new TridentKafkaSpoutNew(kafkaConfig, "mobile").builder(configConsumer))
                 .parallelismHint(2)
                 .shuffle()
                 .each(new Fields("bytes"), new MobileBuilderFunction(), new Fields("key", "mobileMap"))
                 .partitionPersist(memcachedMobile, new Fields("key", "mobileMap"), new MemcachedUpdater("key", "mobileMap", "rb_mobile"));
 
         // RSSI DATA
-        TridentState rssiState = topology.newStream("rb_trap", new TridentKafkaSpoutNew(kafkaConfig, "trap", configConsumer).builder())
+        TridentState rssiState = topology.newStream("rb_trap", new TridentKafkaSpoutNew(kafkaConfig, "trap").builder(configConsumer))
                 .parallelismHint(2)
                 .shuffle()
                 .each(new Fields("bytes"), new MapperFunction(), new Fields("rssi"))
@@ -70,7 +70,7 @@ public class RedBorderTopologies {
                 .partitionPersist(memcached, new Fields("rssiKey", "rssiValue"), new MemcachedUpdater("rssiKey", "rssiValue", "rb_trap"));
 
         // FLOW STREAM
-        Stream flowStream = topology.newStream("rb_flow", new TridentKafkaSpoutNew(kafkaConfig, "traffics", configConsumer).builder())
+        Stream flowStream = topology.newStream("rb_flow", new TridentKafkaSpoutNew(kafkaConfig, "traffics").builder(configConsumer))
                 .parallelismHint(2)
                 .shuffle()
                 .each(new Fields("bytes"), new MapperFunction(), new Fields("flows"))
