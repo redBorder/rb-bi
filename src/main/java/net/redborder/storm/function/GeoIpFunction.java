@@ -103,9 +103,9 @@ public class GeoIpFunction extends BaseFunction {
                 String[] asn = asnInfo.split(" ", 2);
                 // event.put("AsnNum" + where, asn[0]);
                 if (asn.length > 1) {
-                    eventMap.put("asn_name", asn[1]);
+                    if (asn[1] != null) eventMap.put("asn_name", asn[1]);
                 } else {
-                    eventMap.put("asn_name", asn[0]);
+                    if (asn[0] != null) eventMap.put("asn_name", asn[0]);
                 }
             }
         }
@@ -129,15 +129,15 @@ public class GeoIpFunction extends BaseFunction {
         if (event.containsKey("src")) {
             ip = event.get("src").toString();
             aux = getIPData(ip);
-            geoIPMap.put("src_country_code", aux.get("country_code"));
-            geoIPMap.put("src_as_name", aux.get("asn_name"));
+            if(aux.containsKey("country_code")) geoIPMap.put("src_country_code", aux.get("country_code"));
+            if(aux.containsKey("asn_name")) geoIPMap.put("src_as_name", aux.get("asn_name"));
         }
 
         if (event.containsKey("dst")) {
             ip = event.get("dst").toString();
             aux = getIPData(ip);
-            geoIPMap.put("dst_country_code", aux.get("country_code"));
-            geoIPMap.put("dst_as_name", aux.get("asn_name"));
+            if(aux.containsKey("country_code")) geoIPMap.put("dst_country_code", aux.get("country_code"));
+            if(aux.containsKey("asn_name")) geoIPMap.put("dst_as_name", aux.get("asn_name"));
         }
         collector.emit(new Values(geoIPMap));
     }
