@@ -20,7 +20,7 @@ public class RedBorderTopology {
             System.out.println("./storm jar {name_jar} {main_class} {local|cluster}");
         } else {
             RedBorderTopologies topologies = new RedBorderTopologies();             
-            TridentTopology topology = topologies.newKafka();         
+            TridentTopology topology = topologies.all();         
 
             if (args[0].equalsIgnoreCase("local")) {
                 Config conf = new CreateConfig(args[0]).makeConfig();
