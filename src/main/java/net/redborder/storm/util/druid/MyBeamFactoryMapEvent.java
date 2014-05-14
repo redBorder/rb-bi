@@ -39,17 +39,25 @@ import org.apache.curator.retry.RetryOneTime;
  */
 public class MyBeamFactoryMapEvent implements BeamFactory<Map<String, Object>> {
 
+    int partitions;
+    int replicas;
+
+    public MyBeamFactoryMapEvent(int partitions, int replicas) {
+        this.partitions = partitions;
+        this.replicas = replicas;
+    }
+
     @Override
     public Beam<Map<String, Object>> makeBeam(Map<?, ?> conf, IMetricsContext metrics) {
         try {
             KafkaConfigFile configFile = new KafkaConfigFile("events");
-            
+
             final CuratorFramework curator = CuratorFrameworkFactory
                     .builder()
                     .connectString(configFile.getZkHost())
                     .retryPolicy(new RetryOneTime(1000))
                     .build();
-            
+
             curator.start();
 
             final String dataSource = configFile.getTopic();
@@ -85,9 +93,9 @@ public class MyBeamFactoryMapEvent implements BeamFactory<Map<String, Object>> {
                             )
                     )
                     .rollup(DruidRollup.create(DruidDimensions.schemalessWithExclusions(exclusions), aggregators, QueryGranularity.MINUTE))
-                    .tuning(ClusteredBeamTuning.create(Granularity.HOUR, new Period("PT0M"), new Period("PT30M"), 1, 1))
+                    .tuning(ClusteredBeamTuning.create(Granularity.HOUR, new Period("PT0M"), new Period("PT30M"), partitions, replicas))
                     .timestampSpec(new TimestampSpec("timestamp", "posix"));
-            
+
             final Beam<Map<String, Object>> beam = builder.buildBeam();
 
             return beam;

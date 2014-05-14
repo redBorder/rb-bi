@@ -39,6 +39,14 @@ import org.apache.curator.retry.RetryOneTime;
  * @author andresgomez
  */
 public class MyBeamFactoryMapFlow implements BeamFactory<Map<String, Object>> {
+    
+    int partitions;
+    int replicas;
+    
+    public MyBeamFactoryMapFlow(int partitions, int replicas){
+        this.partitions=partitions;
+        this.replicas=replicas;
+    }
 
     @Override
     public Beam<Map<String, Object>> makeBeam(Map<?, ?> conf, IMetricsContext metrics) {
@@ -91,7 +99,7 @@ public class MyBeamFactoryMapFlow implements BeamFactory<Map<String, Object>> {
                             )
                     )
                     .rollup(DruidRollup.create(DruidDimensions.schemalessWithExclusions(exclusions), aggregators, QueryGranularity.MINUTE))
-                    .tuning(ClusteredBeamTuning.create(Granularity.HOUR, new Period("PT0M"), new Period("PT15M"), 4, 1))
+                    .tuning(ClusteredBeamTuning.create(Granularity.HOUR, new Period("PT0M"), new Period("PT15M"), partitions, replicas))
                     .timestampSpec(new TimestampSpec("timestamp", "posix"));
             
             final Beam<Map<String, Object>> beam = builder.buildBeam();
