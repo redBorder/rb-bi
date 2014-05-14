@@ -3,8 +3,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>net.redborder</groupId>
-    <project.artifactId>redBorder-BI</project.artifactId>
-    <project.version>1.0</project.version>
+    <artifactId>redBorder-BI</artifactId>
+    <version>1.0</version>
     <packaging>jar</packaging>
 
     <name>redBorder-BI</name>
@@ -41,15 +41,8 @@
             <id>twitter-maven</id>
             <url>http://maven.twttr.com/</url>
         </repository>
-        <!--repository>
-            <id>wso2-maven2-repository</id>
-            <name>WSO2 Maven2 Repository</name>
-            <url>http://dist.wso2.org/maven2</url>
-        </repository-->    
     </repositories>
 
-
-    
     <dependencies>
         
         <!-- GeoIP -->    
@@ -86,25 +79,12 @@
             <groupId>org.codehaus.jackson</groupId>
             <artifactId>jackson-mapper-asl</artifactId>
             <version>1.9.13</version>
-        </dependency>           
+        </dependency>
+        
         <dependency>
             <groupId>org.codehaus.jackson</groupId>
             <artifactId>jackson-core-asl</artifactId>
             <version>1.9.13</version>
-        </dependency>
-        
-        <!-- Stream twitter HouseBird -->
-        <dependency>
-            <groupId>com.twitter</groupId>
-            <artifactId>hbc-core</artifactId>
-            <version>1.4.0</version>
-            <type>jar</type>
-            <exclusions>
-                <exclusion>
-                    <artifactId>slf4j-api</artifactId>
-                    <groupId>org.slf4j</groupId>
-                </exclusion>
-            </exclusions>
         </dependency>
         
         <!-- Tranquility (druid) -->
@@ -126,81 +106,12 @@
         
         <!-- Memcached dependency -->
         <dependency>
-            <groupId>com.thimbleware.jmemcached</groupId>
-            <artifactId>jmemcached-core</artifactId>
-            <version>1.0.0</version>
-            <type>jar</type>
-            <exclusions>
-                <exclusion>
-                    <artifactId>slf4j-api</artifactId>
-                    <groupId>org.slf4j</groupId>
-                </exclusion>
-            </exclusions>
-        </dependency>      
-        <dependency>
-            <groupId>com.twitter</groupId>
-            <artifactId>finagle-memcached_2.9.2</artifactId>
-            <version>6.13.0</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.google.guava</groupId>
-                    <artifactId>guava</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.twitter</groupId>
-                    <artifactId>util-hashing_2.9.2</artifactId>
-                </exclusion>
-            </exclusions>
+            <groupId>storm</groupId>
+            <artifactId>trident-memcached</artifactId>
+            <version>0.0.5-wip3</version>
         </dependency>
-        <dependency>
-            <groupId>com.twitter</groupId>
-            <artifactId>util-hashing_2.9.2</artifactId>
-            <version>6.13.0</version>
-        </dependency>   
-        <dependency>
-            <groupId>com.twitter</groupId>
-            <artifactId>util-core_2.9.2</artifactId>
-            <version>6.13.0</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.google.guava</groupId>
-                    <artifactId>guava</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency> 
-        <dependency>
-            <groupId>com.twitter</groupId>
-            <artifactId>util-collection_2.9.2</artifactId>
-            <version>6.13.0</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.google.guava</groupId>
-                    <artifactId>guava</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>com.twitter</groupId>
-            <artifactId>util-logging_2.9.2</artifactId>
-            <version>6.13.0</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.google.guava</groupId>
-                    <artifactId>guava</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>com.twitter</groupId>
-            <artifactId>finagle-core_2.9.2</artifactId>
-            <version>6.13.0</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.google.guava</groupId>
-                    <artifactId>guava</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
+        
+        <!-- Kafka -->
         <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka_2.9.2</artifactId>
@@ -231,7 +142,7 @@
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
-                    <finalName>${project.artifactId}-${project.version}-selfcontained</finalName>
+                    <finalName>${artifactId}-${version}-selfcontained</finalName>
                     <appendAssemblyId>false</appendAssemblyId>
                     <archive>
                         <manifest>

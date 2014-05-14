@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import net.redborder.storm.function.*;
 import net.redborder.storm.spout.*;
-import net.redborder.storm.state.*;
+import trident.memcached.MemcachedState;
 import net.redborder.storm.state.query.*;
 import net.redborder.storm.state.updater.*;
 import net.redborder.storm.util.*;
