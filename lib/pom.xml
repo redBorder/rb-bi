@@ -96,100 +96,80 @@
   
     <dependencies>
         <dependency>
-            <groupId>com.twitter</groupId>
-            <artifactId>util-core</artifactId>
-            <version>5.3.7</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.google.guava</groupId>
-                    <artifactId>guava</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>com.twitter</groupId>
-            <artifactId>util-collection</artifactId>
-            <version>5.3.7</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.google.guava</groupId>
-                    <artifactId>guava</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>com.twitter</groupId>
-            <artifactId>util-logging</artifactId>
-            <version>5.3.7</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.google.guava</groupId>
-                    <artifactId>guava</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>com.twitter</groupId>
-            <artifactId>finagle-core</artifactId>
-            <version>5.3.8</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.google.guava</groupId>
-                    <artifactId>guava</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>com.twitter</groupId>
-            <artifactId>finagle-memcached</artifactId>
-            <version>5.3.8</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.google.guava</groupId>
-                    <artifactId>guava</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
             <groupId>com.thimbleware.jmemcached</groupId>
-            <artifactId>jmemcached-cli</artifactId>
+            <artifactId>jmemcached-core</artifactId>
             <version>1.0.0</version>
+            <type>jar</type>
+            <exclusions>
+                <exclusion>
+                    <artifactId>slf4j-api</artifactId>
+                    <groupId>org.slf4j</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>      
+        <dependency>
+            <groupId>com.twitter</groupId>
+            <artifactId>finagle-memcached_2.9.2</artifactId>
+            <version>6.13.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.twitter</groupId>
+                    <artifactId>util-hashing_2.9.2</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
-            <groupId>org.apache.storm</groupId>
-            <artifactId>storm-core</artifactId>
-            <version>0.9.1-incubating-mmx2</version>
-            <scope>provided</scope>
+            <groupId>com.twitter</groupId>
+            <artifactId>util-hashing_2.9.2</artifactId>
+            <version>6.13.0</version>
+        </dependency>   
+        <dependency>
+            <groupId>com.twitter</groupId>
+            <artifactId>util-core_2.9.2</artifactId>
+            <version>6.13.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency> 
         <dependency>
-            <groupId>org.clojure</groupId>
-            <artifactId>clojure</artifactId>
-            <version>1.4.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.clojure</groupId>
-            <artifactId>tools.nrepl</artifactId>
-            <version>0.2.3</version>
+            <groupId>com.twitter</groupId>
+            <artifactId>util-collection_2.9.2</artifactId>
+            <version>6.13.0</version>
             <exclusions>
                 <exclusion>
-                    <groupId>org.clojure</groupId>
-                    <artifactId>clojure</artifactId>
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava</artifactId>
                 </exclusion>
             </exclusions>
-            <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>clojure-complete</groupId>
-            <artifactId>clojure-complete</artifactId>
-            <version>0.2.3</version>
+            <groupId>com.twitter</groupId>
+            <artifactId>util-logging_2.9.2</artifactId>
+            <version>6.13.0</version>
             <exclusions>
                 <exclusion>
-                    <groupId>org.clojure</groupId>
-                    <artifactId>clojure</artifactId>
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava</artifactId>
                 </exclusion>
             </exclusions>
-            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.twitter</groupId>
+            <artifactId>finagle-core_2.9.2</artifactId>
+            <version>6.13.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
 </project>

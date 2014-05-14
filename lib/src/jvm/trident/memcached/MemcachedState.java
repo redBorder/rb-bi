@@ -1,3 +1,9 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+
 package trident.memcached;
 
 import backtype.storm.task.IMetricsContext;
@@ -193,7 +199,6 @@ public class MemcachedState<T> implements IBackingMap<T> {
         _client = client;
         _opts = opts;
         _ser = ser;
-        _mexceptions = new CountMetric();
 
     }
 
@@ -221,7 +226,7 @@ public class MemcachedState<T> implements IBackingMap<T> {
                     }
                 }
             }
-	    _mreads.incrBy(ret.size());
+      _mreads.incrBy(ret.size());
             return ret;
         } catch(Exception e) {
             checkMemcachedException(e);
@@ -246,7 +251,7 @@ public class MemcachedState<T> implements IBackingMap<T> {
             for(Future future: futures) {
                 future.get();
             }
-	    _mwrites.incrBy(futures.size());
+      _mwrites.incrBy(futures.size());
         } catch(Exception e) {
             checkMemcachedException(e);
         }
@@ -254,7 +259,7 @@ public class MemcachedState<T> implements IBackingMap<T> {
     
     
     private void checkMemcachedException(Exception e) {
-	_mexceptions.incr();
+  _mexceptions.incr();
         if(e instanceof RequestException ||
            e instanceof ChannelException ||
            e instanceof ServiceException ||
@@ -269,7 +274,7 @@ public class MemcachedState<T> implements IBackingMap<T> {
     }
 
     private void registerMetrics(Map conf, IMetricsContext context) {
-      Integer bucketSize = (Integer)(conf.get(Config.TOPOLOGY_BUILTIN_METRICS_BUCKET_SIZE_SECS));
+      int bucketSize = (Integer)(conf.get(Config.TOPOLOGY_BUILTIN_METRICS_BUCKET_SIZE_SECS));
       _mreads = context.registerMetric("memcached/readCount", new CountMetric(), bucketSize);
       _mwrites = context.registerMetric("memcached/writeCount", new CountMetric(), bucketSize);
       _mexceptions = context.registerMetric("memcached/exceptionCount", new CountMetric(), bucketSize);
