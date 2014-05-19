@@ -95,7 +95,7 @@
   
   
     <dependencies>
-        <dependency>
+        <dependency>  
             <groupId>com.thimbleware.jmemcached</groupId>
             <artifactId>jmemcached-core</artifactId>
             <version>1.0.0</version>
@@ -170,6 +170,13 @@
                     <artifactId>guava</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.storm</groupId>
+            <artifactId>storm-core</artifactId>
+            <version>0.9.2-incubating-SNAPSHOT</version>
+            <type>jar</type>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 </project>
