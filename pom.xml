@@ -12,34 +12,18 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <finagle.version>6.11.1</finagle.version>
-        <jackson.version>2.2.2</jackson.version>
-        <tranquility.version>0.1.19</tranquility.version>
     </properties>
 
     <repositories>
         <repository>
             <id>central</id>
             <name>Maven Repository Switchboard</name>
-            <url>http://repo1.maven.org/maven2</url>
-        </repository>       
-        <repository>
-            <id>clojars.org</id>
-            <url>http://clojars.org/repo</url>
-        </repository> 
+            <url>http://central.maven.org/maven2</url>
+        </repository>
         <repository>
             <id>central-local</id>
             <name>Central</name>
             <url>https://metamx.artifactoryonline.com/metamx/pub-libs-releases-local</url>
-        </repository> 
-        <repository>
-            <id>scala-tools-releases</id>
-            <name>Scala Tools Releases</name>
-            <url>https://repository.jboss.org/nexus/content/repositories/scala-tools-releases</url>
-        </repository>
-        <repository>
-            <id>twitter-maven</id>
-            <url>http://maven.twttr.com/</url>
         </repository>
     </repositories>
 
@@ -91,7 +75,7 @@
         <dependency>
             <groupId>com.metamx</groupId>
             <artifactId>tranquility</artifactId>
-            <version>${tranquility.version}</version>
+            <version>0.1.19</version>
             <exclusions>
                 <exclusion>
                     <artifactId>slf4j-log4j12</artifactId>
@@ -138,7 +122,6 @@
             -->
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>2.4</version>
                 <configuration>
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>

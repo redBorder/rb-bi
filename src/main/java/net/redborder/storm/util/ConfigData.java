@@ -27,7 +27,6 @@ public class ConfigData {
 
     CuratorFramework client;
     Config conf;
-    
 
     public ConfigData(KafkaConfigFile zk) {
         conf = new Config();
@@ -68,10 +67,9 @@ public class ConfigData {
 
     public int getMiddleManagerCapacity() {
         int middleManagers = 0;
-
-        List<String> middleManagersList = null;
+        
         try {
-            middleManagersList = client.getChildren().forPath("/druid/indexer/announcements");
+            List<String> middleManagersList = client.getChildren().forPath("/druid/indexer/announcements");
 
             for (String middleManager : middleManagersList) {
                 String jsonString = null;
@@ -84,7 +82,7 @@ public class ConfigData {
 
                 if (jsonString != null) {
                     ObjectMapper mapper = new ObjectMapper();
-                    Map<String, Object> json = null;
+                    Map<String, Object> json;
 
                     try {
                         json = mapper.readValue(jsonString, Map.class);
@@ -109,6 +107,7 @@ public class ConfigData {
     /**
      * Getter.
      *
+     * @param _mode
      * @return the config of storm topology.
      */
     public Config getConfig(String _mode) {
