@@ -81,7 +81,8 @@ public class RedBorderTopology {
         Stream mseStream = topology.newStream("rb_loc", new TridentKafkaSpout(kafkaConfig, "location").builder())
                 .each(new Fields("str"), new MapperFunction(), new Fields("mse_map"))
                 .each(new Fields("mse_map"), new GetMSEdata(), new Fields("src_mac", "mse_data", "mse_data_druid"))
-                .parallelismHint(locationPartition);
+                .parallelismHint(locationPartition)
+                .name("MSE");
 
         TridentState mseState = mseStream
                 .project(new Fields("src_mac", "mse_data"))
@@ -105,26 +106,32 @@ public class RedBorderTopology {
                 .each(new Fields("str"), new MapperFunction(), new Fields("flows"))
                 .parallelismHint(flowPartition)
                 .shuffle()
-                .project(new Fields("flows"));
+                .project(new Fields("flows"))
+                .name("Flow");
 
         Stream locationStream = flowStream
                 .each(new Fields("flows"), new GetFieldFunction("client_mac"), new Fields("mac_src_flow"))
                 .stateQuery(mseState, new Fields("mac_src_flow"), new MemcachedQuery("mac_src_flow", "rb_loc"), new Fields("mseMap"))
-                .project(new Fields("flows", "mseMap"));
+                .project(new Fields("flows", "mseMap"))
+                .name("Location");
 
         Stream trapStream = flowStream
                 .each(new Fields("flows"), new GetFieldFunction("client_mac"), new Fields("mac_src_flow"))
                 .stateQuery(rssiState, new Fields("mac_src_flow"), new MemcachedQuery("mac_src_flow", "rb_trap"), new Fields("rssiMap"))
-                .project(new Fields("flows", "rssiMap"));
+                .project(new Fields("flows", "rssiMap"))
+                .name("Trap");
 
         Stream macVendorStream = flowStream
-                .each(new Fields("flows"), new MacVendorFunction(), new Fields("macVendorMap"));
+                .each(new Fields("flows"), new MacVendorFunction(), new Fields("macVendorMap"))
+                .name("MAC Vendor");
 
         Stream geoIPStream = flowStream
-                .each(new Fields("flows"), new GeoIpFunction(), new Fields("geoIPMap"));
+                .each(new Fields("flows"), new GeoIpFunction(), new Fields("geoIPMap"))
+                .name("GeoIP");
 
         Stream httpUrlStream = flowStream
-                .each(new Fields("flows"), new AnalizeHttpUrlFunction(), new Fields("httpUrlMap"));
+                .each(new Fields("flows"), new AnalizeHttpUrlFunction(), new Fields("httpUrlMap"))
+                .name("HTTP");
 
         Stream mobileStream = flowStream
                 .each(new Fields("flows"), new GetFieldFunction("src"), new Fields("src_ip_addr"))
@@ -134,7 +141,8 @@ public class RedBorderTopology {
                 .each(new Fields("ueRegisterMap"), new GetFieldFunction("path"), new Fields("path"))
                 .stateQuery(mobileState, new Fields("path"), new MemcachedQuery("path", "rb_mobile"), new Fields("hnbRegisterMap"))
                 .each(new Fields("ipAssignMap", "ueRegisterMap", "hnbRegisterMap"), new JoinFlowFunction(), new Fields("mobileMap"))
-                .project(new Fields("flows", "mobileMap"));
+                .project(new Fields("flows", "mobileMap"))
+                .name("Mobile");
 
         List<Stream> joinStream = new ArrayList<>();
         joinStream.add(locationStream);
@@ -153,7 +161,8 @@ public class RedBorderTopology {
         keyFields.add(new Fields("flows"));
 
         Stream joinedStream = topology.join(joinStream, keyFields, new Fields("flows", "mseMap", "macVendorMap", "geoIPMap", "mobileMap", "rssiMap", "httpUrlMap"))
-                .each(new Fields("flows", "mseMap", "macVendorMap", "geoIPMap", "mobileMap", "rssiMap", "httpUrlMap"), new JoinFlowFunction(), new Fields("finalMap"));
+                .each(new Fields("flows", "mseMap", "macVendorMap", "geoIPMap", "mobileMap", "rssiMap", "httpUrlMap"), new JoinFlowFunction(), new Fields("finalMap"))
+                .name("Joined");
 
         String outputTopic = kafkaConfig.getOutputTopic();
 
@@ -211,9 +220,7 @@ public class RedBorderTopology {
                     .partitionPersist(druidStateFlow, new Fields("finalMap"), new TridentBeamStateUpdater())
                     .parallelismHint(partitions);
 
-            mseStream
-                    .project(new Fields("mse_data_druid"))
-                    .partitionPersist(druidStateFlow, new Fields("mse_data_druid"), new TridentBeamStateUpdater());
+            mseStream.partitionPersist(druidStateFlow, new Fields("mse_data_druid"), new TridentBeamStateUpdater());
         }
 
         return topology;
