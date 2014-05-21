@@ -102,38 +102,23 @@ public class RedBorderTopology {
                 .parallelismHint(trapPartition);
 
         // FLOW STREAM
-        Stream flowStream = topology.newStream("rb_flow", new TridentKafkaSpout(kafkaConfig, "traffics").builder())
+        Stream joinedStream = topology.newStream("rb_flow", new TridentKafkaSpout(kafkaConfig, "traffics").builder())
                 .each(new Fields("str"), new MapperFunction(), new Fields("flows"))
                 .parallelismHint(flowPartition)
                 .shuffle()
-                .project(new Fields("flows"))
-                .name("Flow");
-
-        Stream locationStream = flowStream
+                .name("Flow")
                 .each(new Fields("flows"), new GetFieldFunction("client_mac"), new Fields("mac_src_flow"))
                 .stateQuery(mseState, new Fields("mac_src_flow"), new MemcachedQuery("mac_src_flow", "rb_loc"), new Fields("mseMap"))
-                .project(new Fields("flows", "mseMap"))
-                .name("Location");
-
-        Stream trapStream = flowStream
+                .name("Location")
                 .each(new Fields("flows"), new GetFieldFunction("client_mac"), new Fields("mac_src_flow"))
                 .stateQuery(rssiState, new Fields("mac_src_flow"), new MemcachedQuery("mac_src_flow", "rb_trap"), new Fields("rssiMap"))
-                .project(new Fields("flows", "rssiMap"))
-                .name("Trap");
-
-        Stream macVendorStream = flowStream
+                .name("Trap")
                 .each(new Fields("flows"), new MacVendorFunction(), new Fields("macVendorMap"))
-                .name("MAC Vendor");
-
-        Stream geoIPStream = flowStream
+                .name("MAC Vendor")
                 .each(new Fields("flows"), new GeoIpFunction(), new Fields("geoIPMap"))
-                .name("GeoIP");
-
-        Stream httpUrlStream = flowStream
+                .name("GeoIP")
                 .each(new Fields("flows"), new AnalizeHttpUrlFunction(), new Fields("httpUrlMap"))
-                .name("HTTP");
-
-        Stream mobileStream = flowStream
+                .name("HTTP")
                 .each(new Fields("flows"), new GetFieldFunction("src"), new Fields("src_ip_addr"))
                 .stateQuery(mobileState, new Fields("src_ip_addr"), new MemcachedQuery("src_ip_addr", "rb_mobile"), new Fields("ipAssignMap"))
                 .each(new Fields("ipAssignMap"), new GetFieldFunction("imsi"), new Fields("imsi"))
@@ -142,25 +127,7 @@ public class RedBorderTopology {
                 .stateQuery(mobileState, new Fields("path"), new MemcachedQuery("path", "rb_mobile"), new Fields("hnbRegisterMap"))
                 .each(new Fields("ipAssignMap", "ueRegisterMap", "hnbRegisterMap"), new JoinFlowFunction(), new Fields("mobileMap"))
                 .project(new Fields("flows", "mobileMap"))
-                .name("Mobile");
-
-        List<Stream> joinStream = new ArrayList<>();
-        joinStream.add(locationStream);
-        joinStream.add(macVendorStream);
-        joinStream.add(geoIPStream);
-        joinStream.add(mobileStream);
-        joinStream.add(trapStream);
-        joinStream.add(httpUrlStream);
-
-        List<Fields> keyFields = new ArrayList<>();
-        keyFields.add(new Fields("flows"));
-        keyFields.add(new Fields("flows"));
-        keyFields.add(new Fields("flows"));
-        keyFields.add(new Fields("flows"));
-        keyFields.add(new Fields("flows"));
-        keyFields.add(new Fields("flows"));
-
-        Stream joinedStream = topology.join(joinStream, keyFields, new Fields("flows", "mseMap", "macVendorMap", "geoIPMap", "mobileMap", "rssiMap", "httpUrlMap"))
+                .name("Mobile")
                 .each(new Fields("flows", "mseMap", "macVendorMap", "geoIPMap", "mobileMap", "rssiMap", "httpUrlMap"), new JoinFlowFunction(), new Fields("finalMap"))
                 .name("Joined");
 
