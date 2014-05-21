@@ -75,29 +75,31 @@ public class RedBorderTopology {
         int trapPartition = config.getKafkaPartitions("rb_trap");
 
         StateFactory memcached =  MemcachedState.transactional(memConfig.getServers(), mseOpts);
-        StateFactory memcachedMobile = MemcachedState.transactional(memConfig.getServers(), mobileOpts);
+        TridentState memcachedState = topology.newStaticState(memcached);
 
         // LOCATION DATA
         Stream mseStream = topology.newStream("rb_loc", new TridentKafkaSpout(kafkaConfig, "location").builder())
                 .each(new Fields("str"), new MapperFunction(), new Fields("mse_map"))
                 .each(new Fields("mse_map"), new GetMSEdata(), new Fields("src_mac", "mse_data", "mse_data_druid"))
                 .parallelismHint(locationPartition)
-                .name("MSE");
+                .name("MSE Strean");
 
-        TridentState mseState = mseStream
+        mseStream
                 .project(new Fields("src_mac", "mse_data"))
                 .partitionPersist(memcached, new Fields("src_mac", "mse_data"), new MemcachedUpdater("src_mac", "mse_data", "rb_loc"));
 
         // MOBILE DATA
-        TridentState mobileState = topology.newStream("rb_mobile", new TridentKafkaSpout(kafkaConfig, "mobile").builder())
+        topology.newStream("rb_mobile", new TridentKafkaSpout(kafkaConfig, "mobile").builder())
                 .each(new Fields("str"), new MobileBuilderFunction(), new Fields("key", "mobileMap"))
-                .partitionPersist(memcachedMobile, new Fields("key", "mobileMap"), new MemcachedUpdater("key", "mobileMap", "rb_mobile"))
+                .name("Mobile Strean")
+                .partitionPersist(memcached, new Fields("key", "mobileMap"), new MemcachedUpdater("key", "mobileMap", "rb_mobile"))
                 .parallelismHint(mobilePartition);
 
         // RSSI DATA
-        TridentState rssiState = topology.newStream("rb_trap", new TridentKafkaSpout(kafkaConfig, "trap").builder())
+        topology.newStream("rb_trap", new TridentKafkaSpout(kafkaConfig, "trap").builder())
                 .each(new Fields("str"), new MapperFunction(), new Fields("rssi"))
                 .each(new Fields("rssi"), new GetTRAPdata(), new Fields("rssiKey", "rssiValue"))
+                .name("RSSI Stream")
                 .partitionPersist(memcached, new Fields("rssiKey", "rssiValue"), new MemcachedUpdater("rssiKey", "rssiValue", "rb_trap"))
                 .parallelismHint(trapPartition);
 
@@ -106,12 +108,11 @@ public class RedBorderTopology {
                 .each(new Fields("str"), new MapperFunction(), new Fields("flows"))
                 .parallelismHint(flowPartition)
                 .shuffle()
-                .name("Flow")
+                .name("Flow Stream")
                 .each(new Fields("flows"), new GetFieldFunction("client_mac"), new Fields("mac_src_flow"))
-                .stateQuery(mseState, new Fields("mac_src_flow"), new MemcachedQuery("mac_src_flow", "rb_loc"), new Fields("mseMap"))
+                .stateQuery(memcachedState, new Fields("mac_src_flow"), new MemcachedQuery("mac_src_flow", "rb_loc"), new Fields("mseMap"))
                 .name("Location")
-                .each(new Fields("flows"), new GetFieldFunction("client_mac"), new Fields("mac_src_flow"))
-                .stateQuery(rssiState, new Fields("mac_src_flow"), new MemcachedQuery("mac_src_flow", "rb_trap"), new Fields("rssiMap"))
+                .stateQuery(memcachedState, new Fields("mac_src_flow"), new MemcachedQuery("mac_src_flow", "rb_trap"), new Fields("rssiMap"))
                 .name("Trap")
                 .each(new Fields("flows"), new MacVendorFunction(), new Fields("macVendorMap"))
                 .name("MAC Vendor")
@@ -120,16 +121,17 @@ public class RedBorderTopology {
                 .each(new Fields("flows"), new AnalizeHttpUrlFunction(), new Fields("httpUrlMap"))
                 .name("HTTP")
                 .each(new Fields("flows"), new GetFieldFunction("src"), new Fields("src_ip_addr"))
-                .stateQuery(mobileState, new Fields("src_ip_addr"), new MemcachedQuery("src_ip_addr", "rb_mobile"), new Fields("ipAssignMap"))
+                .stateQuery(memcachedState, new Fields("src_ip_addr"), new MemcachedQuery("src_ip_addr", "rb_mobile"), new Fields("ipAssignMap"))
                 .each(new Fields("ipAssignMap"), new GetFieldFunction("imsi"), new Fields("imsi"))
-                .stateQuery(mobileState, new Fields("imsi"), new MemcachedQuery("imsi", "rb_mobile"), new Fields("ueRegisterMap"))
+                .stateQuery(memcachedState, new Fields("imsi"), new MemcachedQuery("imsi", "rb_mobile"), new Fields("ueRegisterMap"))
                 .each(new Fields("ueRegisterMap"), new GetFieldFunction("path"), new Fields("path"))
-                .stateQuery(mobileState, new Fields("path"), new MemcachedQuery("path", "rb_mobile"), new Fields("hnbRegisterMap"))
+                .stateQuery(memcachedState, new Fields("path"), new MemcachedQuery("path", "rb_mobile"), new Fields("hnbRegisterMap"))
                 .each(new Fields("ipAssignMap", "ueRegisterMap", "hnbRegisterMap"), new JoinFlowFunction(), new Fields("mobileMap"))
-                .project(new Fields("flows", "mobileMap"))
                 .name("Mobile")
                 .each(new Fields("flows", "mseMap", "macVendorMap", "geoIPMap", "mobileMap", "rssiMap", "httpUrlMap"), new JoinFlowFunction(), new Fields("finalMap"))
-                .name("Joined");
+                .project(new Fields("finalMap"))
+                .name("Joined")
+                .parallelismHint(config.getWorkers() * 4);
 
         String outputTopic = kafkaConfig.getOutputTopic();
 

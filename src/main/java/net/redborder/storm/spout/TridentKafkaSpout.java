@@ -10,7 +10,7 @@ import java.io.FileNotFoundException;
 import net.redborder.storm.util.KafkaConfigFile;
 import storm.kafka.StringScheme;
 import storm.kafka.ZkHosts;
-import storm.kafka.trident.OpaqueTridentKafkaSpout;
+import storm.kafka.trident.TransactionalTridentKafkaSpout;
 import storm.kafka.trident.TridentKafkaConfig;
 
 /**
@@ -41,9 +41,9 @@ public class TridentKafkaSpout {
      *
      * @return Trident spout of kafka.
      */
-    public OpaqueTridentKafkaSpout builder() {
+    public TransactionalTridentKafkaSpout builder() {
         //Logger.getLogger(KafkaConfigFile.class.getName()).log(Level.INFO, "Reading from topic " + _configFile.getTopic());
-        return new OpaqueTridentKafkaSpout(_kafkaConfig);
+        return new TransactionalTridentKafkaSpout(_kafkaConfig);
     }
 
 }
