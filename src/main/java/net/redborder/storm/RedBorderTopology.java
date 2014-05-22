@@ -105,11 +105,10 @@ public class RedBorderTopology {
 
         // FLOW STREAM
         Stream joinedStream = topology.newStream("rb_flow", new TridentKafkaSpout(kafkaConfig, "traffics").builder())
-                .name("Flow")
-                .each(new Fields("str"), new MapperFunction(), new Fields("flows"))
                 .parallelismHint(flowPartition)
                 .shuffle()                
                 .name("Main")
+                .each(new Fields("str"), new MapperFunction(), new Fields("flows"))
                 .each(new Fields("flows"), new GetFieldFunction("client_mac"), new Fields("mac_src_flow"))
                 .stateQuery(memcachedState, new Fields("mac_src_flow"), new MemcachedQuery("mac_src_flow", "rb_loc"), new Fields("mseMap"))
                 .stateQuery(memcachedState, new Fields("mac_src_flow"), new MemcachedQuery("mac_src_flow", "rb_trap"), new Fields("rssiMap"))

@@ -5,9 +5,12 @@
  */
 package net.redborder.storm.state;
 
+import backtype.storm.topology.ReportedFailedException;
 import com.google.common.collect.Lists;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import storm.trident.operation.TridentCollector;
 import storm.trident.state.BaseStateUpdater;
 import storm.trident.state.map.MapState;
@@ -46,7 +49,12 @@ public class MemcachedUpdater extends BaseStateUpdater<MapState<Map<String, Obje
             System.out.println("SAVED TO MEMCACHED KEY: " + _generalKey +t.getValueByField(_key) +
                     " VALUE: " + t.getValueByField(_value));
         }
-        state.multiPut(keys, events);
+        
+        try {
+            state.multiPut(keys, events);
+        } catch (ReportedFailedException e) {
+            Logger.getLogger(MemcachedUpdater.class.getName()).log(Level.WARNING, null, e);
+        }
     }
 
 }
