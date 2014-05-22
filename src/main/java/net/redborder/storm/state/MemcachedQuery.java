@@ -5,12 +5,14 @@
  */
 package net.redborder.storm.state;
 
+import backtype.storm.topology.ReportedFailedException;
 import backtype.storm.tuple.Values;
 import com.google.common.collect.Lists;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import storm.trident.operation.TridentCollector;
 import storm.trident.state.BaseQueryFunction;
 import storm.trident.state.map.MapState;
@@ -63,8 +65,12 @@ public class MemcachedQuery extends BaseQueryFunction<MapState<Map<String, Objec
                 keysToMemcached.add(l);
             }
             
-            memcachedData = state.multiGet(keysToMemcached);
-            //System.out.println("MemcachedResponse: " + memcachedData.toString());
+            try {
+                memcachedData = state.multiGet(keysToMemcached);
+                //System.out.println("MemcachedResponse: " + memcachedData.toString());
+            } catch (ReportedFailedException e) {
+                Logger.getLogger(MemcachedQuery.class.getName()).log(Level.WARNING, null, e);
+            }
         }
         
         for (String key : keysToAppend) {

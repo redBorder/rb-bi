@@ -79,10 +79,10 @@ public class RedBorderTopology {
 
         // LOCATION DATA
         Stream mseStream = topology.newStream("rb_loc", new TridentKafkaSpout(kafkaConfig, "location").builder())
+                .name("MSE")
                 .each(new Fields("str"), new MapperFunction(), new Fields("mse_map"))
                 .each(new Fields("mse_map"), new GetMSEdata(), new Fields("src_mac", "mse_data", "mse_data_druid"))
-                .parallelismHint(locationPartition)
-                .name("MSE Strean");
+                .parallelismHint(locationPartition);
 
         mseStream
                 .project(new Fields("src_mac", "mse_data"))
@@ -90,47 +90,40 @@ public class RedBorderTopology {
 
         // MOBILE DATA
         topology.newStream("rb_mobile", new TridentKafkaSpout(kafkaConfig, "mobile").builder())
+                .name("Mobile")
                 .each(new Fields("str"), new MobileBuilderFunction(), new Fields("key", "mobileMap"))
-                .name("Mobile Strean")
                 .partitionPersist(memcached, new Fields("key", "mobileMap"), new MemcachedUpdater("key", "mobileMap", "rb_mobile"))
                 .parallelismHint(mobilePartition);
 
         // RSSI DATA
         topology.newStream("rb_trap", new TridentKafkaSpout(kafkaConfig, "trap").builder())
+                .name("RSSI")
                 .each(new Fields("str"), new MapperFunction(), new Fields("rssi"))
                 .each(new Fields("rssi"), new GetTRAPdata(), new Fields("rssiKey", "rssiValue"))
-                .name("RSSI Stream")
                 .partitionPersist(memcached, new Fields("rssiKey", "rssiValue"), new MemcachedUpdater("rssiKey", "rssiValue", "rb_trap"))
                 .parallelismHint(trapPartition);
 
         // FLOW STREAM
         Stream joinedStream = topology.newStream("rb_flow", new TridentKafkaSpout(kafkaConfig, "traffics").builder())
+                .name("Flow")
                 .each(new Fields("str"), new MapperFunction(), new Fields("flows"))
                 .parallelismHint(flowPartition)
-                .shuffle()
-                .name("Flow Stream")
+                .shuffle()                
+                .name("Main")
                 .each(new Fields("flows"), new GetFieldFunction("client_mac"), new Fields("mac_src_flow"))
                 .stateQuery(memcachedState, new Fields("mac_src_flow"), new MemcachedQuery("mac_src_flow", "rb_loc"), new Fields("mseMap"))
-                .name("Location")
                 .stateQuery(memcachedState, new Fields("mac_src_flow"), new MemcachedQuery("mac_src_flow", "rb_trap"), new Fields("rssiMap"))
-                .name("Trap")
                 .each(new Fields("flows"), new MacVendorFunction(), new Fields("macVendorMap"))
-                .name("MAC Vendor")
                 .each(new Fields("flows"), new GeoIpFunction(), new Fields("geoIPMap"))
-                .name("GeoIP")
                 .each(new Fields("flows"), new AnalizeHttpUrlFunction(), new Fields("httpUrlMap"))
-                .name("HTTP")
                 .each(new Fields("flows"), new GetFieldFunction("src"), new Fields("src_ip_addr"))
                 .stateQuery(memcachedState, new Fields("src_ip_addr"), new MemcachedQuery("src_ip_addr", "rb_mobile"), new Fields("ipAssignMap"))
                 .each(new Fields("ipAssignMap"), new GetFieldFunction("imsi"), new Fields("imsi"))
                 .stateQuery(memcachedState, new Fields("imsi"), new MemcachedQuery("imsi", "rb_mobile"), new Fields("ueRegisterMap"))
                 .each(new Fields("ueRegisterMap"), new GetFieldFunction("path"), new Fields("path"))
                 .stateQuery(memcachedState, new Fields("path"), new MemcachedQuery("path", "rb_mobile"), new Fields("hnbRegisterMap"))
-                .each(new Fields("ipAssignMap", "ueRegisterMap", "hnbRegisterMap"), new JoinFlowFunction(), new Fields("mobileMap"))
-                .name("Mobile")
-                .each(new Fields("flows", "mseMap", "macVendorMap", "geoIPMap", "mobileMap", "rssiMap", "httpUrlMap"), new JoinFlowFunction(), new Fields("finalMap"))
+                .each(new Fields("ipAssignMap", "ueRegisterMap", "hnbRegisterMap", "flows", "mseMap", "macVendorMap", "geoIPMap", "rssiMap", "httpUrlMap"), new JoinFlowFunction(), new Fields("finalMap"))
                 .project(new Fields("finalMap"))
-                .name("Joined")
                 .parallelismHint(config.getWorkers() * 4);
 
         String outputTopic = kafkaConfig.getOutputTopic();
@@ -150,7 +143,10 @@ public class RedBorderTopology {
             System.out.println("   * rb_flow_pre: " + flowPrePartitions);
 
             System.out.println("Flows send to: " + outputTopic);
-            joinedStream.each(new Fields("finalMap"), new MapToJSONFunction(), new Fields("jsonString"))
+            joinedStream
+                    .shuffle()
+                    .name("Kafka Producer")
+                    .each(new Fields("finalMap"), new MapToJSONFunction(), new Fields("jsonString"))
                     .each(new Fields("jsonString"), new ProducerKafkaFunction(kafkaConfig, outputTopic), new Fields("a"))
                     .parallelismHint(flowPrePartitions);
 
@@ -186,10 +182,13 @@ public class RedBorderTopology {
             StateFactory druidStateFlow = new TridentBeamStateFactory<>(new MyBeamFactoryMapFlow(partitions, replicas));
 
             joinedStream//.each(new Fields("finalMap"), new PrinterFunction("----"), new Fields(""))
+                    .shuffle()
+                    .name("Tranquility")
                     .partitionPersist(druidStateFlow, new Fields("finalMap"), new TridentBeamStateUpdater())
                     .parallelismHint(partitions);
 
-            mseStream.partitionPersist(druidStateFlow, new Fields("mse_data_druid"), new TridentBeamStateUpdater());
+            mseStream
+                    .partitionPersist(druidStateFlow, new Fields("mse_data_druid"), new TridentBeamStateUpdater());
         }
 
         return topology;
