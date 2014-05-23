@@ -73,6 +73,7 @@ public class RedBorderTopology {
         int mobilePartition = config.getKafkaPartitions("rb_mobile");
         int flowPartition = config.getKafkaPartitions("rb_flow");
         int trapPartition = config.getKafkaPartitions("rb_trap");
+        int radiusPartition = config.getKafkaPartitions("rb_radius");
 
         StateFactory memcached = MemcachedState.transactional(memConfig.getServers(), mseOpts);
         StateFactory memcachedMobile = MemcachedState.transactional(memConfig.getServers(), mobileOpts);
@@ -101,7 +102,17 @@ public class RedBorderTopology {
                 .each(new Fields("rssi"), new GetTRAPdata(), new Fields("rssiKey", "rssiValue"))
                 .partitionPersist(memcachedMobile, new Fields("rssiKey", "rssiValue"), new MemcachedUpdater("rssiKey", "rssiValue", "rb_trap"))
                 .parallelismHint(trapPartition);
-
+        
+        // RADIUS DATA
+        Stream radiusStream = topology.newStream("rb_radius", new TridentKafkaSpout(kafkaConfig, "radius").builder())
+                .name("Radius")
+                .each(new Fields("str"), new MapperFunction(), new Fields("radius"))
+                .each(new Fields("radius"), new GetRadiusData(), new Fields("radiusKey", "radiusData", "radiusDruid"))
+                .parallelismHint(radiusPartition);
+        
+        radiusStream.project(new Fields("radiusKey", "radiusData"))
+                .partitionPersist(memcachedMobile, new Fields("radiusKey", "radiusData"), new MemcachedUpdater("radiusKey", "radiusData", "rb_radius"));
+                
         // FLOW STREAM
         Stream joinedStream = topology.newStream("rb_flow", new TridentKafkaSpout(kafkaConfig, "traffics").builder())
                 .parallelismHint(flowPartition)
@@ -133,6 +144,7 @@ public class RedBorderTopology {
         System.out.println("   * rb_mobile: " + mobilePartition);
         System.out.println("   * rb_trap: " + trapPartition);
         System.out.println("   * rb_flow: " + flowPartition);
+        System.out.println("   * rb_radius: " + radiusPartition);
 
         if (outputTopic != null) {
 
@@ -151,6 +163,10 @@ public class RedBorderTopology {
             mseStream
                     .each(new Fields("mse_data_druid"), new MapToJSONFunction(), new Fields("jsonString"))
                     .each(new Fields("jsonString"), new ProducerKafkaFunction(kafkaConfig, outputTopic), new Fields("a"));
+            
+            radiusStream
+                    .each(new Fields("radiusDruid"), new MapToJSONFunction(), new Fields("radiusJSONString"))
+                    .each(new Fields("radiusJSONString"), new ProducerKafkaFunction(kafkaConfig, outputTopic), new Fields("a"));
         } else {
 
             System.out.println("\n- Tranquility info: ");
@@ -187,6 +203,9 @@ public class RedBorderTopology {
 
             mseStream
                     .partitionPersist(druidStateFlow, new Fields("mse_data_druid"), new TridentBeamStateUpdater());
+            
+            radiusStream
+                    .partitionPersist(druidStateFlow, new Fields("radiusDruid"), new TridentBeamStateUpdater());
         }
 
         return topology;

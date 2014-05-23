@@ -80,7 +80,7 @@ public class GetMSEdata extends BaseFunction {
             
             collector.emit(new Values(macAddress, mseData, mseDataDruid));
         } catch (NullPointerException e) {
-            Logger.getLogger(GetMSEdata.class.getName()).log(Level.SEVERE, "Failed reading a MSE JSON tuple", e);
+            Logger.getLogger(GetMSEdata.class.getName()).log(Level.SEVERE, "Failed processing a MSE map", e);
         }
     }
 
