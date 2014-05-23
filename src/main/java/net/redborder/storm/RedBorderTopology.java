@@ -75,6 +75,7 @@ public class RedBorderTopology {
         int trapPartition = config.getKafkaPartitions("rb_trap");
 
         StateFactory memcached = MemcachedState.transactional(memConfig.getServers(), mseOpts);
+        StateFactory memcachedMobile = MemcachedState.transactional(memConfig.getServers(), mobileOpts);
 
         // LOCATION DATA
         Stream mseStream = topology.newStream("rb_loc", new TridentKafkaSpout(kafkaConfig, "location").builder())
@@ -90,7 +91,7 @@ public class RedBorderTopology {
         topology.newStream("rb_mobile", new TridentKafkaSpout(kafkaConfig, "mobile").builder())
                 .name("Mobile")
                 .each(new Fields("str"), new MobileBuilderFunction(), new Fields("key", "mobileMap"))
-                .partitionPersist(memcached, new Fields("key", "mobileMap"), new MemcachedUpdater("key", "mobileMap", "rb_mobile"))
+                .partitionPersist(memcachedMobile, new Fields("key", "mobileMap"), new MemcachedUpdater("key", "mobileMap", "rb_mobile"))
                 .parallelismHint(mobilePartition);
 
         // RSSI DATA
@@ -98,7 +99,7 @@ public class RedBorderTopology {
                 .name("RSSI")
                 .each(new Fields("str"), new MapperFunction(), new Fields("rssi"))
                 .each(new Fields("rssi"), new GetTRAPdata(), new Fields("rssiKey", "rssiValue"))
-                .partitionPersist(memcached, new Fields("rssiKey", "rssiValue"), new MemcachedUpdater("rssiKey", "rssiValue", "rb_trap"))
+                .partitionPersist(memcachedMobile, new Fields("rssiKey", "rssiValue"), new MemcachedUpdater("rssiKey", "rssiValue", "rb_trap"))
                 .parallelismHint(trapPartition);
 
         // FLOW STREAM
