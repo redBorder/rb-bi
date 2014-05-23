@@ -2,33 +2,14 @@ package net.redborder.storm;
 
 import backtype.storm.Config;
 import backtype.storm.LocalCluster;
-import backtype.storm.LocalDRPC;
 import backtype.storm.StormSubmitter;
 import backtype.storm.generated.AlreadyAliveException;
 import backtype.storm.generated.InvalidTopologyException;
-import backtype.storm.tuple.Fields;
-import backtype.storm.tuple.Values;
-import com.metamx.tranquility.storm.TridentBeamStateFactory;
-import com.metamx.tranquility.storm.TridentBeamStateUpdater;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.List;
-import net.redborder.storm.function.*;
 import net.redborder.storm.spout.TridentKafkaSpout;
-import net.redborder.storm.state.*;
 import net.redborder.storm.util.ConfigData;
 import net.redborder.storm.util.KafkaConfigFile;
-import net.redborder.storm.util.MemcachedConfigFile;
-import net.redborder.storm.util.druid.MyBeamFactoryMapFlow;
-import storm.trident.Stream;
-import storm.trident.TridentState;
 import storm.trident.TridentTopology;
-import storm.trident.operation.builtin.Count;
-import storm.trident.operation.builtin.Sum;
-import storm.trident.state.StateFactory;
-import storm.trident.testing.FixedBatchSpout;
-import storm.trident.testing.MemoryMapState;
-import trident.memcached.MemcachedState;
 
 public class RedBorderTopology {
 
@@ -73,14 +54,8 @@ public class RedBorderTopology {
         TridentTopology topology = new TridentTopology();
 
         //int flowPartition = config.getKafkaPartitions("rb_flow");
-        
-        FixedBatchSpout spout = new FixedBatchSpout(new Fields("sentence"), 3, new Values("the cow jumped over the moon"),
-            new Values("the man went to the store and bought some candy"), new Values("four score and seven years ago"),
-            new Values("how many apples can you eat"), new Values("to be or not to be the person"));
-        
-        spout.setCycle(true);
 
-        topology.newStream("rb_flow", spout);
+        topology.newStream("rb_flow", new TridentKafkaSpout(kafkaConfig, "traffics").builder());
 
         return topology;
     }
