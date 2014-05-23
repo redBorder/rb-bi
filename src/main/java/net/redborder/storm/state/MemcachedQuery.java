@@ -46,14 +46,14 @@ public class MemcachedQuery extends BaseQueryFunction<MapState<Map<String, Objec
         
         for (TridentTuple t : tuples) {
             String key = (String) t.getValueByField(_key);
-            keysToAppend.add(_generalkey+key);
+            keysToAppend.add(_generalkey + key);
             
-            if(!key.equals("null") && !keysToRequest.contains(key)) {
-                keysToRequest.add(_generalkey+key);
+            if(!key.equals("null") && !keysToRequest.contains(_generalkey + key)) {
+                keysToRequest.add(_generalkey + key);
             }
         }
         
-        //System.out.println("BatchSize " + tuples.size() +
+        // System.out.println("BatchSize " + tuples.size() +
         //            " RequestedToMemcached: " + keysToRequest.size());
         
         if (!keysToRequest.isEmpty()) {
@@ -67,7 +67,7 @@ public class MemcachedQuery extends BaseQueryFunction<MapState<Map<String, Objec
             
             try {
                 memcachedData = state.multiGet(keysToMemcached);
-                //System.out.println("MemcachedResponse: " + memcachedData.toString());
+                // System.out.println("MemcachedResponse: " + memcachedData.toString());
             } catch (ReportedFailedException e) {
                 Logger.getLogger(MemcachedQuery.class.getName()).log(Level.WARNING, null, e);
             }

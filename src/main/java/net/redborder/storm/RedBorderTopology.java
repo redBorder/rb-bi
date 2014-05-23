@@ -74,7 +74,7 @@ public class RedBorderTopology {
         int flowPartition = config.getKafkaPartitions("rb_flow");
         int trapPartition = config.getKafkaPartitions("rb_trap");
 
-        StateFactory memcached =  MemcachedState.transactional(memConfig.getServers(), mseOpts);
+        StateFactory memcached = MemcachedState.transactional(memConfig.getServers(), mseOpts);
         TridentState memcachedState = topology.newStaticState(memcached);
 
         // LOCATION DATA
