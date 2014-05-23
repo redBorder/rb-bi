@@ -33,7 +33,7 @@ public class TridentKafkaSpout {
         config.setSection(section);
         _kafkaConfig = new TridentKafkaConfig(new ZkHosts(config.getZkHost()), config.getTopic(), "stormKafka");
         _kafkaConfig.scheme = new SchemeAsMultiScheme(new StringScheme());
-        _kafkaConfig.forceFromStart = false;
+        _kafkaConfig.forceFromStart = true;
     }
 
     /**
