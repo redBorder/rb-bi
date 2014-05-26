@@ -27,7 +27,7 @@ public class GetRadiusData extends BaseFunction {
         try {
             if (radiusData.containsKey("Called-Station-Id") && radiusData.containsKey("Calling-Station-Id") &&
                     radiusData.containsKey("Framed-IP-Address") && radiusData.containsKey("NAS-Identifier") &&
-                    radiusData.containsKey("NAS-IP-Address")) {
+                    radiusData.containsKey("NAS-IP-Address") && radiusData.containsKey("User-Name")) {
                 
                 String clientMac = radiusData.get("Calling-Station-Id").toString();
                 clientMac = clientMac.replace("-", ":");
@@ -47,12 +47,14 @@ public class GetRadiusData extends BaseFunction {
                 String sensorName = radiusData.get("NAS-Identifier").toString();
                 String sensorIP = radiusData.get("NAS-IP-Address").toString();
                 String timestamp = radiusData.get("timestamp").toString();
+                String clientId = radiusData.get("User-Name").toString();
 
                 Map<String, Object> radiusMap = new HashMap<>();
                 Map<String, Object> radiusDruid = new HashMap<>();
 
                 radiusMap.put("ap_mac", apMac);
                 radiusMap.put("wlan_ssid", ssid);
+                radiusMap.put("client_id", clientId);
                 
                 radiusDruid.putAll(radiusMap);
                 radiusDruid.put("timestamp", timestamp);

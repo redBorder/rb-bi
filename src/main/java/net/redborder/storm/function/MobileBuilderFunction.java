@@ -112,7 +112,7 @@ public class MobileBuilderFunction extends BaseFunction {
             } else if (tag.equals("notify") && type.equals("add")) {
                 event = ue_register(document);
                 event.put("path", path);
-                key = (String) event.get("imsi");
+                key = (String) event.get("client_id");
             }              
         } catch (ParserConfigurationException | SAXException | IOException | NullPointerException ex) {
             Logger.getLogger(GetMSEdata.class.getName()).log(Level.SEVERE, "Failed reading a Mobile XML tuple", ex);
