@@ -46,14 +46,16 @@ public class GetRadiusData extends BaseFunction {
                 String src = radiusData.get("Framed-IP-Address").toString();
                 String sensorName = radiusData.get("NAS-Identifier").toString();
                 String sensorIP = radiusData.get("NAS-IP-Address").toString();
+                String timestamp = radiusData.get("timestamp").toString();
 
                 Map<String, Object> radiusMap = new HashMap<>();
                 Map<String, Object> radiusDruid = new HashMap<>();
 
                 radiusMap.put("ap_mac", apMac);
-                radiusMap.put("ssid", ssid);
+                radiusMap.put("wlan_ssid", ssid);
                 
                 radiusDruid.putAll(radiusMap);
+                radiusDruid.put("timestamp", timestamp);
                 radiusDruid.put("client_mac", clientMac);
                 radiusDruid.put("src", src);
                 radiusDruid.put("sensor_name", sensorName);
