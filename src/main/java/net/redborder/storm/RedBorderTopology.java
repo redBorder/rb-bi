@@ -10,8 +10,10 @@ import java.io.FileNotFoundException;
 import net.redborder.storm.function.GetFieldFunction;
 import net.redborder.storm.function.MapperFunction;
 import net.redborder.storm.function.PrinterFunction;
+import net.redborder.storm.function.ProducerKafkaFunction;
 import net.redborder.storm.function.ThroughputLoggingFilter;
 import net.redborder.storm.spout.TridentKafkaSpout;
+import net.redborder.storm.state.KafkaState;
 import net.redborder.storm.util.ConfigData;
 import net.redborder.storm.util.KafkaConfigFile;
 import storm.trident.TridentTopology;
@@ -41,10 +43,10 @@ public class RedBorderTopology {
                 LocalCluster cluster = new LocalCluster();
                 cluster.submitTopology(topologyName, conf, topology.build());
 
-                 for (int i = 0; i < 10; i++) {
+                for (int i = 0; i < 10; i++) {
                     Thread.sleep(1000);
                 }
-                 
+
                 //Utils.sleep(1000000);
                 //cluster.killTopology(topologyName);
                 //cluster.shutdown();
@@ -60,12 +62,12 @@ public class RedBorderTopology {
         TridentTopology topology = new TridentTopology();
 
         //int flowPartition = config.getKafkaPartitions("rb_flow");
-
         topology.newStream("rb_flow", new TridentKafkaSpout(kafkaConfig, "traffics").builder())
                 .parallelismHint(4)
                 .shuffle()
-                .each(new Fields("str"), new MapperFunction(), new Fields("map"))
-                .each(new Fields(), new ThroughputLoggingFilter());
+                //.each(new Fields("str"), new ProducerKafkaFunction(kafkaConfig, "rb_flow_pre"), new Fields("producer"))
+                //.parallelismHint(2);
+                .partitionPersist(new KafkaState.Factory("rb_flow_pre", "pablo02"), new Fields(), new KafkaState.Updater(), new Fields());
 
         return topology;
     }

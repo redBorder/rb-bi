@@ -7,6 +7,7 @@ package net.redborder.storm.function;
 
 import backtype.storm.tuple.Values;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -22,9 +23,10 @@ import storm.trident.tuple.TridentTuple;
  * @author andresgomez
  */
 public class MapperFunction extends BaseFunction {
-    
+
     ObjectMapper mapper;
-    
+    String jsonEvent;
+
     @Override
     public void prepare(Map conf, TridentOperationContext context) {
         mapper = new ObjectMapper();
@@ -32,12 +34,11 @@ public class MapperFunction extends BaseFunction {
 
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
-        String jsonEvent = (String) tuple.getValue(0);
+        jsonEvent = tuple.getString(0);
         if (jsonEvent != null && jsonEvent.length() > 0) {
-       
+
             try {
-                Map<String, Object> event = null;
-                event = mapper.readValue(jsonEvent, Map.class);
+                Map<String, Object> event = mapper.readValue(jsonEvent, Map.class);
                 collector.emit(new Values(event));
             } catch (IOException | NullPointerException ex) {
                 Logger.getLogger(MapperFunction.class.getName()).log(Level.SEVERE, "Failed converting a JSON tuple to a Map class", ex);
