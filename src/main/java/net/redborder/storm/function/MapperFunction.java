@@ -13,6 +13,7 @@ import java.util.logging.Logger;
 import org.codehaus.jackson.map.ObjectMapper;
 import storm.trident.operation.BaseFunction;
 import storm.trident.operation.TridentCollector;
+import storm.trident.operation.TridentOperationContext;
 import storm.trident.tuple.TridentTuple;
 
 /**
@@ -21,14 +22,21 @@ import storm.trident.tuple.TridentTuple;
  * @author andresgomez
  */
 public class MapperFunction extends BaseFunction {
+    
+    ObjectMapper mapper;
+    
+    @Override
+    public void prepare(Map conf, TridentOperationContext context) {
+        mapper = new ObjectMapper();
+    }
 
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
         String jsonEvent = (String) tuple.getValue(0);
         if (jsonEvent != null && jsonEvent.length() > 0) {
-            ObjectMapper mapper = new ObjectMapper();
-            Map<String, Object> event = null;
+       
             try {
+                Map<String, Object> event = null;
                 event = mapper.readValue(jsonEvent, Map.class);
                 collector.emit(new Values(event));
             } catch (IOException | NullPointerException ex) {

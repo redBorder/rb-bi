@@ -5,11 +5,17 @@ import backtype.storm.LocalCluster;
 import backtype.storm.StormSubmitter;
 import backtype.storm.generated.AlreadyAliveException;
 import backtype.storm.generated.InvalidTopologyException;
+import backtype.storm.tuple.Fields;
 import java.io.FileNotFoundException;
+import net.redborder.storm.function.GetFieldFunction;
+import net.redborder.storm.function.MapperFunction;
+import net.redborder.storm.function.PrinterFunction;
+import net.redborder.storm.function.ThroughputLoggingFilter;
 import net.redborder.storm.spout.TridentKafkaSpout;
 import net.redborder.storm.util.ConfigData;
 import net.redborder.storm.util.KafkaConfigFile;
 import storm.trident.TridentTopology;
+import storm.trident.operation.builtin.Count;
 
 public class RedBorderTopology {
 
@@ -55,7 +61,11 @@ public class RedBorderTopology {
 
         //int flowPartition = config.getKafkaPartitions("rb_flow");
 
-        topology.newStream("rb_flow", new TridentKafkaSpout(kafkaConfig, "traffics").builder());
+        topology.newStream("rb_flow", new TridentKafkaSpout(kafkaConfig, "traffics").builder())
+                .parallelismHint(4)
+                .shuffle()
+                .each(new Fields("str"), new MapperFunction(), new Fields("map"))
+                .each(new Fields(), new ThroughputLoggingFilter());
 
         return topology;
     }
