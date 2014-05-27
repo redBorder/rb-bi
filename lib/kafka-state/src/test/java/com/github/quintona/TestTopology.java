@@ -41,7 +41,7 @@ public class TestTopology {
         topology.newStream("kafka",
                 new TransactionalTridentKafkaSpout(spoutConfig))
                 .each(new Fields("bytes"), new AppendFunction(), new Fields("text"))
-                .partitionPersist(KafkaState.transactional("test1", new KafkaState.Options()), new Fields("text"), new KafkaStateUpdater("text"));
+                .partitionPersist(KafkaState.nonTransactional("localhost", "test1", new KafkaState.Options()), new Fields("text"), new KafkaStateUpdater("text"));
 
         return topology;
     }

@@ -58,8 +58,6 @@ public class RedBorderTopology {
     public static TridentTopology topology() throws FileNotFoundException {
         TridentTopology topology = new TridentTopology();
         KafkaState.Options options = new KafkaState.Options();
-        options.zookeeperHost = "pablo02:9092,pablo04";
-        options.zookeeperPort = 9092;
 
         //int flowPartition = config.getKafkaPartitions("rb_flow");
         topology.newStream("rb_flow", new TridentKafkaSpout(kafkaConfig, "traffics").builder())
@@ -67,7 +65,7 @@ public class RedBorderTopology {
                 .shuffle()
                 .each(new Fields(), new ThroughputLoggingFilter())
                 //.each(new Fields("str"), new ProducerKafkaFilter(kafkaConfig, "rb_flow_post"));
-                .partitionPersist(KafkaState.transactional("rb_flow_post", options), new Fields("str"), new KafkaStateUpdater("str"));
+                .partitionPersist(KafkaState.nonTransactional(kafkaConfig.getZkHost(),"rb_flow_post", options), new Fields("str"), new KafkaStateUpdater("str"));
                 //.each(new Fields("str"), new ProducerKafkaFunction(kafkaConfig, "rb_flow_pre"), new Fields("producer"))
                 //.parallelismHint(2);
 
