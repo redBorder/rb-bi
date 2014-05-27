@@ -499,13 +499,12 @@ public class Config extends HashMap<String, Object> {
     public static final String TOPOLOGY_DEBUG = "topology.debug";
     public static final Object TOPOLOGY_DEBUG_SCHEMA = Boolean.class;
 
-
     /**
-     * Whether or not the master should optimize topologies by running multiple
-     * tasks in a single thread where appropriate.
+     * The serializer for communication between shell components and non-JVM
+     * processes
      */
-    public static final String TOPOLOGY_OPTIMIZE = "topology.optimize";
-    public static final Object TOPOLOGY_OPTIMIZE_SCHEMA = Boolean.class;
+    public static final String TOPOLOGY_MULTILANG_SERIALIZER = "topology.multilang.serializer";
+    public static final Object TOPOLOGY_MULTILANG_SERIALIZER_SCHEMA = String.class;
 
     /**
      * How many processes should be spawned around the cluster to execute this
@@ -832,11 +831,6 @@ public class Config extends HashMap<String, Object> {
     public void setDebug(boolean isOn) {
         setDebug(this, isOn);
     }
-    
-    @Deprecated
-    public void setOptimize(boolean isOn) {
-        put(Config.TOPOLOGY_OPTIMIZE, isOn);
-    } 
     
     public static void setNumWorkers(Map conf, int workers) {
         conf.put(Config.TOPOLOGY_WORKERS, workers);

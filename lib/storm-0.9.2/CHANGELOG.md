@@ -1,4 +1,21 @@
 ## 0.9.2-incubating (unreleased)
+ * STORM-308: Add support for config_value to {supervisor,nimbus,ui,drpc,logviewer} childopts
+ * STORM-309: storm-starter Readme: windows documentation update
+ * STORM-318: update storm-kafka to use apache curator-2.4.0
+ * STORM-303: storm-kafka reliability improvements
+ * STORM-233: Removed inline heartbeat to nimbus to avoid workers being killed when under heavy ZK load
+ * STORM-267: fix package name of LoggingMetricsConsumer in storm.yaml.example
+ * STORM-265: upgrade to clojure 1.5.1
+ * STORM-232: ship JNI dependencies with the topology jar
+ * STORM-295: Add storm configuration to define JAVA_HOME
+ * STORM-138: Pluggable serialization for multilang
+ * STORM-264: Removes references to the deprecated topology.optimize
+ * STORM-245: implement Stream.localOrShuffle() for trident
+ * STORM-317: Add SECURITY.md to release binaries
+ * STORM-310: Change Twitter authentication
+ * STORM-305: Create developer documentation
+ * STORM-280: storm unit tests are failing on windows
+ * STORM-298: Logback file does not include full path for metrics appender fileNamePattern
  * STORM-316: added validation to registermetrics to have timebucketSizeInSecs >= 1
  * STORM-315: Added progress bar when submitting topology
  * STORM-214: Windows: storm.cmd does not properly handle multiple -c arguments
