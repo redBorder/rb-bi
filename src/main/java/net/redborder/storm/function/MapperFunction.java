@@ -6,12 +6,11 @@
 package net.redborder.storm.function;
 
 import backtype.storm.tuple.Values;
-import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.codehaus.jackson.map.ObjectMapper;
+import org.boon.json.JsonFactory;
+import org.boon.json.ObjectMapper;
 import storm.trident.operation.BaseFunction;
 import storm.trident.operation.TridentCollector;
 import storm.trident.operation.TridentOperationContext;
@@ -29,21 +28,19 @@ public class MapperFunction extends BaseFunction {
 
     @Override
     public void prepare(Map conf, TridentOperationContext context) {
-        mapper = new ObjectMapper();
+        mapper = JsonFactory.create();
     }
 
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
         jsonEvent = tuple.getString(0);
         if (jsonEvent != null && jsonEvent.length() > 0) {
-
             try {
                 Map<String, Object> event = mapper.readValue(jsonEvent, Map.class);
                 collector.emit(new Values(event));
-            } catch (IOException | NullPointerException ex) {
-                Logger.getLogger(MapperFunction.class.getName()).log(Level.SEVERE, "Failed converting a JSON tuple to a Map class", ex);
+            } catch (NullPointerException ex) {
+                Logger.getLogger(MapperFunction.class.getName()).log(Level.SEVERE, "Failed converting a JSON tuple to a Map class: " + jsonEvent, ex);
             }
-
         }
     }
 

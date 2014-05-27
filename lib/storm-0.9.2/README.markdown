@@ -8,6 +8,9 @@ Storm has a website at [storm-project.net](http://storm-project.net). Follow [@s
 
 Documentation and tutorials can be found on the [Storm wiki](http://github.com/nathanmarz/storm/wiki).
 
+Developers and contributors should also take a look at our [Developer documentation](DEVELOPER.md).
+
+
 ## Getting help
 
 __NOTE:__ The google groups account storm-user@googlegroups.com is now officially deprecated in favor of the Apache-hosted user/dev mailing lists.
@@ -17,14 +20,14 @@ Storm users should send messages and subscribe to [user@storm.incubator.apache.o
 
 You can subscribe to this list by sending an email to [user-subscribe@storm.incubator.apache.org](mailto:user-subscribe@storm.incubator.apache.org). Likewise, you can cancel a subscription by sending an email to [user-unsubscribe@storm.incubator.apache.org](mailto:user-unsubscribe@storm.incubator.apache.org).
 
-You can view the archives of the mailing list [here](http://mail-archives.apache.org/mod_mbox/incubator-storm-user/).
+You can also [browse the archives of the storm-user mailing list](http://mail-archives.apache.org/mod_mbox/incubator-storm-user/).
 
 ### Storm Developers
 Storm developers should send messages and subscribe to [dev@storm.incubator.apache.org](mailto:dev@storm.incubator.apache.org).
 
 You can subscribe to this list by sending an email to [dev-subscribe@storm.incubator.apache.org](mailto:dev-subscribe@storm.incubator.apache.org). Likewise, you can cancel a subscription by sending an email to [dev-unsubscribe@storm.incubator.apache.org](mailto:dev-unsubscribe@storm.incubator.apache.org).
 
-You can view the archives of the mailing list [here](http://mail-archives.apache.org/mod_mbox/incubator-storm-dev/).
+You can also [browse the archives of the storm-dev mailing list](http://mail-archives.apache.org/mod_mbox/incubator-storm-dev/).
 
 ### Which list should I send/subscribe to?
 If you are using a pre-built binary distribution of Storm, then chances are you should send questions, comments, storm-related announcements, etc. to [user@storm.apache.incubator.org](user@storm.apache.incubator.org). 
@@ -73,7 +76,6 @@ under the License.
 * P. Taylor Goetz ([@ptgoetz](https://github.com/ptgoetz))
 * Derek Dagit ([@d2r](https://github.com/d2r))
 * Robert Evans ([@revans2](https://github.com/revans2))
-
 
 ## Contributors
 
