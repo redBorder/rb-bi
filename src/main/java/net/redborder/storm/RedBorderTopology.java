@@ -5,7 +5,12 @@ import backtype.storm.LocalCluster;
 import backtype.storm.StormSubmitter;
 import backtype.storm.generated.AlreadyAliveException;
 import backtype.storm.generated.InvalidTopologyException;
+import backtype.storm.tuple.Fields;
+import com.github.quintona.KafkaState;
+import com.github.quintona.KafkaStateUpdater;
 import java.io.FileNotFoundException;
+import net.redborder.storm.function.ProducerKafkaFilter;
+import net.redborder.storm.function.ThroughputLoggingFilter;
 import net.redborder.storm.spout.TridentKafkaSpout;
 import net.redborder.storm.util.ConfigData;
 import net.redborder.storm.util.KafkaConfigFile;
@@ -52,11 +57,17 @@ public class RedBorderTopology {
 
     public static TridentTopology topology() throws FileNotFoundException {
         TridentTopology topology = new TridentTopology();
+        KafkaState.Options options = new KafkaState.Options();
+        options.zookeeperHost = "pablo02:9092,pablo04";
+        options.zookeeperPort = 9092;
 
         //int flowPartition = config.getKafkaPartitions("rb_flow");
         topology.newStream("rb_flow", new TridentKafkaSpout(kafkaConfig, "traffics").builder())
                 .parallelismHint(4)
-                .shuffle();
+                .shuffle()
+                .each(new Fields(), new ThroughputLoggingFilter())
+                //.each(new Fields("str"), new ProducerKafkaFilter(kafkaConfig, "rb_flow_post"));
+                .partitionPersist(KafkaState.transactional("rb_flow_post", options), new Fields("str"), new KafkaStateUpdater("str"));
                 //.each(new Fields("str"), new ProducerKafkaFunction(kafkaConfig, "rb_flow_pre"), new Fields("producer"))
                 //.parallelismHint(2);
 

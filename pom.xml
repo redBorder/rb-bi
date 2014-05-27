@@ -105,6 +105,23 @@
                 </exclusion>
             </exclusions>
         </dependency>
+        
+        <!-- Kafka producer -->
+        <dependency>
+            <groupId>com.github.quintona</groupId>
+            <artifactId>trident-kafka-push</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>slf4j-log4j12</artifactId>
+                    <groupId>org.slf4j</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>slf4j-api</artifactId>
+                    <groupId>org.slf4j</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
     
     </dependencies>
     

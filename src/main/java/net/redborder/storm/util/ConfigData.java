@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.redborder.storm.function.MapperFunction;
-import net.redborder.storm.function.ProducerKafkaFunction;
+import net.redborder.storm.function.ProducerKafkaFilter;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -77,7 +77,7 @@ public class ConfigData {
                 try {
                     jsonString = new String(client.getData().forPath("/druid/indexer/announcements/" + middleManager), "UTF-8");
                 } catch (Exception ex) {
-                    Logger.getLogger(ProducerKafkaFunction.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(ProducerKafkaFilter.class.getName()).log(Level.SEVERE, null, ex);
                 }
 
                 if (jsonString != null) {
