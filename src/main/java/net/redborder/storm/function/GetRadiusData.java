@@ -52,8 +52,8 @@ public class GetRadiusData extends BaseFunction {
                 Map<String, Object> radiusMap = new HashMap<>();
                 Map<String, Object> radiusDruid = new HashMap<>();
 
-                radiusMap.put("ap_mac", apMac);
-                radiusMap.put("wlan_ssid", ssid);
+                radiusMap.put("wireless_station", apMac);
+                radiusMap.put("wireless_id", ssid);
                 radiusMap.put("client_id", clientId);
                 
                 radiusDruid.putAll(radiusMap);
