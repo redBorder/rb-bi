@@ -39,6 +39,7 @@ public class RedBorderTopology {
 
         } else {
             kafkaConfig = new KafkaConfigFile();
+            kafkaConfig.setSection("traffics");
             config = new ConfigData(kafkaConfig);
 
             TridentTopology topology = topology();
