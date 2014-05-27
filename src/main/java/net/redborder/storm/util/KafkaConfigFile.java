@@ -48,6 +48,10 @@ public class KafkaConfigFile {
         this();
         this.setSection(section);
     }
+    
+    public void init(){
+        setSection("traffics");
+    }
 
     /**
      * Get the zookeeper setting of the topic indicated.
