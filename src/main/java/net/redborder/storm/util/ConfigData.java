@@ -117,7 +117,6 @@ public class ConfigData {
         } else if (_mode.equals("cluster")) {
             conf.put(Config.TOPOLOGY_WORKERS, getWorkers());
             conf.put(Config.TOPOLOGY_MAX_SPOUT_PENDING, 5);
-            conf.put(Config.TOPOLOGY_TRIDENT_BATCH_EMIT_INTERVAL_MILLIS, 10);
         }
         return conf;
     }

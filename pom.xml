@@ -58,12 +58,18 @@
             <version>0.9.2-incubating-SNAPSHOT</version>
         </dependency>
         
-        <!-- Boon JSON Parser -->
+         <!-- Jackson JSON -->
         <dependency>
-            <groupId>io.fastjson</groupId>
-            <artifactId>boon</artifactId>
-            <version>0.11</version>
-       </dependency>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-mapper-asl</artifactId>
+            <version>1.9.13</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-core-asl</artifactId>
+            <version>1.9.13</version>
+        </dependency>
         
         <!-- Tranquility (druid) -->
         <dependency>
