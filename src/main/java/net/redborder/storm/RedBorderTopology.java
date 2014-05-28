@@ -9,8 +9,6 @@ import backtype.storm.tuple.Fields;
 import com.metamx.tranquility.storm.TridentBeamStateFactory;
 import com.metamx.tranquility.storm.TridentBeamStateUpdater;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.List;
 import net.redborder.storm.function.*;
 import net.redborder.storm.spout.TridentKafkaSpout;
 import net.redborder.storm.state.*;
