@@ -50,15 +50,15 @@ public class GetMSEdata extends BaseFunction {
             longitude = (double) Math.round(longitude * 100000) / 100000;
             locationFormat = lattitude.toString() + "," + longitude.toString();
 
-            mseData.put("client_lat", lattitude.toString());
-            mseData.put("client_long", longitude.toString());
-            mseData.put("client_latlong", locationFormat);
+            mseData.put("sta_mac_address_lat", lattitude.toString());
+            mseData.put("sta_mac_address_long", longitude.toString());
+            mseData.put("sta_mac_address_latlong", locationFormat);
 
             zone = mapHierachy.split(">");
 
-            mseData.put("client_campus", zone[0]);
-            mseData.put("client_building", zone[1]);
-            mseData.put("client_floor", zone[2]);
+            mseData.put("sta_mac_address_campus", zone[0]);
+            mseData.put("sta_mac_address_building", zone[1]);
+            mseData.put("sta_mac_address_floor", zone[2]);
 
             state = location.get("dot11Status").toString();
             if (state.equals("ASSOCIATED")) {
