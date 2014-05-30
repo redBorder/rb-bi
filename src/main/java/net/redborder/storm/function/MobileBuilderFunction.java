@@ -36,7 +36,7 @@ public class MobileBuilderFunction extends BaseFunction {
             String hnbid = document.getElementsByTagName("hnbid").item(0).getTextContent();
             String location = document.getElementsByTagName("location").item(0).getTextContent();
             String hnbGeoLocation = document.getElementsByTagName("hnbGeoLocation").item(0).getTextContent();
-            event.put("wireless_station", hnbid);
+            event.put("hnbid", hnbid);
             event.put("hnblocation", location);
             event.put("hnbgeolocation", hnbGeoLocation);
         } catch (NullPointerException ex) {
@@ -51,7 +51,7 @@ public class MobileBuilderFunction extends BaseFunction {
         
         try {
             String imsi = document.getElementsByTagName("imsi").item(0).getTextContent();
-            event.put("client_id", imsi);
+            event.put("imsi", imsi);
         } catch (NullPointerException ex) {
             Logger.getLogger(GetMSEdata.class.getName()).log(Level.SEVERE, "Failed reading a UE Register message", ex);
         }
@@ -67,8 +67,8 @@ public class MobileBuilderFunction extends BaseFunction {
             String apn = document.getElementsByTagName("apn").item(0).getTextContent();
             String ipAddress = document.getElementsByTagName("ipAddress").item(0).getTextContent();
             String rat = document.getElementsByTagName("rat").item(0).getTextContent();
-            event.put("client_id", imsi);
-            event.put("wireless_id", apn);
+            event.put("imsi", imsi);
+            event.put("apn", apn);
             event.put("ip", ipAddress);
             event.put("rat", rat);
         } catch (NullPointerException ex) {
@@ -112,7 +112,7 @@ public class MobileBuilderFunction extends BaseFunction {
             } else if (tag.equals("notify") && type.equals("add")) {
                 event = ue_register(document);
                 event.put("path", path);
-                key = (String) event.get("client_id");
+                key = (String) event.get("imsi");
             }              
         } catch (ParserConfigurationException | SAXException | IOException | NullPointerException ex) {
             Logger.getLogger(GetMSEdata.class.getName()).log(Level.SEVERE, "Failed reading a Mobile XML tuple", ex);
