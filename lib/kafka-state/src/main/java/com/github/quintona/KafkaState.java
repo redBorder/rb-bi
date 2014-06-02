@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import kafka.javaapi.producer.Producer;
@@ -24,54 +23,34 @@ import storm.trident.state.StateFactory;
 public class KafkaState<T> implements State {
 
     List<KeyedMessage<String, String>> messages = new ArrayList<>();
-    String _brokerList;
-    String _topic;
-    private Options options;
-    private String topic;
+    String _brokerList = new String();
     Producer<String, String> producer;
 
-    public static class Options implements Serializable {
-
-        public String serializerClass = "kafka.serializer.StringEncoder";
-
-    }
-
-    public static StateFactory nonTransactional(String zookeeper, String topic, Options options) {
-        return new Factory(zookeeper, topic, options);
+    public static StateFactory nonTransactional(String zookeeper) {
+        return new Factory(zookeeper);
     }
 
     protected static class Factory implements StateFactory {
+        private final String zookeeper;
 
-        private Options options;
-        private String topic;
-        private String zookeeper;
-
-        public Factory(String zookeeper ,String topic, Options options) {
-            this.options = options;
-            this.topic = topic;
+        public Factory(String zookeeper) {
             this.zookeeper = zookeeper;
         }
 
         @Override
         public State makeState(Map conf, IMetricsContext metrics,
                 int partitionIndex, int numPartitions) {
-            return new KafkaState(zookeeper,topic, options);
+            return new KafkaState(zookeeper);
         }
-
     }
 
-    public KafkaState(String zookeeper ,String topic, Options options) {
-        this.topic = topic;
-        this.options = options;
-        
+    public KafkaState(String zookeeper) {        
         RetryPolicy retryPolicy = new ExponentialBackoffRetry(1000, 3);
         CuratorFramework client = CuratorFrameworkFactory.newClient(zookeeper, retryPolicy);
-        _brokerList = new String();
         client.start();
 
         List<String> ids = null;
         boolean first = true;
-        _topic = topic;
 
         try {
             ids = client.getChildren().forPath("/brokers/ids");
@@ -109,9 +88,9 @@ public class KafkaState<T> implements State {
         
         Properties props = new Properties();
         props.put("metadata.broker.list", _brokerList);
-        props.put("serializer.class", options.serializerClass);
+        props.put("serializer.class", "kafka.serializer.StringEncoder");
         ProducerConfig config = new ProducerConfig(props);
-        producer = new Producer<String, String>(config);
+        producer = new Producer<>(config);
     }
 
     @Override
@@ -131,8 +110,8 @@ public class KafkaState<T> implements State {
 
     @Override
     public void commit(Long txid) {
+        System.out.println("SENDING BATCH WITH SIZE " + messages.size());
         sendMessage();
         messages.clear();
     }
-
 }

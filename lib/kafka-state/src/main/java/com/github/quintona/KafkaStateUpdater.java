@@ -8,7 +8,7 @@ import storm.trident.tuple.TridentTuple;
 
 public class KafkaStateUpdater extends BaseStateUpdater<KafkaState> {
 
-    private String messageFieldName;
+    private final String messageFieldName;
 
     public KafkaStateUpdater(String messageFieldName) {
         this.messageFieldName = messageFieldName;
@@ -20,8 +20,7 @@ public class KafkaStateUpdater extends BaseStateUpdater<KafkaState> {
         for (TridentTuple t : tuples) {
             try {
                 if (t.size() > 0) {
-                    KeyedMessage<String, String> data = new KeyedMessage<String, String>("rb_flow_post", t.getStringByField(messageFieldName));
-                    state.enqueue(data);
+                    state.enqueue(new KeyedMessage<String, String>("rb_flow_post", t.getStringByField(messageFieldName)));
                 }
             } catch (Exception e) {
                 e.printStackTrace();
