@@ -110,7 +110,7 @@ public class KafkaState<T> implements State {
 
     @Override
     public void commit(Long txid) {
-        System.out.println("SENDING BATCH WITH SIZE " + messages.size());
+        // System.out.println("SENDING BATCH WITH SIZE " + messages.size());
         sendMessage();
         messages.clear();
     }
