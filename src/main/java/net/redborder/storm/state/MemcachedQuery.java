@@ -54,7 +54,7 @@ public class MemcachedQuery extends BaseQueryFunction<MapState<Map<String, Objec
         }
         
         // System.out.println("BatchSize " + tuples.size() +
-        //            " RequestedToMemcached: " + keysToRequest.size());
+         //           " RequestedToMemcached: " + keysToRequest.size());
         
         if (!keysToRequest.isEmpty()) {
             List<List<Object>> keysToMemcached = Lists.newArrayList();
@@ -67,7 +67,7 @@ public class MemcachedQuery extends BaseQueryFunction<MapState<Map<String, Objec
             
             try {
                 memcachedData = state.multiGet(keysToMemcached);
-                // System.out.println("MemcachedResponse: " + memcachedData.toString());
+               //  System.out.println("MemcachedResponse: " + memcachedData.toString());
             } catch (ReportedFailedException e) {
                 Logger.getLogger(MemcachedQuery.class.getName()).log(Level.WARNING, null, e);
             }
@@ -88,10 +88,10 @@ public class MemcachedQuery extends BaseQueryFunction<MapState<Map<String, Objec
     public void execute(TridentTuple tuple, Map<String, Object> result, TridentCollector collector) {
         if (result == null) {
             Map<String,Object> empty = new HashMap<>();
-            empty.put("dot11_status", "UNKNOWN");
+            //System.out.println("null");
             collector.emit(new Values(empty));
         } else {
-            result.put("dot11_status", "ASSOCIATED");
+            //System.out.println("Result execute: "+ result.toString());
             collector.emit(new Values(result));
         }
     }

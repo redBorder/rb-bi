@@ -27,7 +27,7 @@ public class JoinFlowFunction extends BaseFunction {
                
         Map<String, Object> flow = (Map<String, Object>) data.get(0);
         data.remove(flow);
-                
+        
         for(Object value : data){
             Map<String, Object> valueMap = (Map<String, Object>) value;
             if(!valueMap.isEmpty()){
