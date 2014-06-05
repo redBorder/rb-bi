@@ -64,7 +64,7 @@ public class RedBorderTopology {
         MemcachedConfigFile memConfig = new MemcachedConfigFile();
         TridentTopology topology = new TridentTopology();
         MemcachedState.Options mseOpts = new MemcachedState.Options();
-        mseOpts.expiration = 360000;
+        mseOpts.expiration = 3600000;
         MemcachedState.Options mobileOpts = new MemcachedState.Options();
         mobileOpts.expiration = 0;
 
