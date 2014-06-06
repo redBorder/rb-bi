@@ -45,11 +45,17 @@ public class MemcachedQuery extends BaseQueryFunction<MapState<Map<String, Objec
         List<String> keysToAppend = Lists.newArrayList();
         
         for (TridentTuple t : tuples) {
-            String key = (String) t.getValueByField(_key);
-            keysToAppend.add(_generalkey + key);
+            Map<String, Object> flow = (Map<String, Object>) t.getValue(0);
+            String key = (String) flow.get(_key);
             
-            if(!key.equals("null") && !keysToRequest.contains(_generalkey + key)) {
-                keysToRequest.add(_generalkey + key);
+            if (key != null) {
+                keysToAppend.add(_generalkey + key);
+
+                if(!keysToRequest.contains(_generalkey + key)) {
+                    keysToRequest.add(_generalkey + key);
+                }
+            } else {
+                keysToAppend.add(null);
             }
         }
         
@@ -74,7 +80,8 @@ public class MemcachedQuery extends BaseQueryFunction<MapState<Map<String, Objec
         }
         
         for (String key : keysToAppend) {
-            if (memcachedData != null && !memcachedData.isEmpty() &&keysToRequest.contains(key)) {
+            if (key != null && memcachedData != null &&
+                    !memcachedData.isEmpty() && keysToRequest.contains(key)) {
                 result.add(memcachedData.get(keysToRequest.indexOf(key)));
             } else {
                 result.add(null);
@@ -88,10 +95,8 @@ public class MemcachedQuery extends BaseQueryFunction<MapState<Map<String, Objec
     public void execute(TridentTuple tuple, Map<String, Object> result, TridentCollector collector) {
         if (result == null) {
             Map<String,Object> empty = new HashMap<>();
-            empty.put("dot11_status", "UNKNOWN");
             collector.emit(new Values(empty));
         } else {
-            result.put("dot11_status", "ASSOCIATED");
             collector.emit(new Values(result));
         }
     }

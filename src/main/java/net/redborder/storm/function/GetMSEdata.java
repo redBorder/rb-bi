@@ -61,6 +61,8 @@ public class GetMSEdata extends BaseFunction {
             mseData.put("client_floor", zone[2]);
 
             state = location.get("dot11Status").toString();
+            mseData.put("dot11_status", "ASSOCIATED");
+
             if (state.equals("ASSOCIATED")) {
                 ArrayList ip = (ArrayList) location.get("ipAddress");
                 mseData.put("wireless_id", location.get("ssId").toString());
@@ -85,5 +87,5 @@ public class GetMSEdata extends BaseFunction {
             Logger.getLogger(GetMSEdata.class.getName()).log(Level.SEVERE, "Failed processing a MSE map: \n" + mseEvent.toString(), e);
         }
     }
-
+    
 }

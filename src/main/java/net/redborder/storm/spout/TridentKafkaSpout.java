@@ -33,8 +33,8 @@ public class TridentKafkaSpout {
         config.setSection(section);
         _kafkaConfig = new TridentKafkaConfig(new ZkHosts(config.getZkHost()), config.getTopic(), "stormKafka");
         _kafkaConfig.scheme = new SchemeAsMultiScheme(new StringScheme());
-        _kafkaConfig.bufferSizeBytes = 1024 * 1024 * 8;
-        _kafkaConfig.fetchSizeBytes = 1024 * 1024 * 8;
+        _kafkaConfig.bufferSizeBytes = 1024 * 1024 * 4;
+        _kafkaConfig.fetchSizeBytes = 1024 * 1024 * 4;
         _kafkaConfig.forceFromStart = false;
     }
 
