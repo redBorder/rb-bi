@@ -6,15 +6,17 @@ import backtype.storm.StormSubmitter;
 import backtype.storm.generated.AlreadyAliveException;
 import backtype.storm.generated.InvalidTopologyException;
 import backtype.storm.tuple.Fields;
+import com.github.quintona.KafkaState;
+import com.github.quintona.KafkaStateUpdater;
 import com.metamx.tranquility.storm.TridentBeamStateFactory;
 import com.metamx.tranquility.storm.TridentBeamStateUpdater;
 import java.io.FileNotFoundException;
 import net.redborder.storm.function.*;
 import net.redborder.storm.spout.TridentKafkaSpout;
 import net.redborder.storm.state.*;
+import net.redborder.storm.util.ConfigData;
 import net.redborder.storm.util.KafkaConfigFile;
 import net.redborder.storm.util.MemcachedConfigFile;
-import net.redborder.storm.util.ConfigData;
 import net.redborder.storm.util.druid.MyBeamFactoryMapFlow;
 import storm.trident.Stream;
 import storm.trident.TridentState;
@@ -133,7 +135,7 @@ public class RedBorderTopology {
                 .stateQuery(memcachedState, new Fields("path"), new MemcachedQuery("path", "rb_mobile"), new Fields("hnbRegisterMap"))
                 .each(new Fields("ipAssignMap", "ueRegisterMap", "hnbRegisterMap", "flows", "mseMap", "macVendorMap", "geoIPMap", "rssiMap", "radiusMap", "httpUrlMap"), new JoinFlowFunction(), new Fields("finalMap"))
                 .project(new Fields("finalMap"))
-                .parallelismHint(config.getWorkers() * 4);
+                .parallelismHint(config.getWorkers());
 
         String outputTopic = kafkaConfig.getOutputTopic();
 
@@ -147,26 +149,25 @@ public class RedBorderTopology {
         System.out.println("   * rb_radius: " + radiusPartition);
 
         if (outputTopic != null) {
-
             int flowPrePartitions = config.getKafkaPartitions(outputTopic);
-
-            System.out.println("   * rb_flow_pre: " + flowPrePartitions);
-
+            System.out.println("   * " + outputTopic + ": " + flowPrePartitions);
             System.out.println("Flows send to: " + outputTopic);
+            
             joinedStream
                     .shuffle()
                     .name("Kafka Producer")
                     .each(new Fields("finalMap"), new MapToJSONFunction(), new Fields("jsonString"))
-                    .each(new Fields("jsonString"), new ProducerKafkaFunction(kafkaConfig, outputTopic), new Fields("a"))
+                    .each(new Fields(), new ThroughputLoggingFilter())
+                    .partitionPersist(KafkaState.nonTransactional(kafkaConfig.getZkHost()), new Fields("jsonString"), new KafkaStateUpdater("jsonString", outputTopic))
                     .parallelismHint(flowPrePartitions);
 
             mseStream
                     .each(new Fields("mse_data_druid"), new MapToJSONFunction(), new Fields("jsonString"))
-                    .each(new Fields("jsonString"), new ProducerKafkaFunction(kafkaConfig, outputTopic), new Fields("a"));
+                    .partitionPersist(KafkaState.nonTransactional(kafkaConfig.getZkHost()), new Fields("jsonString"), new KafkaStateUpdater("jsonString", outputTopic));
             
             radiusStream
                     .each(new Fields("radiusDruid"), new MapToJSONFunction(), new Fields("radiusJSONString"))
-                    .each(new Fields("radiusJSONString"), new ProducerKafkaFunction(kafkaConfig, outputTopic), new Fields("a"));
+                    .partitionPersist(KafkaState.nonTransactional(kafkaConfig.getZkHost()), new Fields("radiusJSONString"), new KafkaStateUpdater("radiusJSONString", outputTopic));
         } else {
 
             System.out.println("\n- Tranquility info: ");
@@ -195,7 +196,7 @@ public class RedBorderTopology {
 
             StateFactory druidStateFlow = new TridentBeamStateFactory<>(new MyBeamFactoryMapFlow(partitions, replicas));
 
-            joinedStream//.each(new Fields("finalMap"), new PrinterFunction("----"), new Fields(""))
+            joinedStream
                     .shuffle()
                     .name("Tranquility")
                     .partitionPersist(druidStateFlow, new Fields("finalMap"), new TridentBeamStateUpdater())

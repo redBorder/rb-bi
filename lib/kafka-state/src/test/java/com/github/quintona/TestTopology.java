@@ -2,18 +2,11 @@ package com.github.quintona;
 
 import java.io.IOException;
 import java.util.Arrays;
-
-import org.apache.http.util.ByteArrayBuffer;
-
 import storm.kafka.trident.TransactionalTridentKafkaSpout;
 import storm.kafka.trident.TridentKafkaConfig;
 import storm.trident.TridentTopology;
-import storm.trident.operation.BaseFilter;
 import storm.trident.operation.BaseFunction;
 import storm.trident.operation.TridentCollector;
-import storm.trident.operation.builtin.Count;
-import storm.trident.operation.builtin.Debug;
-import storm.trident.state.StateFactory;
 import storm.trident.tuple.TridentTuple;
 import backtype.storm.Config;
 import backtype.storm.LocalCluster;
@@ -41,7 +34,7 @@ public class TestTopology {
         topology.newStream("kafka",
                 new TransactionalTridentKafkaSpout(spoutConfig))
                 .each(new Fields("bytes"), new AppendFunction(), new Fields("text"))
-                .partitionPersist(KafkaState.transactional("test1", new KafkaState.Options()), new Fields("text"), new KafkaStateUpdater("text"));
+                .partitionPersist(KafkaState.nonTransactional("test1"), new Fields("text"), new KafkaStateUpdater("text", "outTopic"));
 
         return topology;
     }

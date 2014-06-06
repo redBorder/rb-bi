@@ -1,32 +1,32 @@
 package com.github.quintona;
 
 import java.util.List;
-
+import kafka.producer.KeyedMessage;
 import storm.trident.operation.TridentCollector;
 import storm.trident.state.BaseStateUpdater;
 import storm.trident.tuple.TridentTuple;
 
 public class KafkaStateUpdater extends BaseStateUpdater<KafkaState> {
+    private final String _messageFieldName;
+    private final String _topic;
 
-	private static final long serialVersionUID = -3657719900919830955L;
-	private String messageFieldName;
+    public KafkaStateUpdater(String messageFieldName, String topic) {
+        _messageFieldName = messageFieldName;
+        _topic = topic;
+    }
 
-	public KafkaStateUpdater(String messageFieldName) {
-		this.messageFieldName = messageFieldName;
-	}
+    @Override
+    public void updateState(KafkaState state, List<TridentTuple> tuples,
+            TridentCollector collector) {
+        for (TridentTuple t : tuples) {            
+            try {
+                if (t.size() > 0) {
+                    state.enqueue(new KeyedMessage<String, String>(_topic, t.getStringByField(_messageFieldName)));
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
 
-	@Override
-	public void updateState(KafkaState state, List<TridentTuple> tuples,
-			TridentCollector collector) {
-		for (TridentTuple t : tuples) {
-			try{
-				if(t.size() > 0)
-					state.enqueue(t.getStringByField(messageFieldName));
-			}catch(Exception e){
-				e.printStackTrace();
-			}
-		}
-
-	}
-
+    }
 }
