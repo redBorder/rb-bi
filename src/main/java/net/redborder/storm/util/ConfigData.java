@@ -5,7 +5,10 @@
  */
 package net.redborder.storm.util;
 
+import backtype.storm.Config;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -17,7 +20,6 @@ import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.codehaus.jackson.map.ObjectMapper;
-import backtype.storm.Config;
 
 /**
  *
@@ -27,46 +29,61 @@ public class ConfigData {
 
     CuratorFramework client;
     Config conf;
+    List<String> topics;
+    Map<String, Integer> kafkaPartitions;
+    Integer numWorkers;
+    int middleManagers;
 
-    public ConfigData(KafkaConfigFile zk) {
+    public ConfigData(KafkaConfigFile kafkaConfig) {
         conf = new Config();
+        kafkaPartitions = new HashMap<>();
+        this.topics = kafkaConfig.getAvaibleTopics();
         RetryPolicy retryPolicy = new ExponentialBackoffRetry(1000, 3);
-        client = CuratorFrameworkFactory.newClient(zk.getZkHost(), retryPolicy);
+        client = CuratorFrameworkFactory.newClient(kafkaConfig.getZkHost(), retryPolicy);
         client.start();
+        initKafkaPartitions();
+        initWorkers();
+        initMiddleManagerCapacity();
+        client.close();
+    }
+
+    private void initKafkaPartitions() {
+        List<String> partitionsList;
+
+        for (String topic : topics) {
+            try {
+                partitionsList = client.getChildren().forPath("/brokers/topics/" + topic + "/partitions");
+                kafkaPartitions.put(topic, partitionsList.size());
+            } catch (Exception ex) {
+                Logger.getLogger(ConfigData.class.getName()).log(Level.SEVERE, "No partitions found. Default: 2", ex);
+                kafkaPartitions.put(topic, 2);
+            }
+        }
+
     }
 
     public int getKafkaPartitions(String topic) {
-        int partitions;
-
-        List<String> partitionsList;
-        try {
-            partitionsList = client.getChildren().forPath("/brokers/topics/" + topic + "/partitions");
-            partitions = partitionsList.size();
-        } catch (Exception ex) {
-            Logger.getLogger(ConfigData.class.getName()).log(Level.SEVERE, "No partitions found. Default: 2", ex);
-            partitions = 2;
-        }
-
-        return partitions;
+        return kafkaPartitions.get(topic);
     }
 
-    public int getWorkers() {
-        int workers;
+    private void initWorkers() {
 
         List<String> workersList;
         try {
             workersList = client.getChildren().forPath("/storm/supervisors");
-            workers = workersList.size();
+            numWorkers = workersList.size();
         } catch (Exception ex) {
             Logger.getLogger(ConfigData.class.getName()).log(Level.SEVERE, "No supervisor found. Default: 1", ex);
-            workers = 1;
+            numWorkers = 1;
         }
 
-        return workers;
     }
 
-    public int getMiddleManagerCapacity() {
-        int middleManagers = 0;
+    public int getWorkers() {
+        return numWorkers;
+    }
+
+    private void initMiddleManagerCapacity() {
         
         try {
             List<String> middleManagersList = client.getChildren().forPath("/druid/indexer/announcements");
@@ -100,7 +117,9 @@ public class ConfigData {
         if (middleManagers == 0) {
             middleManagers = 1;
         }
+    }
 
+    public int getMiddleManagerCapacity() {
         return middleManagers;
     }
 

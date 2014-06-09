@@ -11,6 +11,8 @@ import com.github.quintona.KafkaStateUpdater;
 import com.metamx.tranquility.storm.TridentBeamStateFactory;
 import com.metamx.tranquility.storm.TridentBeamStateUpdater;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.List;
 import net.redborder.storm.function.*;
 import net.redborder.storm.spout.TridentKafkaSpout;
 import net.redborder.storm.state.*;
@@ -39,10 +41,9 @@ public class RedBorderTopology {
 
         } else {
             kafkaConfig = new KafkaConfigFile();
-            kafkaConfig.init();
             config = new ConfigData(kafkaConfig);
 
-            TridentTopology topology = topology();
+            TridentTopology topology = topology(kafkaConfig.getAvaibleTopics());
 
             if (args[0].equalsIgnoreCase("local")) {
                 Config conf = config.getConfig(args[0]);
@@ -50,11 +51,7 @@ public class RedBorderTopology {
                 LocalCluster cluster = new LocalCluster();
                 cluster.submitTopology(topologyName, conf, topology.build());
 
-                //Utils.sleep(1000000);
-                //cluster.killTopology(topologyName);
-                //cluster.shutdown();
             } else if (args[0].equalsIgnoreCase("cluster")) {
-
                 Config conf = config.getConfig(args[0]);
                 StormSubmitter.submitTopology(topologyName, conf, topology.build());
                 System.out.println("Topology: " + topologyName + " uploaded successfully.");
@@ -62,7 +59,7 @@ public class RedBorderTopology {
         }
     }
 
-    public static TridentTopology topology() throws FileNotFoundException {
+    public static TridentTopology topology(List<String> topics) throws FileNotFoundException {
         MemcachedConfigFile memConfig = new MemcachedConfigFile();
         TridentTopology topology = new TridentTopology();
         MemcachedState.Options mseOpts = new MemcachedState.Options();
@@ -72,64 +69,118 @@ public class RedBorderTopology {
         mobileOpts.localCacheSize = 0;
         mobileOpts.expiration = 0;
 
-        int locationPartition = config.getKafkaPartitions("rb_loc");
-        int mobilePartition = config.getKafkaPartitions("rb_mobile");
+        List<String> fields = new ArrayList<>();
+
+        TridentState memcachedState = null;
+
         int flowPartition = config.getKafkaPartitions("rb_flow");
-        int trapPartition = config.getKafkaPartitions("rb_trap");
-        int radiusPartition = config.getKafkaPartitions("rb_radius");
+        int radiusPartition = 0;
+        int trapPartition = 0;
+        int locationPartition = 0;
+        int mobilePartition = 0;
+        Stream mseStream = null;
+        Stream radiusStream = null;
 
         StateFactory memcached = MemcachedState.transactional(memConfig.getServers(), mseOpts);
         StateFactory memcachedMobile = MemcachedState.transactional(memConfig.getServers(), mobileOpts);
 
-        // LOCATION DATA
-        Stream mseStream = topology.newStream("rb_loc", new TridentKafkaSpout(kafkaConfig, "location").builder())
-                .name("MSE")
-                .each(new Fields("str"), new MapperFunction(), new Fields("mse_map"))
-                .each(new Fields("mse_map"), new GetMSEdata(), new Fields("src_mac", "mse_data", "mse_data_druid"))
-                .parallelismHint(locationPartition);
+        if (topics.contains("rb_loc")) {
+            locationPartition = config.getKafkaPartitions("rb_loc");
 
-        TridentState memcachedState = mseStream.project(new Fields("src_mac", "mse_data"))
-                .partitionPersist(memcached, new Fields("src_mac", "mse_data"), new MemcachedUpdater("src_mac", "mse_data", "rb_loc"));
+            // LOCATION DATA
+            mseStream = topology.newStream("rb_loc", new TridentKafkaSpout(kafkaConfig, "location").builder())
+                    .name("MSE")
+                    .each(new Fields("str"), new MapperFunction(), new Fields("mse_map"))
+                    .each(new Fields("mse_map"), new GetMSEdata(), new Fields("src_mac", "mse_data", "mse_data_druid"))
+                    .parallelismHint(locationPartition);
 
-        // MOBILE DATA
-        topology.newStream("rb_mobile", new TridentKafkaSpout(kafkaConfig, "mobile").builder())
-                .name("Mobile")
-                .each(new Fields("str"), new MobileBuilderFunction(), new Fields("key", "mobileMap"))
-                .partitionPersist(memcachedMobile, new Fields("key", "mobileMap"), new MemcachedUpdater("key", "mobileMap", "rb_mobile"))
-                .parallelismHint(mobilePartition);
+            memcachedState = mseStream.project(new Fields("src_mac", "mse_data"))
+                    .partitionPersist(memcached, new Fields("src_mac", "mse_data"), new MemcachedUpdater("src_mac", "mse_data", "rb_loc"));
+        }
 
-        // RSSI DATA
-        topology.newStream("rb_trap", new TridentKafkaSpout(kafkaConfig, "trap").builder())
-                .name("RSSI")
-                .each(new Fields("str"), new MapperFunction(), new Fields("rssi"))
-                .each(new Fields("rssi"), new GetTRAPdata(), new Fields("rssiKey", "rssiValue"))
-                .partitionPersist(memcachedMobile, new Fields("rssiKey", "rssiValue"), new MemcachedUpdater("rssiKey", "rssiValue", "rb_trap"))
-                .parallelismHint(trapPartition);
-        
-        // RADIUS DATA
-        Stream radiusStream = topology.newStream("rb_radius", new TridentKafkaSpout(kafkaConfig, "radius").builder())
-                .name("Radius")
-                .each(new Fields("str"), new MapperFunction(), new Fields("radius"))
-                .each(new Fields("radius"), new GetRadiusData(), new Fields("radiusKey", "radiusData", "radiusDruid"))
-                .parallelismHint(radiusPartition);
-        
-        radiusStream.project(new Fields("radiusKey", "radiusData"))
-                .partitionPersist(memcachedMobile, new Fields("radiusKey", "radiusData"), new MemcachedUpdater("radiusKey", "radiusData", "rb_radius"));
-                
+        if (topics.contains("rb_mobile")) {
+            mobilePartition = config.getKafkaPartitions("rb_mobile");
+
+            // MOBILE DATA
+            topology.newStream("rb_mobile", new TridentKafkaSpout(kafkaConfig, "mobile").builder())
+                    .name("Mobile")
+                    .each(new Fields("str"), new MobileBuilderFunction(), new Fields("key", "mobileMap"))
+                    .partitionPersist(memcachedMobile, new Fields("key", "mobileMap"), new MemcachedUpdater("key", "mobileMap", "rb_mobile"))
+                    .parallelismHint(mobilePartition);
+        }
+
+        if (topics.contains("rb_trap")) {
+            trapPartition = config.getKafkaPartitions("rb_trap");
+
+            // RSSI DATA
+            topology.newStream("rb_trap", new TridentKafkaSpout(kafkaConfig, "trap").builder())
+                    .name("RSSI")
+                    .each(new Fields("str"), new MapperFunction(), new Fields("rssi"))
+                    .each(new Fields("rssi"), new GetTRAPdata(), new Fields("rssiKey", "rssiValue"))
+                    .partitionPersist(memcachedMobile, new Fields("rssiKey", "rssiValue"), new MemcachedUpdater("rssiKey", "rssiValue", "rb_trap"))
+                    .parallelismHint(trapPartition);
+        }
+
+        if (topics.contains("rb_radius")) {
+            radiusPartition = config.getKafkaPartitions("rb_radius");
+
+            // RADIUS DATA
+            radiusStream = topology.newStream("rb_radius", new TridentKafkaSpout(kafkaConfig, "radius").builder())
+                    .name("Radius")
+                    .each(new Fields("str"), new MapperFunction(), new Fields("radius"))
+                    .each(new Fields("radius"), new GetRadiusData(), new Fields("radiusKey", "radiusData", "radiusDruid"))
+                    .parallelismHint(radiusPartition);
+
+            radiusStream.project(new Fields("radiusKey", "radiusData"))
+                    .partitionPersist(memcachedMobile, new Fields("radiusKey", "radiusData"), new MemcachedUpdater("radiusKey", "radiusData", "rb_radius"));
+        }
         // FLOW STREAM
         Stream joinedStream = topology.newStream("rb_flow", new TridentKafkaSpout(kafkaConfig, "traffics").builder())
-                .parallelismHint(flowPartition).shuffle().name("Main")
+                .parallelismHint(flowPartition)
+                .shuffle()
+                .name("Main")
                 .each(new Fields("str"), new MapperFunction(), new Fields("flows"))
-                .stateQuery(memcachedState, new Fields("flows"), new MemcachedQuery("client_mac", "rb_loc"), new Fields("mseMap"))
-                .stateQuery(memcachedState, new Fields("flows"), new MemcachedQuery("client_mac", "rb_trap"), new Fields("rssiMap"))
-                .stateQuery(memcachedState, new Fields("flows"), new MemcachedQuery("client_mac", "rb_radius"), new Fields("radiusMap"))
-                .each(new Fields("flows"), new MacVendorFunction(), new Fields("macVendorMap"))
+                .each(new Fields("flows"), new GetFieldFunction("client_mac"), new Fields("mac_src_flow"));
+
+        fields.add("flows");
+
+        if (topics.contains("rb_loc")) {
+            joinedStream = joinedStream
+                    .stateQuery(memcachedState, new Fields("mac_src_flow"), new MemcachedQuery("mac_src_flow", "rb_loc"), new Fields("mseMap"));
+            fields.add("mseMap");
+        }
+
+        if (topics.contains("rb_trap")) {
+            joinedStream = joinedStream.stateQuery(memcachedState, new Fields("mac_src_flow"), new MemcachedQuery("mac_src_flow", "rb_trap"), new Fields("rssiMap"));
+            fields.add("rssiMap");
+        }
+
+        if (topics.contains("rb_radius")) {
+            joinedStream = joinedStream.stateQuery(memcachedState, new Fields("mac_src_flow"), new MemcachedQuery("mac_src_flow", "rb_radius"), new Fields("radiusMap"));
+            fields.add("radiusMap");
+        }
+
+        joinedStream = joinedStream.each(new Fields("flows"), new MacVendorFunction(), new Fields("macVendorMap"))
                 .each(new Fields("flows"), new GeoIpFunction(), new Fields("geoIPMap"))
-                .each(new Fields("flows"), new AnalizeHttpUrlFunction(), new Fields("httpUrlMap"))
-                .stateQuery(memcachedState, new Fields("flows"), new MemcachedQuery("src", "rb_mobile"), new Fields("ipAssignMap"))
-                .stateQuery(memcachedState, new Fields("ipAssignMap"), new MemcachedQuery("client_id", "rb_mobile"), new Fields("ueRegisterMap"))
-                .stateQuery(memcachedState, new Fields("ueRegisterMap"), new MemcachedQuery("path", "rb_mobile"), new Fields("hnbRegisterMap"))
-                .each(new Fields("ipAssignMap", "ueRegisterMap", "hnbRegisterMap", "flows", "mseMap", "macVendorMap", "geoIPMap", "rssiMap", "radiusMap", "httpUrlMap"), new JoinFlowFunction(), new Fields("finalMap"))
+                .each(new Fields("flows"), new AnalizeHttpUrlFunction(), new Fields("httpUrlMap"));
+
+        fields.add("geoIPMap");
+        fields.add("macVendorMap");
+        fields.add("httpUrlMap");
+
+        if (topics.contains("rb_mobile")) {
+            joinedStream = joinedStream.each(new Fields("flows"), new GetFieldFunction("src"), new Fields("src_ip_addr"))
+                    .stateQuery(memcachedState, new Fields("src_ip_addr"), new MemcachedQuery("src_ip_addr", "rb_mobile"), new Fields("ipAssignMap"))
+                    .each(new Fields("ipAssignMap"), new GetFieldFunction("imsi"), new Fields("imsi"))
+                    .stateQuery(memcachedState, new Fields("imsi"), new MemcachedQuery("imsi", "rb_mobile"), new Fields("ueRegisterMap"))
+                    .each(new Fields("ueRegisterMap"), new GetFieldFunction("path"), new Fields("path"))
+                    .stateQuery(memcachedState, new Fields("path"), new MemcachedQuery("path", "rb_mobile"), new Fields("hnbRegisterMap"));
+            fields.add("ipAssignMap");
+            fields.add("ueRegisterMap");
+            fields.add("hnbRegisterMap");
+        }
+
+        joinedStream = joinedStream.each(new Fields(fields), new JoinFlowFunction(), new Fields("finalMap"))
                 .project(new Fields("finalMap"))
                 .parallelismHint(config.getWorkers());
 
@@ -156,13 +207,17 @@ public class RedBorderTopology {
                     .partitionPersist(KafkaState.nonTransactional(kafkaConfig.getZkHost()), new Fields("jsonString"), new KafkaStateUpdater("jsonString", outputTopic))
                     .parallelismHint(flowPrePartitions);
 
-            mseStream
-                    .each(new Fields("mse_data_druid"), new MapToJSONFunction(), new Fields("jsonString"))
-                    .partitionPersist(KafkaState.nonTransactional(kafkaConfig.getZkHost()), new Fields("jsonString"), new KafkaStateUpdater("jsonString", outputTopic));
-            
-            radiusStream
-                    .each(new Fields("radiusDruid"), new MapToJSONFunction(), new Fields("radiusJSONString"))
-                    .partitionPersist(KafkaState.nonTransactional(kafkaConfig.getZkHost()), new Fields("radiusJSONString"), new KafkaStateUpdater("radiusJSONString", outputTopic));
+            if (topics.contains("rb_loc")) {
+                mseStream
+                        .each(new Fields("mse_data_druid"), new MapToJSONFunction(), new Fields("jsonString"))
+                        .each(new Fields("jsonString"), new ProducerKafkaFunction(kafkaConfig, outputTopic), new Fields("a"));
+            }
+
+            if (topics.contains("rb_radius")) {
+                radiusStream
+                        .each(new Fields("radiusDruid"), new MapToJSONFunction(), new Fields("radiusJSONString"))
+                        .each(new Fields("radiusJSONString"), new ProducerKafkaFunction(kafkaConfig, outputTopic), new Fields("a"));
+            }
         } else {
             System.out.println("\n- Tranquility info: ");
 
@@ -189,17 +244,42 @@ public class RedBorderTopology {
 
             StateFactory druidStateFlow = new TridentBeamStateFactory<>(new MyBeamFactoryMapFlow(partitions, replicas));
 
-            joinedStream.shuffle().name("Tranquility")
-                    .each(new Fields(), new ThroughputLoggingFilter())
+            joinedStream
+                    .shuffle()
+                    .name("Tranquility")
                     .partitionPersist(druidStateFlow, new Fields("finalMap"), new TridentBeamStateUpdater())
                     .parallelismHint(partitions);
 
-            mseStream
-                    .partitionPersist(druidStateFlow, new Fields("mse_data_druid"), new TridentBeamStateUpdater());
-            
-            radiusStream
-                    .partitionPersist(druidStateFlow, new Fields("radiusDruid"), new TridentBeamStateUpdater());
+            if (topics.contains("rb_loc")) {
+                mseStream
+                        .partitionPersist(druidStateFlow, new Fields("mse_data_druid"), new TridentBeamStateUpdater());
+            }
+
+            if (topics.contains("rb_radius")) {
+                radiusStream
+                        .partitionPersist(druidStateFlow, new Fields("radiusDruid"), new TridentBeamStateUpdater());
+            }
         }
+
+        System.out.println("\n----------------------- Topology Enrichment-----------------------\n");
+        System.out.print("rb_flow --> ");
+        if (topics.contains("rb_loc")) {
+            System.out.print("rb_loc --> ");
+        }
+
+        if (topics.contains("rb_mobile")) {
+            System.out.print("rb_mobile --> ");
+        }
+
+        if (topics.contains("rb_trap")) {
+            System.out.print("rb_trap --> ");
+        }
+
+        if (topics.contains("rb_radius")) {
+            System.out.print("rb_radius --> ");
+        }
+
+        System.out.println("||\n");
 
         return topology;
     }

@@ -7,6 +7,8 @@ package net.redborder.storm.util;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -22,9 +24,9 @@ public class KafkaConfigFile {
     String _zkHost;
     String _outputTopic;
     Map<String, Object> _data;
+    List<String> avaibleTopics;
 
     final String CONFIG_FILE_PATH = "/opt/rb/etc/redBorder-BI/zk_config.yml";
-    // final String CONFIG_FILE_PATH = "/Users/andresgomez/rbdruid_config.yml"
 
     /**
      * Constructor.
@@ -35,6 +37,15 @@ public class KafkaConfigFile {
         _zkHost = "localhost";
         Map<String, Object> map = (Map<String, Object>) Yaml.load(new File(CONFIG_FILE_PATH));
         _data = (Map<String, Object>) map.get("production");
+        avaibleTopics = new ArrayList<>();
+        for (Object value : _data.values()) {
+            Map<String, Object> config = (Map<String, Object>) value;
+            avaibleTopics.add(config.get("input_topic").toString());
+            if (config.get("output_topic") != null) {
+                avaibleTopics.add(config.get("output_topic").toString());
+            }
+            _zkHost = config.get("zk_connect").toString();
+        }
     }
 
     /**
@@ -47,10 +58,6 @@ public class KafkaConfigFile {
     public KafkaConfigFile(String section) throws FileNotFoundException {
         this();
         this.setSection(section);
-    }
-    
-    public void init(){
-        setSection("traffics");
     }
 
     /**
@@ -71,7 +78,7 @@ public class KafkaConfigFile {
             } else {
                 _outputTopic = null;
             }
-            
+
             System.out.println("  - inputTopic: [" + _topic + "]");
             System.out.println("  - outputTopic: [" + _outputTopic + "]");
             System.out.println("  - zkConnect: [" + _zkHost + "]");
@@ -106,5 +113,9 @@ public class KafkaConfigFile {
      */
     public String getOutputTopic() {
         return _outputTopic;
+    }
+
+    public List<String> getAvaibleTopics() {
+        return avaibleTopics;
     }
 }
