@@ -66,8 +66,10 @@ public class RedBorderTopology {
         MemcachedConfigFile memConfig = new MemcachedConfigFile();
         TridentTopology topology = new TridentTopology();
         MemcachedState.Options mseOpts = new MemcachedState.Options();
+        mseOpts.localCacheSize = 0;
         mseOpts.expiration = 3600000;
         MemcachedState.Options mobileOpts = new MemcachedState.Options();
+        mobileOpts.localCacheSize = 0;
         mobileOpts.expiration = 0;
 
         int locationPartition = config.getKafkaPartitions("rb_loc");
