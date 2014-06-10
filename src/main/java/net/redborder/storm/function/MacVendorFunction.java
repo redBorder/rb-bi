@@ -28,45 +28,13 @@ import storm.trident.tuple.TridentTuple;
  */
 public class MacVendorFunction extends BaseFunction {
 
-    private String _ouiFilePath;
-
+    private final String _ouiFilePath = "/opt/rb/etc/objects/oui-vendors";
     Map<String, String> _ouiMap;
-
-    /**
-     * Constructor.
-     *
-     * @param ouiPath Path where is the database of oui.
-     */
-    public MacVendorFunction(String ouiPath) {
-        _ouiFilePath = ouiPath;
-    }
-
-    public MacVendorFunction() {
-        _ouiFilePath = "/opt/rb/etc/objects/oui-vendors";
-    }
-
-    @Override
-    public void execute(TridentTuple tuple, TridentCollector collector) {
-
-        Map<String, Object> event = (Map<String, Object>) tuple.getValue(0);
-        Map<String, Object> vendorMap = new HashMap<>();
-        String ouiSrc = "";
-        if (event.containsKey("client_mac")) {
-            ouiSrc = buildOui(event.get("client_mac"));
-            
-            if(ouiSrc != null){
-                ouiSrc = _ouiMap.get(ouiSrc);
-                vendorMap.put("client_mac_vendor", ouiSrc);
-            }            
-        }
-        collector.emit(new Values(vendorMap));
-    }
 
     @Override
     public void prepare(Map conf, TridentOperationContext context) {
-        _ouiMap = new HashMap<>();
-
         InputStream in = null;
+        _ouiMap = new HashMap<>();
 
         try {
             in = new FileInputStream(_ouiFilePath);
@@ -77,22 +45,16 @@ public class MacVendorFunction extends BaseFunction {
         InputStreamReader isr = new InputStreamReader(in);
         BufferedReader br = new BufferedReader(isr);
 
-        while (true) {
-            String line = null;
-            try {
+        try {
+            String line = br.readLine();
+
+            while (line != null) {
+                String[] tokens = line.split("\\|");
+                _ouiMap.put(tokens[0].substring(2, 8), tokens[1]);
                 line = br.readLine();
-
-            } catch (IOException ex) {
-                Logger.getLogger(MacVendorFunction.class.getName()).log(Level.SEVERE, null, ex);
             }
-
-            if (line == null) {
-                break;
-            }
-
-            String[] tokens = line.split("\\|");
-            _ouiMap.put(tokens[0].substring(2, 8), tokens[1]);
-
+        } catch (IOException ex) {
+            Logger.getLogger(MacVendorFunction.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
@@ -103,12 +65,22 @@ public class MacVendorFunction extends BaseFunction {
      * @return oui.
      */
     private String buildOui(Object object) {
-        if (object != null) {
-            String mac = object.toString();
-            mac = mac.trim().replace("-", "").replace(":", "");
-            return mac.substring(0, 6).toUpperCase();
-        } else {
-            return "";
+        String mac = object.toString();
+        mac = mac.trim().replace("-", "").replace(":", "");
+        return mac.substring(0, 6).toUpperCase();
+    }
+
+    @Override
+    public void execute(TridentTuple tuple, TridentCollector collector) {
+        Map<String, Object> event = (Map<String, Object>) tuple.getValue(0);
+        Map<String, Object> vendorMap = new HashMap<>();
+        String clientMac = (String) event.get("client_mac");
+
+        if (clientMac != null) {
+            String oui = buildOui(clientMac);
+            vendorMap.put("client_mac_vendor", _ouiMap.get(oui));
         }
+
+        collector.emit(new Values(vendorMap));
     }
 }

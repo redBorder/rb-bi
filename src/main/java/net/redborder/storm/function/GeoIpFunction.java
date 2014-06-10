@@ -21,7 +21,7 @@ import storm.trident.operation.TridentOperationContext;
 import storm.trident.tuple.TridentTuple;
 
 /**
- * Get the geoLocation from a IPv4 or IPv6 (sourcer and destination).
+ * Get the geoLocation from a IPv4 or IPv6 (source and destination).
  *
  * @author andresgomez
  */
@@ -49,96 +49,71 @@ public class GeoIpFunction extends BaseFunction {
         }
     }
 
-    private Map<String, Object> getIPData(String ip) {
-
-        Location location;
-        Map<String, Object> eventMap = new HashMap<>();
+    private String getCountryCode(String ip) {
         Matcher match = CheckIp.VALID_IPV4_PATTERN.matcher(ip);
-        String asnInfo;
+        String countryCode = null;
+        Location location;
 
         if (match.matches()) {
             location = _city.getLocation(ip);
-            asnInfo = _asn.getOrg(ip);
         } else {
             location = _city6.getLocationV6(ip);
-            asnInfo = _asn6.getOrgV6(ip);
         }
 
         if (location != null) {
-            /* if (timeZone.timeZoneByCountryAndRegion(location.countryCode, location.region) != null) {
-             event.put("TimeZone" + where, timeZone.timeZoneByCountryAndRegion(location.countryCode, location.region));
-             }
-             if (location.countryName != null) {
-             event.put("Country" + where, location.countryName);
-             } */
-            if (location.countryCode != null) {
-                eventMap.put("country_code", location.countryCode);
-            }
-            /* if (location.city != null) {
-             event.put("City" + where, location.city);
-             }
-             if (location.region != null) {
-             event.put("Region" + where, location.region);
-             }
-             if (regionName.regionNameByCode(location.countryCode, location.region) != null) {
-             event.put("RegionName" + where, regionName.regionNameByCode(location.countryCode, location.region));
-             }
-             if (location.postalCode != null) {
-             event.put("CodePostal" + where, location.postalCode);
-             }
-             if (location.latitude != 0) {
-             event.put("Latitude" + where, location.latitude);
-             }
-             if (location.longitude != 0) {
-             event.put("Longitude" + where, location.longitude);
-             }
-             if (location.metro_code != 0) {
-             event.put("Metro_Code" + where, location.metro_code);
-             }
-             if (location.dma_code != 0) {
-             event.put("Dma_Code" + where, location.dma_code);
-             } */
-
-            if (asnInfo != null) {
-                String[] asn = asnInfo.split(" ", 2);
-                // event.put("AsnNum" + where, asn[0]);
-                if (asn.length > 1) {
-                    if (asn[1] != null) eventMap.put("asn_name", asn[1]);
-                } else {
-                    if (asn[0] != null) eventMap.put("asn_name", asn[0]);
-                }
+            countryCode = location.countryCode;
+        }
+        
+        return countryCode;
+    }
+    
+    private String getAsnName(String ip) {
+        Matcher match = CheckIp.VALID_IPV4_PATTERN.matcher(ip);
+        String asnName = null;
+        String asnInfo = null;
+        
+        if (match.matches()) {
+            asnInfo = _asn.getOrg(ip);
+        } else {
+            asnInfo = _asn6.getOrgV6(ip);
+        }
+        
+        if (asnInfo != null) {
+            String[] asn = asnInfo.split(" ", 2);
+            
+            if (asn.length > 1) {
+                if (asn[1] != null) asnName = asn[1];
+            } else {
+                if (asn[0] != null) asnName = asn[0];
             }
         }
-
-        //if (location != null && locationSrc != null) {
-        //    if (locationSrc.distance(location) != 0) {
-        //        event.put("Distance", locationSrc.distance(location));
-        //     }
-        //}
-        return eventMap;
+        
+        return asnName;
     }
 
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
-
         Map<String, Object> event = (Map<String, Object>) tuple.getValue(0);
         Map<String, Object> geoIPMap = new HashMap<>();
-        Map<String, Object> aux;
-        String ip;
+        String src = (String) event.get("src");
+        String dst = (String) event.get("dst");
 
-        if (event.containsKey("src")) {
-            ip = event.get("src").toString();
-            aux = getIPData(ip);
-            if(aux.containsKey("country_code")) geoIPMap.put("src_country_code", aux.get("country_code"));
-            if(aux.containsKey("asn_name")) geoIPMap.put("src_as_name", aux.get("asn_name"));
+        if (src != null) {
+            String country_code = getCountryCode(src);
+            String asn_name = getAsnName(src);
+            
+            if(country_code != null) geoIPMap.put("src_country_code", country_code);
+            if(asn_name != null) geoIPMap.put("src_as_name", asn_name);
         }
 
-        if (event.containsKey("dst")) {
-            ip = event.get("dst").toString();
-            aux = getIPData(ip);
-            if(aux.containsKey("country_code")) geoIPMap.put("dst_country_code", aux.get("country_code"));
-            if(aux.containsKey("asn_name")) geoIPMap.put("dst_as_name", aux.get("asn_name"));
+        if (dst != null) {
+            String country_code = getCountryCode(dst);
+            String asn_name = getAsnName(dst);
+            
+            if(country_code != null) geoIPMap.put("src_country_code", country_code);
+            if(asn_name != null) geoIPMap.put("src_as_name", asn_name);
         }
+        
         collector.emit(new Values(geoIPMap));
     }
 
