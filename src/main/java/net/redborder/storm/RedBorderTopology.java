@@ -148,12 +148,12 @@ public class RedBorderTopology {
         }
 
         if (topics.contains("rb_trap")) {
-            mainStream = mainStream.stateQuery(memcachedState, new Fields("mac_src_flow"), new MemcachedQuery("mac_src_flow", "rb_trap"), new Fields("rssiMap"));
+            mainStream = mainStream.stateQuery(memcachedState, new Fields("flows"), new MemcachedQuery("client_mac", "rb_trap"), new Fields("rssiMap"));
             fields.add("rssiMap");
         }
 
         if (topics.contains("rb_radius")) {
-            mainStream = mainStream.stateQuery(memcachedState, new Fields("mac_src_flow"), new MemcachedQuery("mac_src_flow", "rb_radius"), new Fields("radiusMap"));
+            mainStream = mainStream.stateQuery(memcachedState, new Fields("flows"), new MemcachedQuery("client_mac", "rb_radius"), new Fields("radiusMap"));
             fields.add("radiusMap");
         }
 
