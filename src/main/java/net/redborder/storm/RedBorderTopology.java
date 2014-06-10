@@ -135,32 +135,29 @@ public class RedBorderTopology {
                     .partitionPersist(memcachedMobile, new Fields("radiusKey", "radiusData"), new MemcachedUpdater("radiusKey", "radiusData", "rb_radius"));
         }
         // FLOW STREAM
-        Stream joinedStream = topology.newStream("rb_flow", new TridentKafkaSpout(kafkaConfig, "traffics").builder())
-                .parallelismHint(flowPartition)
-                .shuffle()
-                .name("Main")
-                .each(new Fields("str"), new MapperFunction(), new Fields("flows"))
-                .each(new Fields("flows"), new GetFieldFunction("client_mac"), new Fields("mac_src_flow"));
+        Stream mainStream = topology.newStream("rb_flow", new TridentKafkaSpout(kafkaConfig, "traffics").builder())
+                .parallelismHint(flowPartition).shuffle().name("Main")
+                .each(new Fields("str"), new MapperFunction(), new Fields("flows"));
 
         fields.add("flows");
 
         if (topics.contains("rb_loc")) {
-            joinedStream = joinedStream
-                    .stateQuery(memcachedState, new Fields("mac_src_flow"), new MemcachedQuery("mac_src_flow", "rb_loc"), new Fields("mseMap"));
+            mainStream = mainStream
+                    .stateQuery(memcachedState, new Fields("flows"), new MemcachedQuery("client_mac", "rb_loc"), new Fields("mseMap"));
             fields.add("mseMap");
         }
 
         if (topics.contains("rb_trap")) {
-            joinedStream = joinedStream.stateQuery(memcachedState, new Fields("mac_src_flow"), new MemcachedQuery("mac_src_flow", "rb_trap"), new Fields("rssiMap"));
+            mainStream = mainStream.stateQuery(memcachedState, new Fields("mac_src_flow"), new MemcachedQuery("mac_src_flow", "rb_trap"), new Fields("rssiMap"));
             fields.add("rssiMap");
         }
 
         if (topics.contains("rb_radius")) {
-            joinedStream = joinedStream.stateQuery(memcachedState, new Fields("mac_src_flow"), new MemcachedQuery("mac_src_flow", "rb_radius"), new Fields("radiusMap"));
+            mainStream = mainStream.stateQuery(memcachedState, new Fields("mac_src_flow"), new MemcachedQuery("mac_src_flow", "rb_radius"), new Fields("radiusMap"));
             fields.add("radiusMap");
         }
 
-        joinedStream = joinedStream.each(new Fields("flows"), new MacVendorFunction(), new Fields("macVendorMap"))
+        mainStream = mainStream.each(new Fields("flows"), new MacVendorFunction(), new Fields("macVendorMap"))
                 .each(new Fields("flows"), new GeoIpFunction(), new Fields("geoIPMap"))
                 .each(new Fields("flows"), new AnalizeHttpUrlFunction(), new Fields("httpUrlMap"));
 
@@ -169,18 +166,17 @@ public class RedBorderTopology {
         fields.add("httpUrlMap");
 
         if (topics.contains("rb_mobile")) {
-            joinedStream = joinedStream.each(new Fields("flows"), new GetFieldFunction("src"), new Fields("src_ip_addr"))
-                    .stateQuery(memcachedState, new Fields("src_ip_addr"), new MemcachedQuery("src_ip_addr", "rb_mobile"), new Fields("ipAssignMap"))
-                    .each(new Fields("ipAssignMap"), new GetFieldFunction("imsi"), new Fields("imsi"))
-                    .stateQuery(memcachedState, new Fields("imsi"), new MemcachedQuery("imsi", "rb_mobile"), new Fields("ueRegisterMap"))
-                    .each(new Fields("ueRegisterMap"), new GetFieldFunction("path"), new Fields("path"))
-                    .stateQuery(memcachedState, new Fields("path"), new MemcachedQuery("path", "rb_mobile"), new Fields("hnbRegisterMap"));
+            mainStream = mainStream
+                    .stateQuery(memcachedState, new Fields("flows"), new MemcachedQuery("src", "rb_mobile"), new Fields("ipAssignMap"))
+                    .stateQuery(memcachedState, new Fields("ipAssignMap"), new MemcachedQuery("imsi", "rb_mobile"), new Fields("ueRegisterMap"))
+                    .stateQuery(memcachedState, new Fields("ueRegisterMap"), new MemcachedQuery("path", "rb_mobile"), new Fields("hnbRegisterMap"));
+
             fields.add("ipAssignMap");
             fields.add("ueRegisterMap");
             fields.add("hnbRegisterMap");
         }
 
-        joinedStream = joinedStream.each(new Fields(fields), new JoinFlowFunction(), new Fields("finalMap"))
+        mainStream = mainStream.each(new Fields(fields), new JoinFlowFunction(), new Fields("finalMap"))
                 .project(new Fields("finalMap"))
                 .parallelismHint(config.getWorkers());
 
@@ -199,8 +195,8 @@ public class RedBorderTopology {
             int flowPrePartitions = config.getKafkaPartitions(outputTopic);
             System.out.println("   * " + outputTopic + ": " + flowPrePartitions);
             System.out.println("Flows send to: " + outputTopic);
-            
-            joinedStream
+
+            mainStream
                     .shuffle().name("Kafka Producer")
                     .each(new Fields("finalMap"), new MapToJSONFunction(), new Fields("jsonString"))
                     .each(new Fields(), new ThroughputLoggingFilter())
@@ -210,13 +206,13 @@ public class RedBorderTopology {
             if (topics.contains("rb_loc")) {
                 mseStream
                         .each(new Fields("mse_data_druid"), new MapToJSONFunction(), new Fields("jsonString"))
-                        .each(new Fields("jsonString"), new ProducerKafkaFunction(kafkaConfig, outputTopic), new Fields("a"));
+                        .partitionPersist(KafkaState.nonTransactional(kafkaConfig.getZkHost()), new Fields("jsonString"), new KafkaStateUpdater("jsonString", outputTopic));
             }
 
             if (topics.contains("rb_radius")) {
                 radiusStream
                         .each(new Fields("radiusDruid"), new MapToJSONFunction(), new Fields("radiusJSONString"))
-                        .each(new Fields("radiusJSONString"), new ProducerKafkaFunction(kafkaConfig, outputTopic), new Fields("a"));
+                        .partitionPersist(KafkaState.nonTransactional(kafkaConfig.getZkHost()), new Fields("radiusJSONString"), new KafkaStateUpdater("radiusJSONString", outputTopic));
             }
         } else {
             System.out.println("\n- Tranquility info: ");
@@ -244,7 +240,7 @@ public class RedBorderTopology {
 
             StateFactory druidStateFlow = new TridentBeamStateFactory<>(new MyBeamFactoryMapFlow(partitions, replicas));
 
-            joinedStream
+            mainStream
                     .shuffle()
                     .name("Tranquility")
                     .partitionPersist(druidStateFlow, new Fields("finalMap"), new TridentBeamStateUpdater())
