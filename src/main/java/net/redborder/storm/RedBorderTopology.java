@@ -241,8 +241,8 @@ public class RedBorderTopology {
             StateFactory druidStateFlow = new TridentBeamStateFactory<>(new MyBeamFactoryMapFlow(partitions, replicas));
 
             mainStream
-                    .shuffle()
-                    .name("Tranquility")
+                    .shuffle().name("Tranquility")
+                    .each(new Fields(), new ThroughputLoggingFilter())
                     .partitionPersist(druidStateFlow, new Fields("finalMap"), new TridentBeamStateUpdater())
                     .parallelismHint(partitions);
 
