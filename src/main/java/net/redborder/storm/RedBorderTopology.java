@@ -205,13 +205,19 @@ public class RedBorderTopology {
 
             if (topics.contains("rb_loc")) {
                 mseStream
-                        .each(new Fields("mse_data_druid"), new MapToJSONFunction(), new Fields("jsonString"))
-                        .partitionPersist(KafkaState.nonTransactional(kafkaConfig.getZkHost()), new Fields("jsonString"), new KafkaStateUpdater("jsonString", outputTopic));
+                        .each(new Fields("mse_data_druid"), new MacVendorFunction(), new Fields("mseMacVendorMap"))
+                        .each(new Fields("mse_data_druid"), new GeoIpFunction(), new Fields("mseGeoIPMap"))
+                        .each(new Fields("mse_data_druid", "mseMacVendorMap", "mseGeoIPMap"), new JoinFlowFunction(), new Fields("mseFinalMap"))
+                        .each(new Fields("mseFinalMap"), new MapToJSONFunction(), new Fields("mseJsonString"))
+                        .partitionPersist(KafkaState.nonTransactional(kafkaConfig.getZkHost()), new Fields("mseJsonString"), new KafkaStateUpdater("jsonString", outputTopic));
             }
 
             if (topics.contains("rb_radius")) {
                 radiusStream
-                        .each(new Fields("radiusDruid"), new MapToJSONFunction(), new Fields("radiusJSONString"))
+                        .each(new Fields("radiusDruid"), new MacVendorFunction(), new Fields("radiusMacVendorMap"))
+                        .each(new Fields("radiusDruid"), new GeoIpFunction(), new Fields("radiusGeoIPMap"))
+                        .each(new Fields("radiusDruid", "radiusMacVendorMap", "radiusGeoIPMap"), new JoinFlowFunction(), new Fields("radiusFinalMap"))
+                        .each(new Fields("radiusFinalMap"), new MapToJSONFunction(), new Fields("radiusJSONString"))
                         .partitionPersist(KafkaState.nonTransactional(kafkaConfig.getZkHost()), new Fields("radiusJSONString"), new KafkaStateUpdater("radiusJSONString", outputTopic));
             }
         } else {
@@ -248,12 +254,18 @@ public class RedBorderTopology {
 
             if (topics.contains("rb_loc")) {
                 mseStream
-                        .partitionPersist(druidStateFlow, new Fields("mse_data_druid"), new TridentBeamStateUpdater());
+                        .each(new Fields("mse_data_druid"), new MacVendorFunction(), new Fields("mseMacVendorMap"))
+                        .each(new Fields("mse_data_druid"), new GeoIpFunction(), new Fields("mseGeoIPMap"))
+                        .each(new Fields("mse_data_druid", "mseMacVendorMap", "mseGeoIPMap"), new JoinFlowFunction(), new Fields("mseFinalMap"))
+                        .partitionPersist(druidStateFlow, new Fields("mseFinalMap"), new TridentBeamStateUpdater());
             }
 
             if (topics.contains("rb_radius")) {
                 radiusStream
-                        .partitionPersist(druidStateFlow, new Fields("radiusDruid"), new TridentBeamStateUpdater());
+                        .each(new Fields("radiusDruid"), new MacVendorFunction(), new Fields("radiusMacVendorMap"))
+                        .each(new Fields("radiusDruid"), new GeoIpFunction(), new Fields("radiusGeoIPMap"))
+                        .each(new Fields("radiusDruid", "radiusMacVendorMap", "radiusGeoIPMap"), new JoinFlowFunction(), new Fields("radiusFinalMap"))
+                        .partitionPersist(druidStateFlow, new Fields("radiusFinalMap"), new TridentBeamStateUpdater());
             }
         }
 
