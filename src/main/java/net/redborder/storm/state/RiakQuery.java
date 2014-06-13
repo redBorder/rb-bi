@@ -7,7 +7,7 @@ package net.redborder.storm.state;
 
 import backtype.storm.topology.ReportedFailedException;
 import backtype.storm.tuple.Values;
-import com.google.common.collect.Lists;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,19 +22,19 @@ import storm.trident.tuple.TridentTuple;
  *
  * @author andresgomez
  */
-public class MemcachedQuery extends BaseQueryFunction<MapState<Map<String, Object>>, Map<String, Object>> {
+public class RiakQuery extends BaseQueryFunction<MapState<Map<String, Object>>, Map<String, Object>> {
 
     String _key;
     String _generalkey;
     boolean debug;
 
-    public MemcachedQuery(String key, boolean debug) {
+    public RiakQuery(String key, boolean debug) {
         _key = key;
         _generalkey = "rbbi:none:";
         this.debug = debug;
     }
 
-    public MemcachedQuery(String key, String generalKey, boolean debug) {
+    public RiakQuery(String key, String generalKey, boolean debug) {
         this(key, debug);
         _generalkey = "rbbi:" + generalKey + ":";
     }
@@ -42,9 +42,9 @@ public class MemcachedQuery extends BaseQueryFunction<MapState<Map<String, Objec
     @Override
     public List<Map<String, Object>> batchRetrieve(MapState<Map<String, Object>> state, List<TridentTuple> tuples) {
         List<Map<String, Object>> memcachedData = null;
-        List<Map<String, Object>> result = Lists.newArrayList();
-        List<Object> keysToRequest = Lists.newArrayList();
-        List<String> keysToAppend = Lists.newArrayList();
+        List<Map<String, Object>> result = new ArrayList<>();
+        List<Object> keysToRequest = new ArrayList<>();
+        List<String> keysToAppend = new ArrayList<>();
 
         for (TridentTuple t : tuples) {
             Map<String, Object> flow = (Map<String, Object>) t.getValue(0);
@@ -63,14 +63,14 @@ public class MemcachedQuery extends BaseQueryFunction<MapState<Map<String, Objec
 
         if (debug) {
             System.out.println("BatchSize " + tuples.size()
-                    + " RequestedToMemcached: " + keysToRequest.size());
+                    + " RequestedToRiak: " + keysToRequest.size());
         }
 
         if (!keysToRequest.isEmpty()) {
-            List<List<Object>> keysToMemcached = Lists.newArrayList();
+            List<List<Object>> keysToMemcached = new ArrayList<>();
 
             for (Object key : keysToRequest) {
-                List<Object> l = Lists.newArrayList();
+                List<Object> l = new ArrayList<>();
                 l.add(key);
                 keysToMemcached.add(l);
             }
@@ -78,10 +78,10 @@ public class MemcachedQuery extends BaseQueryFunction<MapState<Map<String, Objec
             try {
                 memcachedData = state.multiGet(keysToMemcached);
                 if (debug) {
-                    System.out.println("MemcachedResponse: " + memcachedData.toString());
+                    System.out.println("RiakResponse: " + memcachedData.toString());
                 }
             } catch (ReportedFailedException e) {
-                Logger.getLogger(MemcachedQuery.class.getName()).log(Level.WARNING, null, e);
+                Logger.getLogger(RiakQuery.class.getName()).log(Level.WARNING, null, e);
             }
         }
 

@@ -88,13 +88,6 @@
             </exclusions>
         </dependency>
         
-        <!-- Memcached dependency -->
-        <dependency>
-            <groupId>storm</groupId>
-            <artifactId>trident-memcached</artifactId>
-            <version>0.0.5-wip3</version>
-        </dependency>
-        
         <!-- Kafka -->
         <dependency>
             <groupId>org.apache.kafka</groupId>
@@ -129,6 +122,13 @@
             </exclusions>
         </dependency>
         
+        <!-- Riak -->
+        <dependency>
+            <groupId>com.basho.riak</groupId>
+            <artifactId>riak-client</artifactId>
+            <version>1.4.4</version>
+        </dependency>
+
     </dependencies>
     
     <build>

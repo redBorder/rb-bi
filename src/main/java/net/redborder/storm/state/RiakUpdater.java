@@ -6,7 +6,7 @@
 package net.redborder.storm.state;
 
 import backtype.storm.topology.ReportedFailedException;
-import com.google.common.collect.Lists;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -20,37 +20,37 @@ import storm.trident.tuple.TridentTuple;
  *
  * @author andresgomez
  */
-public class MemcachedUpdater extends BaseStateUpdater<MapState<Map<String, Object>>> {
+public class RiakUpdater extends BaseStateUpdater<MapState<Map<String, Object>>> {
 
     String _key;
     String _value;
     String _generalKey;
     boolean debug;
 
-    public MemcachedUpdater(String key, String value, boolean debug) {
+    public RiakUpdater(String key, String value, boolean debug) {
         _key = key;
         _value = value;
         _generalKey = "rbbi:none:";
         this.debug = debug;
     }
 
-    public MemcachedUpdater(String key, String value, String generalKey, boolean debug) {
+    public RiakUpdater(String key, String value, String generalKey, boolean debug) {
         this(key, value, debug);
         _generalKey = "rbbi:" + generalKey + ":";
     }
 
     @Override
     public void updateState(MapState<Map<String, Object>> state, List<TridentTuple> tuples, TridentCollector collector) {
-        List<Map<String, Object>> events = Lists.newArrayList();
-        List<List<Object>> keys = Lists.newArrayList();
+        List<Map<String, Object>> events = new ArrayList<>();
+        List<List<Object>> keys = new ArrayList<>();
         for (TridentTuple t : tuples) {
-            List<Object> l = Lists.newArrayList();
+            List<Object> l = new ArrayList<>();
             l.add(_generalKey + t.getValueByField(_key));
             keys.add(l);
             events.add((Map<String, Object>) t.getValueByField(_value));
 
             if (debug) {
-                System.out.println("SAVED TO MEMCACHED KEY: " + _generalKey + t.getValueByField(_key)
+                System.out.println("SAVED TO RIAK KEY: " + _generalKey + t.getValueByField(_key)
                         + " VALUE: " + t.getValueByField(_value));
             }
         }
@@ -58,7 +58,7 @@ public class MemcachedUpdater extends BaseStateUpdater<MapState<Map<String, Obje
         try {
             state.multiPut(keys, events);
         } catch (ReportedFailedException e) {
-            Logger.getLogger(MemcachedUpdater.class.getName()).log(Level.WARNING, null, e);
+            Logger.getLogger(RiakUpdater.class.getName()).log(Level.WARNING, null, e);
         }
     }
 

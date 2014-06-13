@@ -13,6 +13,7 @@ import com.metamx.tranquility.storm.TridentBeamStateUpdater;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import net.redborder.storm.function.*;
 import net.redborder.storm.spout.TridentKafkaSpout;
 import net.redborder.storm.state.*;
@@ -24,7 +25,6 @@ import storm.trident.Stream;
 import storm.trident.TridentState;
 import storm.trident.TridentTopology;
 import storm.trident.state.StateFactory;
-import trident.memcached.MemcachedState;
 
 public class RedBorderTopology {
 
@@ -66,25 +66,21 @@ public class RedBorderTopology {
     }
 
     public static TridentTopology topology(List<String> topics, boolean debug) throws FileNotFoundException {
-        MemcachedConfigFile memConfig = new MemcachedConfigFile();
         TridentTopology topology = new TridentTopology();
-        MemcachedState.Options mseOpts = new MemcachedState.Options();
-        mseOpts.localCacheSize = 0;
-        mseOpts.expiration = 0;
-
         List<String> fields = new ArrayList<>();
-
-        TridentState memcachedState = null;
-
+        TridentState riakState = null;
+        Stream mseStream = null;
+        Stream radiusStream = null;
         int flowPartition = config.getKafkaPartitions("rb_flow");
         int radiusPartition = 0;
         int trapPartition = 0;
         int locationPartition = 0;
         int mobilePartition = 0;
-        Stream mseStream = null;
-        Stream radiusStream = null;
+        
+        List<String> riakHosts = new ArrayList<>();
+        riakHosts.add("pablo02");
 
-        StateFactory memcached = MemcachedState.transactional(memConfig.getServers(), mseOpts);
+        StateFactory riak = new RiakState.Factory("storm", riakHosts, 8087, Map.class);
 
         if (topics.contains("rb_loc")) {
             locationPartition = config.getKafkaPartitions("rb_loc");
@@ -96,8 +92,8 @@ public class RedBorderTopology {
                     .each(new Fields("mse_map"), new GetMSEdata(debug), new Fields("src_mac", "mse_data", "mse_data_druid"))
                     .parallelismHint(locationPartition);
 
-            memcachedState = mseStream.project(new Fields("src_mac", "mse_data"))
-                    .partitionPersist(memcached, new Fields("src_mac", "mse_data"), new MemcachedUpdater("src_mac", "mse_data", "rb_loc", debug));
+            riakState = mseStream.project(new Fields("src_mac", "mse_data"))
+                    .partitionPersist(riak, new Fields("src_mac", "mse_data"), new RiakUpdater("src_mac", "mse_data", "rb_loc", debug));
         }
 
         if (topics.contains("rb_mobile")) {
@@ -107,7 +103,7 @@ public class RedBorderTopology {
             topology.newStream("rb_mobile", new TridentKafkaSpout(kafkaConfig, "mobile").builder())
                     .name("Mobile")
                     .each(new Fields("str"), new MobileBuilderFunction(debug), new Fields("key", "mobileMap"))
-                    .partitionPersist(memcached, new Fields("key", "mobileMap"), new MemcachedUpdater("key", "mobileMap", "rb_mobile", debug))
+                    .partitionPersist(riak, new Fields("key", "mobileMap"), new RiakUpdater("key", "mobileMap", "rb_mobile", debug))
                     .parallelismHint(mobilePartition);
         }
 
@@ -119,7 +115,7 @@ public class RedBorderTopology {
                     .name("RSSI")
                     .each(new Fields("str"), new MapperFunction(debug), new Fields("rssi"))
                     .each(new Fields("rssi"), new GetTRAPdata(), new Fields("rssiKey", "rssiValue"))
-                    .partitionPersist(memcached, new Fields("rssiKey", "rssiValue"), new MemcachedUpdater("rssiKey", "rssiValue", "rb_trap", debug))
+                    .partitionPersist(riak, new Fields("rssiKey", "rssiValue"), new RiakUpdater("rssiKey", "rssiValue", "rb_trap", debug))
                     .parallelismHint(trapPartition);
         }
 
@@ -134,7 +130,7 @@ public class RedBorderTopology {
                     .parallelismHint(radiusPartition);
 
             radiusStream.project(new Fields("radiusKey", "radiusData"))
-                    .partitionPersist(memcached, new Fields("radiusKey", "radiusData"), new MemcachedUpdater("radiusKey", "radiusData", "rb_radius", debug));
+                    .partitionPersist(riak, new Fields("radiusKey", "radiusData"), new RiakUpdater("radiusKey", "radiusData", "rb_radius", debug));
         }
         // FLOW STREAM
         Stream mainStream = topology.newStream("rb_flow", new TridentKafkaSpout(kafkaConfig, "traffics").builder())
@@ -145,17 +141,17 @@ public class RedBorderTopology {
 
         if (topics.contains("rb_loc")) {
             mainStream = mainStream
-                    .stateQuery(memcachedState, new Fields("flows"), new MemcachedQuery("client_mac", "rb_loc", debug), new Fields("mseMap"));
+                    .stateQuery(riakState, new Fields("flows"), new RiakQuery("client_mac", "rb_loc", debug), new Fields("mseMap"));
             fields.add("mseMap");
         }
 
         if (topics.contains("rb_trap")) {
-            mainStream = mainStream.stateQuery(memcachedState, new Fields("flows"), new MemcachedQuery("client_mac", "rb_trap", debug), new Fields("rssiMap"));
+            mainStream = mainStream.stateQuery(riakState, new Fields("flows"), new RiakQuery("client_mac", "rb_trap", debug), new Fields("rssiMap"));
             fields.add("rssiMap");
         }
 
         if (topics.contains("rb_radius")) {
-            mainStream = mainStream.stateQuery(memcachedState, new Fields("flows"), new MemcachedQuery("client_mac", "rb_radius", debug), new Fields("radiusMap"));
+            mainStream = mainStream.stateQuery(riakState, new Fields("flows"), new RiakQuery("client_mac", "rb_radius", debug), new Fields("radiusMap"));
             fields.add("radiusMap");
         }
 
@@ -169,9 +165,9 @@ public class RedBorderTopology {
 
         if (topics.contains("rb_mobile")) {
             mainStream = mainStream
-                    .stateQuery(memcachedState, new Fields("flows"), new MemcachedQuery("src", "rb_mobile", debug), new Fields("ipAssignMap"))
-                    .stateQuery(memcachedState, new Fields("ipAssignMap"), new MemcachedQuery("imsi", "rb_mobile", debug), new Fields("ueRegisterMap"))
-                    .stateQuery(memcachedState, new Fields("ueRegisterMap"), new MemcachedQuery("path", "rb_mobile", debug), new Fields("hnbRegisterMap"));
+                    .stateQuery(riakState, new Fields("flows"), new RiakQuery("src", "rb_mobile", debug), new Fields("ipAssignMap"))
+                    .stateQuery(riakState, new Fields("ipAssignMap"), new RiakQuery("imsi", "rb_mobile", debug), new Fields("ueRegisterMap"))
+                    .stateQuery(riakState, new Fields("ueRegisterMap"), new RiakQuery("path", "rb_mobile", debug), new Fields("hnbRegisterMap"));
 
             fields.add("ipAssignMap");
             fields.add("ueRegisterMap");
