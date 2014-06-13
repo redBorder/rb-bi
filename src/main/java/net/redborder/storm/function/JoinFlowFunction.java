@@ -19,6 +19,12 @@ import storm.trident.tuple.TridentTuple;
  * @author andresgomez
  */
 public class JoinFlowFunction extends BaseFunction {
+    
+    boolean debug;
+    
+    public JoinFlowFunction(boolean debug){
+        this.debug=debug;
+    }
 
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {

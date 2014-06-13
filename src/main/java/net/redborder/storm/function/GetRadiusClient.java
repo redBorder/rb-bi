@@ -18,6 +18,12 @@ import storm.trident.tuple.TridentTuple;
  * @author andresgomez
  */
 public class GetRadiusClient extends BaseFunction {
+    
+    boolean debug;
+    
+    public GetRadiusClient(boolean debug){
+        this.debug=debug;
+    }
 
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
@@ -25,6 +31,10 @@ public class GetRadiusClient extends BaseFunction {
 
         String clientMac = radiusData.get("Calling-Station-Id").toString();
         clientMac = clientMac.replace("-", ":");
+        
+        if(debug){
+            System.out.println(GetRadiusClient.class +" - Client: " + clientMac);
+        }
         
         collector.emit(new Values(clientMac));
     }

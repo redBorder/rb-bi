@@ -36,6 +36,12 @@ public class GeoIpFunction extends BaseFunction {
     LookupService _city6;
     LookupService _asn;
     LookupService _asn6;
+    
+    boolean debug;
+    
+    public GeoIpFunction(boolean debug){
+        this.debug=debug;
+    }
 
     @Override
     public void prepare(Map conf, TridentOperationContext context) {

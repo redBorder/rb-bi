@@ -21,6 +21,12 @@ import storm.trident.tuple.TridentTuple;
  * @author andresgomez
  */
 public class MapToJSONFunction extends BaseFunction {
+    
+    boolean debug;
+    
+    public MapToJSONFunction(boolean debug){
+        this.debug=debug;
+    }
 
     ObjectMapper _mapper;
 

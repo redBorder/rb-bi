@@ -24,6 +24,11 @@ import storm.trident.tuple.TridentTuple;
 public class MapperFunction extends BaseFunction {
 
     ObjectMapper mapper;
+    boolean debug;
+    
+    public MapperFunction(boolean debug){
+        this.debug=debug;
+    }
 
     @Override
     public void prepare(Map conf, TridentOperationContext context) {

@@ -42,16 +42,18 @@ public class MyBeamFactoryMapFlow implements BeamFactory<Map<String, Object>> {
     
     int partitions;
     int replicas;
+    boolean debug;
     
-    public MyBeamFactoryMapFlow(int partitions, int replicas){
+    public MyBeamFactoryMapFlow(int partitions, int replicas, boolean debug){
         this.partitions=partitions;
         this.replicas=replicas;
+        this.debug=debug;
     }
 
     @Override
     public Beam<Map<String, Object>> makeBeam(Map<?, ?> conf, IMetricsContext metrics) {
         try {
-            KafkaConfigFile configFile = new KafkaConfigFile("traffics");
+            KafkaConfigFile configFile = new KafkaConfigFile("traffics", debug);
             
             final CuratorFramework curator = CuratorFrameworkFactory
                     .builder()

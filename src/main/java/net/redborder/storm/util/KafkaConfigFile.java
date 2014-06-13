@@ -26,6 +26,7 @@ public class KafkaConfigFile {
     Map<String, Object> _data;
     List<String> avaibleTopics;
     boolean overwriteCache;
+    boolean debug = false;
 
     final String CONFIG_FILE_PATH = "/opt/rb/etc/redBorder-BI/zk_config.yml";
 
@@ -34,8 +35,9 @@ public class KafkaConfigFile {
      *
      * @throws FileNotFoundException
      */
-    public KafkaConfigFile() throws FileNotFoundException {
+    public KafkaConfigFile(boolean debug) throws FileNotFoundException {
         _zkHost = "localhost";
+        this.debug = debug;
         Map<String, Object> map = (Map<String, Object>) Yaml.load(new File(CONFIG_FILE_PATH));
         _data = (Map<String, Object>) map.get("production");
         avaibleTopics = new ArrayList<>();
@@ -56,8 +58,8 @@ public class KafkaConfigFile {
      *
      * @throws FileNotFoundException
      */
-    public KafkaConfigFile(String section) throws FileNotFoundException {
-        this();
+    public KafkaConfigFile(String section, boolean debug) throws FileNotFoundException {
+        this(debug);
         this.setSection(section);
     }
 
@@ -68,16 +70,15 @@ public class KafkaConfigFile {
      */
     public final void setSection(String section) {
         Map<String, Object> config = (Map<String, Object>) _data.get(section);
-        //System.out.println("Select section: " + section);
         if (config != null) {
             Object outputTopic = config.get("output_topic");
             _topic = config.get("input_topic").toString();
             _zkHost = config.get("zk_connect").toString();
-            
-            if(config.containsKey("overwrite_cache")){
-                overwriteCache=(boolean)config.get("overwrite_cache");
-            }else{
-                overwriteCache=true;
+
+            if (config.containsKey("overwrite_cache")) {
+                overwriteCache = (boolean) config.get("overwrite_cache");
+            } else {
+                overwriteCache = true;
             }
 
             if (outputTopic != null) {
@@ -86,9 +87,12 @@ public class KafkaConfigFile {
                 _outputTopic = null;
             }
 
-            //System.out.println("  - inputTopic: [" + _topic + "]");
-            //System.out.println("  - outputTopic: [" + _outputTopic + "]");
-            //System.out.println("  - zkConnect: [" + _zkHost + "]");
+            if (debug) {
+                System.out.println("Select section: " + section);
+                System.out.println("  - inputTopic: [" + _topic + "]");
+                System.out.println("  - outputTopic: [" + _outputTopic + "]");
+                System.out.println("  - zkConnect: [" + _zkHost + "]");
+            }
         } else {
             Logger.getLogger(KafkaConfigFile.class.getName()).log(Level.SEVERE, "Section not found");
             _zkHost = "localhost";
@@ -125,8 +129,8 @@ public class KafkaConfigFile {
     public List<String> getAvaibleTopics() {
         return avaibleTopics;
     }
-    
-    public boolean getOverwriteCache(String section){
+
+    public boolean getOverwriteCache(String section) {
         this.setSection(section);
         return overwriteCache;
     }

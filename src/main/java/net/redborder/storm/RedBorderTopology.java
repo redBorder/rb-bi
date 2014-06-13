@@ -30,20 +30,26 @@ public class RedBorderTopology {
 
     static ConfigData config;
     static KafkaConfigFile kafkaConfig;
+    static boolean debug = false;
 
     public static void main(String[] args) throws AlreadyAliveException, InvalidTopologyException, FileNotFoundException {
 
         String topologyName = "redBorder-Topology";
 
-        if (args.length != 1) {
+        if (args.length < 1) {
 
-            System.out.println("./storm jar {name_jar} {main_class} {local|cluster}");
-
+            System.out.println("./storm jar {name_jar} {main_class} {local|cluster} [debug]");
         } else {
-            kafkaConfig = new KafkaConfigFile();
+            
+            if(args[1].equals("debug")){
+                debug=true;
+                System.out.println("Debug mode: ON");
+            }
+            
+            kafkaConfig = new KafkaConfigFile(debug);
             config = new ConfigData(kafkaConfig);
 
-            TridentTopology topology = topology(kafkaConfig.getAvaibleTopics());
+            TridentTopology topology = topology(kafkaConfig.getAvaibleTopics(), debug);
 
             if (args[0].equalsIgnoreCase("local")) {
                 Config conf = config.getConfig(args[0]);
@@ -59,7 +65,7 @@ public class RedBorderTopology {
         }
     }
 
-    public static TridentTopology topology(List<String> topics) throws FileNotFoundException {
+    public static TridentTopology topology(List<String> topics, boolean debug) throws FileNotFoundException {
         MemcachedConfigFile memConfig = new MemcachedConfigFile();
         TridentTopology topology = new TridentTopology();
         MemcachedState.Options mseOpts = new MemcachedState.Options();
@@ -86,12 +92,12 @@ public class RedBorderTopology {
             // LOCATION DATA
             mseStream = topology.newStream("rb_loc", new TridentKafkaSpout(kafkaConfig, "location").builder())
                     .name("MSE")
-                    .each(new Fields("str"), new MapperFunction(), new Fields("mse_map"))
-                    .each(new Fields("mse_map"), new GetMSEdata(), new Fields("src_mac", "mse_data", "mse_data_druid"))
+                    .each(new Fields("str"), new MapperFunction(debug), new Fields("mse_map"))
+                    .each(new Fields("mse_map"), new GetMSEdata(debug), new Fields("src_mac", "mse_data", "mse_data_druid"))
                     .parallelismHint(locationPartition);
 
             memcachedState = mseStream.project(new Fields("src_mac", "mse_data"))
-                    .partitionPersist(memcached, new Fields("src_mac", "mse_data"), new MemcachedUpdater("src_mac", "mse_data", "rb_loc"));
+                    .partitionPersist(memcached, new Fields("src_mac", "mse_data"), new MemcachedUpdater("src_mac", "mse_data", "rb_loc", debug));
         }
 
         if (topics.contains("rb_mobile")) {
@@ -100,8 +106,8 @@ public class RedBorderTopology {
             // MOBILE DATA
             topology.newStream("rb_mobile", new TridentKafkaSpout(kafkaConfig, "mobile").builder())
                     .name("Mobile")
-                    .each(new Fields("str"), new MobileBuilderFunction(), new Fields("key", "mobileMap"))
-                    .partitionPersist(memcached, new Fields("key", "mobileMap"), new MemcachedUpdater("key", "mobileMap", "rb_mobile"))
+                    .each(new Fields("str"), new MobileBuilderFunction(debug), new Fields("key", "mobileMap"))
+                    .partitionPersist(memcached, new Fields("key", "mobileMap"), new MemcachedUpdater("key", "mobileMap", "rb_mobile", debug))
                     .parallelismHint(mobilePartition);
         }
 
@@ -111,9 +117,9 @@ public class RedBorderTopology {
             // RSSI DATA
             topology.newStream("rb_trap", new TridentKafkaSpout(kafkaConfig, "trap").builder())
                     .name("RSSI")
-                    .each(new Fields("str"), new MapperFunction(), new Fields("rssi"))
+                    .each(new Fields("str"), new MapperFunction(debug), new Fields("rssi"))
                     .each(new Fields("rssi"), new GetTRAPdata(), new Fields("rssiKey", "rssiValue"))
-                    .partitionPersist(memcached, new Fields("rssiKey", "rssiValue"), new MemcachedUpdater("rssiKey", "rssiValue", "rb_trap"))
+                    .partitionPersist(memcached, new Fields("rssiKey", "rssiValue"), new MemcachedUpdater("rssiKey", "rssiValue", "rb_trap", debug))
                     .parallelismHint(trapPartition);
         }
 
@@ -123,39 +129,39 @@ public class RedBorderTopology {
             // RADIUS DATA
             radiusStream = topology.newStream("rb_radius", new TridentKafkaSpout(kafkaConfig, "radius").builder())
                     .name("Radius")
-                    .each(new Fields("str"), new MapperFunction(), new Fields("radius"))
-                    .each(new Fields("radius"), new GetRadiusData(), new Fields("radiusKey", "radiusData", "radiusDruid"))
+                    .each(new Fields("str"), new MapperFunction(debug), new Fields("radius"))
+                    .each(new Fields("radius"), new GetRadiusData(debug), new Fields("radiusKey", "radiusData", "radiusDruid"))
                     .parallelismHint(radiusPartition);
 
             radiusStream.project(new Fields("radiusKey", "radiusData"))
-                    .partitionPersist(memcached, new Fields("radiusKey", "radiusData"), new MemcachedUpdater("radiusKey", "radiusData", "rb_radius"));
+                    .partitionPersist(memcached, new Fields("radiusKey", "radiusData"), new MemcachedUpdater("radiusKey", "radiusData", "rb_radius", debug));
         }
         // FLOW STREAM
         Stream mainStream = topology.newStream("rb_flow", new TridentKafkaSpout(kafkaConfig, "traffics").builder())
                 .parallelismHint(flowPartition).shuffle().name("Main")
-                .each(new Fields("str"), new MapperFunction(), new Fields("flows"));
+                .each(new Fields("str"), new MapperFunction(debug), new Fields("flows"));
 
         fields.add("flows");
 
         if (topics.contains("rb_loc")) {
             mainStream = mainStream
-                    .stateQuery(memcachedState, new Fields("flows"), new MemcachedQuery("client_mac", "rb_loc"), new Fields("mseMap"));
+                    .stateQuery(memcachedState, new Fields("flows"), new MemcachedQuery("client_mac", "rb_loc", debug), new Fields("mseMap"));
             fields.add("mseMap");
         }
 
         if (topics.contains("rb_trap")) {
-            mainStream = mainStream.stateQuery(memcachedState, new Fields("flows"), new MemcachedQuery("client_mac", "rb_trap"), new Fields("rssiMap"));
+            mainStream = mainStream.stateQuery(memcachedState, new Fields("flows"), new MemcachedQuery("client_mac", "rb_trap", debug), new Fields("rssiMap"));
             fields.add("rssiMap");
         }
 
         if (topics.contains("rb_radius")) {
-            mainStream = mainStream.stateQuery(memcachedState, new Fields("flows"), new MemcachedQuery("client_mac", "rb_radius"), new Fields("radiusMap"));
+            mainStream = mainStream.stateQuery(memcachedState, new Fields("flows"), new MemcachedQuery("client_mac", "rb_radius", debug), new Fields("radiusMap"));
             fields.add("radiusMap");
         }
 
-        mainStream = mainStream.each(new Fields("flows"), new MacVendorFunction(), new Fields("macVendorMap"))
-                .each(new Fields("flows"), new GeoIpFunction(), new Fields("geoIPMap"))
-                .each(new Fields("flows"), new AnalizeHttpUrlFunction(), new Fields("httpUrlMap"));
+        mainStream = mainStream.each(new Fields("flows"), new MacVendorFunction(debug), new Fields("macVendorMap"))
+                .each(new Fields("flows"), new GeoIpFunction(debug), new Fields("geoIPMap"))
+                .each(new Fields("flows"), new AnalizeHttpUrlFunction(debug), new Fields("httpUrlMap"));
 
         fields.add("geoIPMap");
         fields.add("macVendorMap");
@@ -163,16 +169,16 @@ public class RedBorderTopology {
 
         if (topics.contains("rb_mobile")) {
             mainStream = mainStream
-                    .stateQuery(memcachedState, new Fields("flows"), new MemcachedQuery("src", "rb_mobile"), new Fields("ipAssignMap"))
-                    .stateQuery(memcachedState, new Fields("ipAssignMap"), new MemcachedQuery("imsi", "rb_mobile"), new Fields("ueRegisterMap"))
-                    .stateQuery(memcachedState, new Fields("ueRegisterMap"), new MemcachedQuery("path", "rb_mobile"), new Fields("hnbRegisterMap"));
+                    .stateQuery(memcachedState, new Fields("flows"), new MemcachedQuery("src", "rb_mobile", debug), new Fields("ipAssignMap"))
+                    .stateQuery(memcachedState, new Fields("ipAssignMap"), new MemcachedQuery("imsi", "rb_mobile", debug), new Fields("ueRegisterMap"))
+                    .stateQuery(memcachedState, new Fields("ueRegisterMap"), new MemcachedQuery("path", "rb_mobile", debug), new Fields("hnbRegisterMap"));
 
             fields.add("ipAssignMap");
             fields.add("ueRegisterMap");
             fields.add("hnbRegisterMap");
         }
 
-        mainStream = mainStream.each(new Fields(fields), new JoinFlowFunction(), new Fields("finalMap"))
+        mainStream = mainStream.each(new Fields(fields), new JoinFlowFunction(debug), new Fields("finalMap"))
                 .project(new Fields("finalMap"))
                 .parallelismHint(config.getWorkers());
 
@@ -194,26 +200,26 @@ public class RedBorderTopology {
 
             mainStream
                     .shuffle().name("Kafka Producer")
-                    .each(new Fields("finalMap"), new MapToJSONFunction(), new Fields("jsonString"))
+                    .each(new Fields("finalMap"), new MapToJSONFunction(debug), new Fields("jsonString"))
                     .each(new Fields(), new ThroughputLoggingFilter())
                     .partitionPersist(KafkaState.nonTransactional(kafkaConfig.getZkHost()), new Fields("jsonString"), new KafkaStateUpdater("jsonString", outputTopic))
                     .parallelismHint(flowPrePartitions);
 
             if (topics.contains("rb_loc")) {
                 mseStream
-                        .each(new Fields("mse_data_druid"), new MacVendorFunction(), new Fields("mseMacVendorMap"))
-                        .each(new Fields("mse_data_druid"), new GeoIpFunction(), new Fields("mseGeoIPMap"))
-                        .each(new Fields("mse_data_druid", "mseMacVendorMap", "mseGeoIPMap"), new JoinFlowFunction(), new Fields("mseFinalMap"))
-                        .each(new Fields("mseFinalMap"), new MapToJSONFunction(), new Fields("mseJsonString"))
+                        .each(new Fields("mse_data_druid"), new MacVendorFunction(debug), new Fields("mseMacVendorMap"))
+                        .each(new Fields("mse_data_druid"), new GeoIpFunction(debug), new Fields("mseGeoIPMap"))
+                        .each(new Fields("mse_data_druid", "mseMacVendorMap", "mseGeoIPMap"), new JoinFlowFunction(debug), new Fields("mseFinalMap"))
+                        .each(new Fields("mseFinalMap"), new MapToJSONFunction(debug), new Fields("mseJsonString"))
                         .partitionPersist(KafkaState.nonTransactional(kafkaConfig.getZkHost()), new Fields("mseJsonString"), new KafkaStateUpdater("jsonString", outputTopic));
             }
 
             if (topics.contains("rb_radius")) {
                 radiusStream
-                        .each(new Fields("radiusDruid"), new MacVendorFunction(), new Fields("radiusMacVendorMap"))
-                        .each(new Fields("radiusDruid"), new GeoIpFunction(), new Fields("radiusGeoIPMap"))
-                        .each(new Fields("radiusDruid", "radiusMacVendorMap", "radiusGeoIPMap"), new JoinFlowFunction(), new Fields("radiusFinalMap"))
-                        .each(new Fields("radiusFinalMap"), new MapToJSONFunction(), new Fields("radiusJSONString"))
+                        .each(new Fields("radiusDruid"), new MacVendorFunction(debug), new Fields("radiusMacVendorMap"))
+                        .each(new Fields("radiusDruid"), new GeoIpFunction(debug), new Fields("radiusGeoIPMap"))
+                        .each(new Fields("radiusDruid", "radiusMacVendorMap", "radiusGeoIPMap"), new JoinFlowFunction(debug), new Fields("radiusFinalMap"))
+                        .each(new Fields("radiusFinalMap"), new MapToJSONFunction(debug), new Fields("radiusJSONString"))
                         .partitionPersist(KafkaState.nonTransactional(kafkaConfig.getZkHost()), new Fields("radiusJSONString"), new KafkaStateUpdater("radiusJSONString", outputTopic));
             }
         } else {
@@ -240,7 +246,7 @@ public class RedBorderTopology {
             System.out.println("   * replicas: " + replicas);
             System.out.println("\nFlows send to indexing service.\n");
 
-            StateFactory druidStateFlow = new TridentBeamStateFactory<>(new MyBeamFactoryMapFlow(partitions, replicas));
+            StateFactory druidStateFlow = new TridentBeamStateFactory<>(new MyBeamFactoryMapFlow(partitions, replicas, debug));
 
             mainStream
                     .shuffle().name("Tranquility")
@@ -250,17 +256,17 @@ public class RedBorderTopology {
 
             if (topics.contains("rb_loc")) {
                 mseStream
-                        .each(new Fields("mse_data_druid"), new MacVendorFunction(), new Fields("mseMacVendorMap"))
-                        .each(new Fields("mse_data_druid"), new GeoIpFunction(), new Fields("mseGeoIPMap"))
-                        .each(new Fields("mse_data_druid", "mseMacVendorMap", "mseGeoIPMap"), new JoinFlowFunction(), new Fields("mseFinalMap"))
+                        .each(new Fields("mse_data_druid"), new MacVendorFunction(debug), new Fields("mseMacVendorMap"))
+                        .each(new Fields("mse_data_druid"), new GeoIpFunction(debug), new Fields("mseGeoIPMap"))
+                        .each(new Fields("mse_data_druid", "mseMacVendorMap", "mseGeoIPMap"), new JoinFlowFunction(debug), new Fields("mseFinalMap"))
                         .partitionPersist(druidStateFlow, new Fields("mseFinalMap"), new TridentBeamStateUpdater());
             }
 
             if (topics.contains("rb_radius")) {
                 radiusStream
-                        .each(new Fields("radiusDruid"), new MacVendorFunction(), new Fields("radiusMacVendorMap"))
-                        .each(new Fields("radiusDruid"), new GeoIpFunction(), new Fields("radiusGeoIPMap"))
-                        .each(new Fields("radiusDruid", "radiusMacVendorMap", "radiusGeoIPMap"), new JoinFlowFunction(), new Fields("radiusFinalMap"))
+                        .each(new Fields("radiusDruid"), new MacVendorFunction(debug), new Fields("radiusMacVendorMap"))
+                        .each(new Fields("radiusDruid"), new GeoIpFunction(debug), new Fields("radiusGeoIPMap"))
+                        .each(new Fields("radiusDruid", "radiusMacVendorMap", "radiusGeoIPMap"), new JoinFlowFunction(debug), new Fields("radiusFinalMap"))
                         .partitionPersist(druidStateFlow, new Fields("radiusFinalMap"), new TridentBeamStateUpdater());
             }
         }

@@ -19,6 +19,12 @@ import storm.trident.tuple.TridentTuple;
  * @author andresgomez
  */
 public class GetRadiusData extends BaseFunction {
+    
+    boolean debug;
+    
+    public GetRadiusData(boolean debug){
+        this.debug=debug;
+    }        
 
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {

@@ -43,16 +43,18 @@ public class MyBeamFactoryMapMonitor implements BeamFactory<Map<String, Object>>
 
     int partitions;
     int replicas;
+    boolean debug;
     
-    public MyBeamFactoryMapMonitor(int partitions, int replicas){
+    public MyBeamFactoryMapMonitor(int partitions, int replicas, boolean debug){
         this.partitions=partitions;
         this.replicas=replicas;
+        this.debug=debug;
     }
     
     @Override
     public Beam<Map<String, Object>> makeBeam(Map<?, ?> conf, IMetricsContext metrics) {
         try {
-            KafkaConfigFile configFile = new KafkaConfigFile("monitor");
+            KafkaConfigFile configFile = new KafkaConfigFile("monitor", debug);
             
            // final CuratorFramework curator = CuratorFrameworkFactory.newClient(
            //         _zkConnect, new BoundedExponentialBackoffRetry(100, 1000, 5));

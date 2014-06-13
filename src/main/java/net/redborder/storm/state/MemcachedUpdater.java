@@ -21,19 +21,22 @@ import storm.trident.tuple.TridentTuple;
  * @author andresgomez
  */
 public class MemcachedUpdater extends BaseStateUpdater<MapState<Map<String, Object>>> {
+
     String _key;
     String _value;
     String _generalKey;
-    
-    public MemcachedUpdater(String key, String value){
-        _key=key;
-        _value=value;
-        _generalKey="rbbi:none:";
+    boolean debug;
+
+    public MemcachedUpdater(String key, String value, boolean debug) {
+        _key = key;
+        _value = value;
+        _generalKey = "rbbi:none:";
+        this.debug = debug;
     }
-    
-    public MemcachedUpdater(String key, String value, String generalKey){
-        this(key, value);
-        _generalKey="rbbi:" + generalKey + ":";
+
+    public MemcachedUpdater(String key, String value, String generalKey, boolean debug) {
+        this(key, value, debug);
+        _generalKey = "rbbi:" + generalKey + ":";
     }
 
     @Override
@@ -42,14 +45,16 @@ public class MemcachedUpdater extends BaseStateUpdater<MapState<Map<String, Obje
         List<List<Object>> keys = Lists.newArrayList();
         for (TridentTuple t : tuples) {
             List<Object> l = Lists.newArrayList();
-            l.add(_generalKey+t.getValueByField(_key));
+            l.add(_generalKey + t.getValueByField(_key));
             keys.add(l);
             events.add((Map<String, Object>) t.getValueByField(_value));
-            
-            System.out.println("SAVED TO MEMCACHED KEY: " + _generalKey +t.getValueByField(_key) +
-                    " VALUE: " + t.getValueByField(_value));
+
+            if (debug) {
+                System.out.println("SAVED TO MEMCACHED KEY: " + _generalKey + t.getValueByField(_key)
+                        + " VALUE: " + t.getValueByField(_value));
+            }
         }
-        
+
         try {
             state.multiPut(keys, events);
         } catch (ReportedFailedException e) {

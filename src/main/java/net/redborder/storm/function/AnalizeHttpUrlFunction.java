@@ -20,6 +20,11 @@ public class AnalizeHttpUrlFunction extends BaseFunction {
     
     Map<String, Object> result = new HashMap<>();
     Map<String, Object> event;
+    boolean debug;
+    
+    public AnalizeHttpUrlFunction(boolean debug){
+        this.debug=debug;
+    }
     
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {

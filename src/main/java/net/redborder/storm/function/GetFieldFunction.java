@@ -18,9 +18,11 @@ import storm.trident.tuple.TridentTuple;
 public class GetFieldFunction extends BaseFunction {
 
     String _field;
+    boolean debug;
 
-    public GetFieldFunction(String field) {
+    public GetFieldFunction(String field, boolean debug) {
         _field = field;
+        this.debug=debug;
     }
 
     @Override

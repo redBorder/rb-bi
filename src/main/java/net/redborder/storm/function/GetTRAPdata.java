@@ -32,7 +32,6 @@ public class GetTRAPdata extends BaseFunction {
                 Map<String, Object> rssiData = new HashMap<>();
 
                 rssiData.put("client_rssi", rssi.get(".1.3.6.1.4.1.9.9.599.1.2.1.0"));
-                //rssiData.put("location_floor", rssi.get("SNMPv2-SMI-v1::enterprises.9.9.513.1.1.1.1.49.0"));
 
                 collector.emit(new Values(macAddress, rssiData));
             }

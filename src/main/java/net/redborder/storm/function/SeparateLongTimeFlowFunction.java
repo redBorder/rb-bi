@@ -24,6 +24,12 @@ import storm.trident.tuple.TridentTuple;
  */
 public class SeparateLongTimeFlowFunction extends BaseFunction {
     
+    boolean debug;
+    
+    public SeparateLongTimeFlowFunction(boolean debug){
+        this.debug=debug;
+    }
+    
     public final int DELAYED_REALTIME_TIME = 15;
     
     @Override
