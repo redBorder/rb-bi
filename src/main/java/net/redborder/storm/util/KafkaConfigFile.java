@@ -25,6 +25,7 @@ public class KafkaConfigFile {
     String _outputTopic;
     Map<String, Object> _data;
     List<String> avaibleTopics;
+    boolean overwriteCache;
 
     final String CONFIG_FILE_PATH = "/opt/rb/etc/redBorder-BI/zk_config.yml";
 
@@ -67,11 +68,17 @@ public class KafkaConfigFile {
      */
     public final void setSection(String section) {
         Map<String, Object> config = (Map<String, Object>) _data.get(section);
-        System.out.println("Select section: " + section);
+        //System.out.println("Select section: " + section);
         if (config != null) {
             Object outputTopic = config.get("output_topic");
             _topic = config.get("input_topic").toString();
             _zkHost = config.get("zk_connect").toString();
+            
+            if(config.containsKey("overwrite_cache")){
+                overwriteCache=(boolean)config.get("overwrite_cache");
+            }else{
+                overwriteCache=true;
+            }
 
             if (outputTopic != null) {
                 _outputTopic = outputTopic.toString();
@@ -79,9 +86,9 @@ public class KafkaConfigFile {
                 _outputTopic = null;
             }
 
-            System.out.println("  - inputTopic: [" + _topic + "]");
-            System.out.println("  - outputTopic: [" + _outputTopic + "]");
-            System.out.println("  - zkConnect: [" + _zkHost + "]");
+            //System.out.println("  - inputTopic: [" + _topic + "]");
+            //System.out.println("  - outputTopic: [" + _outputTopic + "]");
+            //System.out.println("  - zkConnect: [" + _zkHost + "]");
         } else {
             Logger.getLogger(KafkaConfigFile.class.getName()).log(Level.SEVERE, "Section not found");
             _zkHost = "localhost";
@@ -117,5 +124,10 @@ public class KafkaConfigFile {
 
     public List<String> getAvaibleTopics() {
         return avaibleTopics;
+    }
+    
+    public boolean getOverwriteCache(String section){
+        this.setSection(section);
+        return overwriteCache;
     }
 }
