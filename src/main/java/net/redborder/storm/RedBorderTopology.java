@@ -64,10 +64,7 @@ public class RedBorderTopology {
         TridentTopology topology = new TridentTopology();
         MemcachedState.Options mseOpts = new MemcachedState.Options();
         mseOpts.localCacheSize = 0;
-        mseOpts.expiration = 3600000;
-        MemcachedState.Options mobileOpts = new MemcachedState.Options();
-        mobileOpts.localCacheSize = 0;
-        mobileOpts.expiration = 0;
+        mseOpts.expiration = 0;
 
         List<String> fields = new ArrayList<>();
 
@@ -82,7 +79,6 @@ public class RedBorderTopology {
         Stream radiusStream = null;
 
         StateFactory memcached = MemcachedState.transactional(memConfig.getServers(), mseOpts);
-        StateFactory memcachedMobile = MemcachedState.transactional(memConfig.getServers(), mobileOpts);
 
         if (topics.contains("rb_loc")) {
             locationPartition = config.getKafkaPartitions("rb_loc");
@@ -105,7 +101,7 @@ public class RedBorderTopology {
             topology.newStream("rb_mobile", new TridentKafkaSpout(kafkaConfig, "mobile").builder())
                     .name("Mobile")
                     .each(new Fields("str"), new MobileBuilderFunction(), new Fields("key", "mobileMap"))
-                    .partitionPersist(memcachedMobile, new Fields("key", "mobileMap"), new MemcachedUpdater("key", "mobileMap", "rb_mobile"))
+                    .partitionPersist(memcached, new Fields("key", "mobileMap"), new MemcachedUpdater("key", "mobileMap", "rb_mobile"))
                     .parallelismHint(mobilePartition);
         }
 
@@ -117,7 +113,7 @@ public class RedBorderTopology {
                     .name("RSSI")
                     .each(new Fields("str"), new MapperFunction(), new Fields("rssi"))
                     .each(new Fields("rssi"), new GetTRAPdata(), new Fields("rssiKey", "rssiValue"))
-                    .partitionPersist(memcachedMobile, new Fields("rssiKey", "rssiValue"), new MemcachedUpdater("rssiKey", "rssiValue", "rb_trap"))
+                    .partitionPersist(memcached, new Fields("rssiKey", "rssiValue"), new MemcachedUpdater("rssiKey", "rssiValue", "rb_trap"))
                     .parallelismHint(trapPartition);
         }
 
@@ -132,7 +128,7 @@ public class RedBorderTopology {
                     .parallelismHint(radiusPartition);
 
             radiusStream.project(new Fields("radiusKey", "radiusData"))
-                    .partitionPersist(memcachedMobile, new Fields("radiusKey", "radiusData"), new MemcachedUpdater("radiusKey", "radiusData", "rb_radius"));
+                    .partitionPersist(memcached, new Fields("radiusKey", "radiusData"), new MemcachedUpdater("radiusKey", "radiusData", "rb_radius"));
         }
         // FLOW STREAM
         Stream mainStream = topology.newStream("rb_flow", new TridentKafkaSpout(kafkaConfig, "traffics").builder())
