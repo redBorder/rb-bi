@@ -131,7 +131,10 @@ public class KafkaConfigFile {
     }
 
     public boolean getOverwriteCache(String section) {
+        boolean debugAux = debug;
+        debug = false;
         this.setSection(section);
+        debug = debugAux;
         return overwriteCache;
     }
 }

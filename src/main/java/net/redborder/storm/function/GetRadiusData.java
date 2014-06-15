@@ -19,17 +19,22 @@ import storm.trident.tuple.TridentTuple;
  * @author andresgomez
  */
 public class GetRadiusData extends BaseFunction {
-    
+
     boolean debug;
-    
-    public GetRadiusData(boolean debug){
-        this.debug=debug;
-    }        
+
+    public GetRadiusData(boolean debug) {
+        this.debug = debug;
+    }
 
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
         Map<String, Object> radiusData = (Map<String, Object>) tuple.getValue(0);
-        //Map<String, Object> radiusCached = (Map<String, Object>) tuple.getValue(1);
+        Map<String, Object> radiusCached;
+        if (tuple.size()>1) {
+            radiusCached = (Map<String, Object>) tuple.getValue(1);
+        }else{
+            radiusCached = new HashMap<>();
+        }
 
         try {
             if (radiusData.containsKey("Calling-Station-Id")) {
@@ -78,7 +83,7 @@ public class GetRadiusData extends BaseFunction {
                     clientId = radiusData.get("User-Name").toString();
                 }
 
-                Map<String, Object> radiusMap = new HashMap<>();;
+                Map<String, Object> radiusMap = radiusCached;
 
                 if (apMac != null) {
                     radiusMap.put("ap_mac", apMac);

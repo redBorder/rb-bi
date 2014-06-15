@@ -6,6 +6,7 @@
 package net.redborder.storm.function;
 
 import backtype.storm.tuple.Values;
+import java.util.HashMap;
 import java.util.Map;
 import storm.trident.operation.BaseFunction;
 import storm.trident.operation.Function;
@@ -32,11 +33,15 @@ public class GetRadiusClient extends BaseFunction {
         String clientMac = radiusData.get("Calling-Station-Id").toString();
         clientMac = clientMac.replace("-", ":");
         
+        Map<String, Object> radiusMap = new HashMap<>();
+        
+        radiusMap.put("client_mac", clientMac);
+        
         if(debug){
             System.out.println(GetRadiusClient.class +" - Client: " + clientMac);
         }
         
-        collector.emit(new Values(clientMac));
+        collector.emit(new Values(radiusMap));
     }
 
 }

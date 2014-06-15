@@ -40,12 +40,15 @@ public class RedBorderTopology {
 
             System.out.println("./storm jar {name_jar} {main_class} {local|cluster} [debug]");
         } else {
-            
-            if(args[1].equals("debug")){
-                debug=true;
-                System.out.println("Debug mode: ON");
+            if (args.length == 2) {
+                if (args[1].equals("debug")) {
+                    debug = true;
+                    System.out.println("Debug mode: ON");
+                } else {
+                    System.out.println("./storm jar {name_jar} {main_class} {local|cluster} [debug]");
+                }
             }
-            
+
             kafkaConfig = new KafkaConfigFile(debug);
             config = new ConfigData(kafkaConfig);
 
@@ -76,12 +79,12 @@ public class RedBorderTopology {
         int trapPartition = 0;
         int locationPartition = 0;
         int mobilePartition = 0;
-        
+
         List<String> riakHosts = new ArrayList<>();
-        riakHosts.add("pablo02");
+        riakHosts.add("pablo06");
 
         StateFactory riak = new RiakState.Factory("storm", riakHosts, 8087, Map.class);
-
+        
         if (topics.contains("rb_loc")) {
             locationPartition = config.getKafkaPartitions("rb_loc");
 
@@ -122,13 +125,26 @@ public class RedBorderTopology {
         if (topics.contains("rb_radius")) {
             radiusPartition = config.getKafkaPartitions("rb_radius");
 
-            // RADIUS DATA
             radiusStream = topology.newStream("rb_radius", new TridentKafkaSpout(kafkaConfig, "radius").builder())
                     .name("Radius")
-                    .each(new Fields("str"), new MapperFunction(debug), new Fields("radius"))
-                    .each(new Fields("radius"), new GetRadiusData(debug), new Fields("radiusKey", "radiusData", "radiusDruid"))
-                    .parallelismHint(radiusPartition);
+                    .parallelismHint(radiusPartition)
+                    .shuffle()
+                    .each(new Fields("str"), new MapperFunction(debug), new Fields("radius"));
 
+            // RADIUS DATA
+            if (kafkaConfig.getOverwriteCache("radius")) {
+                radiusStream = radiusStream
+                        .each(new Fields("radius"), new GetRadiusData(debug), new Fields("radiusKey", "radiusData", "radiusDruid"));
+
+            } else {
+                
+                radiusStream = radiusStream
+                        .each(new Fields("radius"), new GetRadiusClient(debug), new Fields("clientMap"))
+                        .stateQuery(riakState, new Fields("clientMap"), new RiakQuery("client_mac", "rb_radius", debug), new Fields("radiusCached"))
+                        .each(new Fields("radius", "radiusCached"), new GetRadiusData(debug), new Fields("radiusKey", "radiusData", "radiusDruid"));
+
+            }
+            
             radiusStream.project(new Fields("radiusKey", "radiusData"))
                     .partitionPersist(riak, new Fields("radiusKey", "radiusData"), new RiakUpdater("radiusKey", "radiusData", "rb_radius", debug));
         }
@@ -282,7 +298,7 @@ public class RedBorderTopology {
         }
 
         if (topics.contains("rb_radius")) {
-            System.out.print("rb_radius --> ");
+            System.out.print("rb_radius " + "(overwrite_cache: " + kafkaConfig.getOverwriteCache("radius") + ") --> ");
         }
 
         System.out.println("||\n");
