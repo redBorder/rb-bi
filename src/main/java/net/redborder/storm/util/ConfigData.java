@@ -111,7 +111,7 @@ public class ConfigData {
                 }
             }
         } catch (Exception ex) {
-            Logger.getLogger(ConfigData.class.getName()).log(Level.SEVERE, "No middle managers found. Default: 1", ex);
+            Logger.getLogger(ConfigData.class.getName()).log(Level.SEVERE, "No middle managers found, maybe use kafka to kafka. Default: 1");
         }
 
         if (middleManagers == 0) {

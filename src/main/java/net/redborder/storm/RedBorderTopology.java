@@ -10,16 +10,19 @@ import com.github.quintona.KafkaState;
 import com.github.quintona.KafkaStateUpdater;
 import com.metamx.tranquility.storm.TridentBeamStateFactory;
 import com.metamx.tranquility.storm.TridentBeamStateUpdater;
+
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
 import net.redborder.storm.function.*;
 import net.redborder.storm.spout.TridentKafkaSpout;
 import net.redborder.storm.state.*;
 import net.redborder.storm.util.ConfigData;
 import net.redborder.storm.util.KafkaConfigFile;
 import net.redborder.storm.util.MemcachedConfigFile;
+import net.redborder.storm.util.RiakConfigFile;
 import net.redborder.storm.util.druid.MyBeamFactoryMapFlow;
 import storm.trident.Stream;
 import storm.trident.TridentState;
@@ -71,6 +74,7 @@ public class RedBorderTopology {
     public static TridentTopology topology(List<String> topics, boolean debug) throws FileNotFoundException {
         TridentTopology topology = new TridentTopology();
         List<String> fields = new ArrayList<>();
+        RiakConfigFile riakConfig = new RiakConfigFile(debug);
         TridentState riakState = null;
         Stream mseStream = null;
         Stream radiusStream = null;
@@ -80,11 +84,9 @@ public class RedBorderTopology {
         int locationPartition = 0;
         int mobilePartition = 0;
 
-        List<String> riakHosts = new ArrayList<>();
-        riakHosts.add("pablo06");
 
-        StateFactory riak = new RiakState.Factory("storm", riakHosts, 8087, Map.class);
-        
+        StateFactory riak = new RiakState.Factory("storm", riakConfig.getServers(), 8087, Map.class);
+
         if (topics.contains("rb_loc")) {
             locationPartition = config.getKafkaPartitions("rb_loc");
 
@@ -137,14 +139,14 @@ public class RedBorderTopology {
                         .each(new Fields("radius"), new GetRadiusData(debug), new Fields("radiusKey", "radiusData", "radiusDruid"));
 
             } else {
-                
+
                 radiusStream = radiusStream
                         .each(new Fields("radius"), new GetRadiusClient(debug), new Fields("clientMap"))
                         .stateQuery(riakState, new Fields("clientMap"), new RiakQuery("client_mac", "rb_radius", debug), new Fields("radiusCached"))
                         .each(new Fields("radius", "radiusCached"), new GetRadiusData(debug), new Fields("radiusKey", "radiusData", "radiusDruid"));
 
             }
-            
+
             radiusStream.project(new Fields("radiusKey", "radiusData"))
                     .partitionPersist(riak, new Fields("radiusKey", "radiusData"), new RiakUpdater("radiusKey", "radiusData", "rb_radius", debug));
         }
@@ -188,6 +190,12 @@ public class RedBorderTopology {
             fields.add("ipAssignMap");
             fields.add("ueRegisterMap");
             fields.add("hnbRegisterMap");
+        }
+
+        if(true){
+            mainStream = mainStream
+                    .stateQuery(riakState, new Fields("flows"), new RiakQuery("src", "rb_darklist", debug), new Fields("blackListInfo"))
+                    .each(new Fields("blackListInfo"), new BlackListParser() ,new Fields("blackListMap"));
         }
 
         mainStream = mainStream.each(new Fields(fields), new JoinFlowFunction(debug), new Fields("finalMap"))
