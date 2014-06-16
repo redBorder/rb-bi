@@ -109,8 +109,7 @@ public class RedBorderTopology {
             locationStream = topology.newStream("rb_loc", new TridentKafkaSpout(kafkaConfig, "location").builder())
                     .name("MSE")
                     .each(new Fields("str"), new MapperFunction(debug), new Fields("mse_map"))
-                    .each(new Fields("mse_map"), new GetMSEdata(debug), new Fields("src_mac", "mse_data", "mse_data_druid"))
-                    .parallelismHint(locationPartition);
+                    .each(new Fields("mse_map"), new GetMSEdata(debug), new Fields("src_mac", "mse_data", "mse_data_druid"));
 
             locationState = locationStream.project(new Fields("src_mac", "mse_data"))
                     .partitionPersist(new RiakState.Factory("rbbi:location", riakConfig.getServers(), 8087, Map.class), new Fields("src_mac", "mse_data"), new RiakUpdater("src_mac", "mse_data", debug));
@@ -122,6 +121,8 @@ public class RedBorderTopology {
             // MOBILE DATA
             mobileStream = topology.newStream("rb_mobile", new TridentKafkaSpout(kafkaConfig, "mobile").builder())
                     .name("Mobile")
+                    .parallelismHint(locationPartition)
+                    .shuffle()
                     .each(new Fields("str"), new MobileBuilderFunction(debug), new Fields("key", "mobileMap"))
                     .parallelismHint(mobilePartition);
 
@@ -136,9 +137,10 @@ public class RedBorderTopology {
             // RSSI DATA
             trapStream = topology.newStream("rb_trap", new TridentKafkaSpout(kafkaConfig, "trap").builder())
                     .name("RSSI")
+                    .parallelismHint(trapPartition)
+                    .shuffle()
                     .each(new Fields("str"), new MapperFunction(debug), new Fields("rssi"))
-                    .each(new Fields("rssi"), new GetTRAPdata(), new Fields("rssiKey", "rssiValue"))
-                    .parallelismHint(trapPartition);
+                    .each(new Fields("rssi"), new GetTRAPdata(), new Fields("rssiKey", "rssiValue"));
 
             trapState = trapStream
                     .partitionPersist(new RiakState.Factory("rbbi:trap", riakConfig.getServers(), 8087, Map.class), new Fields("rssiKey", "rssiValue"), new RiakUpdater("rssiKey", "rssiValue", debug));
