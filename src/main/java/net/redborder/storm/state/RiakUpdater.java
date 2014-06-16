@@ -30,7 +30,7 @@ public class RiakUpdater extends BaseStateUpdater<MapState<Map<String, Object>>>
     public RiakUpdater(String key, String value, boolean debug) {
         _key = key;
         _value = value;
-        _generalKey = "rbbi:none:";
+        _generalKey = "";
         this.debug = debug;
     }
 

@@ -30,7 +30,7 @@ public class RiakQuery extends BaseQueryFunction<MapState<Map<String, Object>>, 
 
     public RiakQuery(String key, boolean debug) {
         _key = key;
-        _generalkey = "rbbi:none:";
+        _generalkey = "";
         this.debug = debug;
     }
 

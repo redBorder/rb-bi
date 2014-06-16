@@ -12,10 +12,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.ho.yaml.Yaml;
 
 /**
- *
  * @author andresgomez
  */
 public class KafkaConfigFile {
@@ -23,10 +23,13 @@ public class KafkaConfigFile {
     String _topic;
     String _zkHost;
     String _outputTopic;
-    Map<String, Object> _data;
+    Map<String, Object> _production;
+    Map<String, Object> _general;
     List<String> avaibleTopics;
     boolean overwriteCache;
     boolean debug = false;
+
+    boolean blacklist;
 
     final String CONFIG_FILE_PATH = "/opt/rb/etc/redBorder-BI/zk_config.yml";
 
@@ -39,9 +42,13 @@ public class KafkaConfigFile {
         _zkHost = "localhost";
         this.debug = debug;
         Map<String, Object> map = (Map<String, Object>) Yaml.load(new File(CONFIG_FILE_PATH));
-        _data = (Map<String, Object>) map.get("production");
+
+        /*
+            Production Config.
+         */
+        _production = (Map<String, Object>) map.get("production");
         avaibleTopics = new ArrayList<>();
-        for (Object value : _data.values()) {
+        for (Object value : _production.values()) {
             Map<String, Object> config = (Map<String, Object>) value;
             avaibleTopics.add(config.get("input_topic").toString());
             if (config.get("output_topic") != null) {
@@ -49,13 +56,29 @@ public class KafkaConfigFile {
             }
             _zkHost = config.get("zk_connect").toString();
         }
+
+        /*
+            General Config.
+         */
+        _general = (Map<String, Object>) map.get("general");
+
+        if(_general!=null) {
+            if (_general.containsKey("blacklist")) {
+                blacklist = (boolean) _general.get("blacklist");
+            } else {
+                blacklist = false;
+            }
+        }else {
+            Logger.getLogger(KafkaConfigFile.class.getName()).log(Level.SEVERE, "general not found in YAML");
+        }
+
+
     }
 
     /**
      * Constructor
      *
      * @param section Section to read from the config file
-     *
      * @throws FileNotFoundException
      */
     public KafkaConfigFile(String section, boolean debug) throws FileNotFoundException {
@@ -69,7 +92,7 @@ public class KafkaConfigFile {
      * @param section Section to read from the config file
      */
     public final void setSection(String section) {
-        Map<String, Object> config = (Map<String, Object>) _data.get(section);
+        Map<String, Object> config = (Map<String, Object>) _production.get(section);
         if (config != null) {
             Object outputTopic = config.get("output_topic");
             _topic = config.get("input_topic").toString();
@@ -136,5 +159,9 @@ public class KafkaConfigFile {
         this.setSection(section);
         debug = debugAux;
         return overwriteCache;
+    }
+
+    public boolean getDarkList() {
+        return blacklist;
     }
 }
