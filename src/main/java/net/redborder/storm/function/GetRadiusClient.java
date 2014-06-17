@@ -38,7 +38,7 @@ public class GetRadiusClient extends BaseFunction {
         radiusMap.put("client_mac", clientMac);
         
         if(debug){
-            System.out.println(GetRadiusClient.class +" - Client: " + clientMac);
+            System.out.println(GetRadiusClient.class +" - Radius client to query: " + clientMac);
         }
         
         collector.emit(new Values(radiusMap));

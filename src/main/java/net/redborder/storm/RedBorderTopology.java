@@ -107,7 +107,7 @@ public class RedBorderTopology {
 
             // LOCATION DATA
             locationStream = topology.newStream("rb_loc", new TridentKafkaSpout(kafkaConfig, "location").builder())
-                    .name("MSE")
+                    .name("location")
                     .each(new Fields("str"), new MapperFunction(debug), new Fields("mse_map"))
                     .each(new Fields("mse_map"), new GetMSEdata(debug), new Fields("src_mac", "mse_data", "mse_data_druid"));
 
@@ -136,7 +136,7 @@ public class RedBorderTopology {
 
             // RSSI DATA
             trapStream = topology.newStream("rb_trap", new TridentKafkaSpout(kafkaConfig, "trap").builder())
-                    .name("RSSI")
+                    .name("Trap")
                     .parallelismHint(trapPartition)
                     .shuffle()
                     .each(new Fields("str"), new MapperFunction(debug), new Fields("rssi"))
@@ -240,7 +240,7 @@ public class RedBorderTopology {
         if (outputTopic != null) {
             int flowPrePartitions = config.getKafkaPartitions(outputTopic);
             System.out.println("   * " + outputTopic + ": " + flowPrePartitions);
-            System.out.println("Flows send to: " + outputTopic);
+            System.out.println("Flows send to (kafka topic): " + outputTopic);
 
             mainStream
                     .shuffle().name("Kafka Producer")
@@ -288,7 +288,7 @@ public class RedBorderTopology {
 
             System.out.println("   * partitions: " + partitions);
             System.out.println("   * replicas: " + replicas);
-            System.out.println("\nFlows send to indexing service.\n");
+            System.out.println("\n Flows send to indexing service. \n");
 
             StateFactory druidStateFlow = new TridentBeamStateFactory<>(new MyBeamFactoryMapFlow(partitions, replicas, debug));
 
@@ -316,7 +316,7 @@ public class RedBorderTopology {
         }
 
         System.out.println("\n----------------------- Topology Enrichment-----------------------\n");
-        
+
         System.out.println(" - flow: ");
         System.out.println("   * location: " + getEnrichment(topics.contains("rb_loc")));
         System.out.println("   * mobile: " + getEnrichment(topics.contains("rb_mobile")));
