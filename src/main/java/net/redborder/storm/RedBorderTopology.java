@@ -80,9 +80,9 @@ public class RedBorderTopology {
          */
         TridentState locationState = null;
         TridentState mobileState = null;
-        TridentState radiusState = topology.newStaticState(new RiakState.Factory("rbbi:radius", riakConfig.getServers(), 8087, Map.class));
+        TridentState radiusState = null;
         TridentState trapState = null;
-        TridentState darklistState = topology.newStaticState(new RiakState.Factory("rbbi:darklist", riakConfig.getServers(), 8087, Map.class));
+        TridentState darklistState = null;
 
         /*
             Streams
@@ -162,6 +162,7 @@ public class RedBorderTopology {
                         .each(new Fields("radius"), new GetRadiusData(debug), new Fields("radiusKey", "radiusData", "radiusDruid"));
 
             } else {
+                radiusState = topology.newStaticState(new RiakState.Factory("rbbi:radius", riakConfig.getServers(), 8087, Map.class));
 
                 radiusStream = radiusStream
                         .each(new Fields("radius"), new GetRadiusClient(debug), new Fields("clientMap"))
@@ -216,6 +217,8 @@ public class RedBorderTopology {
         }
 
         if (kafkaConfig.getDarkList()) {
+            darklistState = topology.newStaticState(new RiakState.Factory("rbbi:darklist", riakConfig.getServers(), 8087, Map.class));
+            
             mainStream = mainStream
                     .stateQuery(darklistState, new Fields("flows"), new RiakQuery("src", debug), new Fields("darklistMap"));
 

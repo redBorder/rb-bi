@@ -68,7 +68,8 @@ public class KafkaConfigFile {
             } else {
                 blacklist = false;
             }
-        }else {
+        } else {
+            blacklist = false;
             Logger.getLogger(KafkaConfigFile.class.getName()).log(Level.SEVERE, "general not found in YAML");
         }
 
