@@ -89,8 +89,8 @@ public class RedBorderTopology {
          */
         Stream locationStream = null;
         Stream radiusStream = null;
-        Stream mobileStream = null;
-        Stream trapStream = null;
+        Stream mobileStream;
+        Stream trapStream;
 
         /*
             Partitions
@@ -316,38 +316,24 @@ public class RedBorderTopology {
         }
 
         System.out.println("\n----------------------- Topology Enrichment-----------------------\n");
+        
         System.out.println(" - flow: ");
-        if (topics.contains("rb_loc")) {
-            System.out.println("   * location: ✓ ");
-        } else {
-            System.out.println("   * location: x");
-        }
-
-        if (topics.contains("rb_mobile")) {
-            System.out.println("   * mobile: ✓ ");
-        } else {
-            System.out.println("   * mobile: x");
-        }
-
-        if (topics.contains("rb_trap")) {
-            System.out.println("   * trap: ✓");
-        } else {
-            System.out.println("   * trap: x");
-        }
-
-        if (topics.contains("rb_radius")) {
-            System.out.println("   * radius " + "(overwrite_cache: " + kafkaConfig.getOverwriteCache("radius") + ") : ✓ ");
-        } else {
-            System.out.println("   * radius: x");
-        }
-
-        if (kafkaConfig.getDarkList()) {
-            System.out.println("   * darklist: ✓");
-        } else {
-            System.out.println("   * darklist: x");
-        }
+        System.out.println("   * location: " + getEnrichment(topics.contains("rb_loc")));
+        System.out.println("   * mobile: " + getEnrichment(topics.contains("rb_mobile")));
+        System.out.println("   * trap: " + getEnrichment(topics.contains("rb_trap")));
+        System.out.println("   * radius: " + getEnrichment(topics.contains("rb_radius")));
+        System.out.println("   * darklist: " + getEnrichment(kafkaConfig.getDarkList()));
 
         return topology;
+    }
+
+    private static String getEnrichment(boolean bool){
+        if(bool){
+            return "✓";
+        }else{
+            return "x";
+        }
+
     }
 
 }
