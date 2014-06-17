@@ -108,6 +108,8 @@ public class RedBorderTopology {
             // LOCATION DATA
             locationStream = topology.newStream("rb_loc", new TridentKafkaSpout(kafkaConfig, "location").builder())
                     .name("location")
+                    .parallelismHint(locationPartition)
+                    .shuffle()
                     .each(new Fields("str"), new MapperFunction(debug), new Fields("mse_map"))
                     .each(new Fields("mse_map"), new GetMSEdata(debug), new Fields("src_mac", "mse_data", "mse_data_druid"));
 
@@ -121,14 +123,12 @@ public class RedBorderTopology {
             // MOBILE DATA
             mobileStream = topology.newStream("rb_mobile", new TridentKafkaSpout(kafkaConfig, "mobile").builder())
                     .name("Mobile")
-                    .parallelismHint(locationPartition)
+                    .parallelismHint(mobilePartition)
                     .shuffle()
-                    .each(new Fields("str"), new MobileBuilderFunction(debug), new Fields("key", "mobileMap"))
-                    .parallelismHint(mobilePartition);
+                    .each(new Fields("str"), new MobileBuilderFunction(debug), new Fields("key", "mobileMap"));
 
             mobileState = mobileStream
                     .partitionPersist(new RiakState.Factory("rbbi:mobile", riakConfig.getServers(), 8087, Map.class), new Fields("key", "mobileMap"), new RiakUpdater("key", "mobileMap", debug));
-
         }
 
         if (topics.contains("rb_trap")) {
