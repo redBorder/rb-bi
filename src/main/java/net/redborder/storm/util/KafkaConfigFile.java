@@ -34,46 +34,47 @@ public class KafkaConfigFile {
     final String CONFIG_FILE_PATH = "/opt/rb/etc/redBorder-BI/zk_config.yml";
 
     /**
-     * Constructor.
-     *
-     * @throws FileNotFoundException
+     * Constructor
      */
-    public KafkaConfigFile(boolean debug) throws FileNotFoundException {
+    public KafkaConfigFile(boolean debug) {
         _zkHost = "localhost";
         this.debug = debug;
-        Map<String, Object> map = (Map<String, Object>) Yaml.load(new File(CONFIG_FILE_PATH));
 
-        /*
-            Production Config.
-         */
-        _production = (Map<String, Object>) map.get("production");
-        avaibleTopics = new ArrayList<>();
-        for (Object value : _production.values()) {
-            Map<String, Object> config = (Map<String, Object>) value;
-            avaibleTopics.add(config.get("input_topic").toString());
-            if (config.get("output_topic") != null) {
-                avaibleTopics.add(config.get("output_topic").toString());
+        try {
+            Map<String, Object> map = (Map<String, Object>) Yaml.load(new File(CONFIG_FILE_PATH));
+
+            /*
+                Production Config.
+             */
+            _production = (Map<String, Object>) map.get("production");
+            avaibleTopics = new ArrayList<>();
+            for (Object value : _production.values()) {
+                Map<String, Object> config = (Map<String, Object>) value;
+                avaibleTopics.add(config.get("input_topic").toString());
+                if (config.get("output_topic") != null) {
+                    avaibleTopics.add(config.get("output_topic").toString());
+                }
+                _zkHost = config.get("zk_connect").toString();
             }
-            _zkHost = config.get("zk_connect").toString();
-        }
 
-        /*
-            General Config.
-         */
-        _general = (Map<String, Object>) map.get("general");
+            /*
+                General Config.
+             */
+            _general = (Map<String, Object>) map.get("general");
 
-        if(_general!=null) {
-            if (_general.containsKey("blacklist")) {
-                blacklist = (boolean) _general.get("blacklist");
+            if (_general != null) {
+                if (_general.containsKey("blacklist")) {
+                    blacklist = (boolean) _general.get("blacklist");
+                } else {
+                    blacklist = false;
+                }
             } else {
                 blacklist = false;
+                Logger.getLogger(KafkaConfigFile.class.getName()).log(Level.SEVERE, "general not found in YAML");
             }
-        } else {
-            blacklist = false;
-            Logger.getLogger(KafkaConfigFile.class.getName()).log(Level.SEVERE, "general not found in YAML");
+        } catch (FileNotFoundException e) {
+            Logger.getLogger(KafkaConfigFile.class.getName()).log(Level.SEVERE, "kafka config file not found");
         }
-
-
     }
 
     /**
