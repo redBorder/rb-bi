@@ -33,9 +33,10 @@ public class GetMSEdata extends BaseFunction {
     public void execute(TridentTuple tuple, TridentCollector collector) {
         Map<String, Object> mseEvent = (Map<String, Object>) tuple.get(0);
         Map<String, Object> mseEventContent, location, geoCoordinate, mapInfo, mseData, mseDataDruid;
-        String macAddress, mapHierachy, locationFormat, state;
+        String mapHierachy, locationFormat, state;
+        String macAddress = null;
+        String dateString = null;
         Double lattitude, longitude;
-        DateTime date;
         String[] zone;
 
         try {
@@ -46,49 +47,63 @@ public class GetMSEdata extends BaseFunction {
             mseData = new HashMap<>();
             mseDataDruid = new HashMap<>();
 
-            macAddress = location.get("macAddress").toString();
-            mapHierachy = mapInfo.get("mapHierarchyString").toString();
+            if (location != null) {
+                macAddress = (String) location.get("macAddress");
+                mseDataDruid.put("client_mac", macAddress);
 
-            lattitude = (Double) geoCoordinate.get("lattitude");
-            lattitude = (double) Math.round(lattitude * 100000) / 100000;
+                mapHierachy = (String) mapInfo.get("mapHierarchyString");
+                zone = mapHierachy.split(">");
 
-            longitude = (Double) geoCoordinate.get("longitude");
-            longitude = (double) Math.round(longitude * 100000) / 100000;
-            locationFormat = lattitude.toString() + "," + longitude.toString();
+                mseData.put("client_campus", zone[0]);
+                mseData.put("client_building", zone[1]);
+                mseData.put("client_floor", zone[2]);
 
-            mseData.put("client_lat", lattitude.toString());
-            mseData.put("client_long", longitude.toString());
-            mseData.put("client_latlong", locationFormat);
+                state = (String) location.get("dot11Status");
+                mseDataDruid.put("dot11_status", state);
+                mseData.put("dot11_status", "ASSOCIATED");
 
-            zone = mapHierachy.split(">");
+                if (state != null && state.equals("ASSOCIATED")) {
+                    ArrayList ip = (ArrayList) location.get("ipAddress");
+                    mseData.put("wireless_id", location.get("ssId"));
+                    mseData.put("wireless_station", location.get("apMacAddress"));
+                    if (ip != null && ip.get(0) != null) {
+                        mseDataDruid.put("src", ip.get(0));
+                    }
+                }
+            }
 
-            mseData.put("client_campus", zone[0]);
-            mseData.put("client_building", zone[1]);
-            mseData.put("client_floor", zone[2]);
+            if (geoCoordinate != null) {
+                lattitude = (Double) geoCoordinate.get("lattitude");
+                lattitude = (double) Math.round(lattitude * 100000) / 100000;
 
-            state = location.get("dot11Status").toString();
-            mseData.put("dot11_status", "ASSOCIATED");
+                longitude = (Double) geoCoordinate.get("longitude");
+                longitude = (double) Math.round(longitude * 100000) / 100000;
 
-            if (state.equals("ASSOCIATED")) {
-                ArrayList ip = (ArrayList) location.get("ipAddress");
-                mseData.put("wireless_id", location.get("ssId").toString());
-                mseData.put("wireless_station", location.get("apMacAddress").toString());
-                if (ip != null) {
-                    mseDataDruid.put("src", ip.get(0).toString());
+                locationFormat = lattitude.toString() + "," + longitude.toString();
+
+                mseData.put("client_lat", lattitude.toString());
+                mseData.put("client_long", longitude.toString());
+                mseData.put("client_latlong", locationFormat);
+            }
+
+            if (mseEventContent != null) {
+                dateString = (String) mseEventContent.get("timestamp");
+                String sensorName = (String) mseEventContent.get("mseUdi");
+
+                if (sensorName != null) {
+                    mseDataDruid.put("sensor_name", sensorName);
                 }
             }
 
             mseDataDruid.putAll(mseData);
-            mseDataDruid.put("sensor_name", mseEventContent.get("mseUdi"));
-            mseDataDruid.put("client_mac", macAddress);
             mseDataDruid.put("bytes", 0);
             mseDataDruid.put("pkts", 0);
 
-            date = new DateTime(mseEventContent.get("timestamp").toString());
-            mseDataDruid.put("timestamp", date.withZone(DateTimeZone.UTC).getMillis() / 1000);
-            mseDataDruid.put("dot11_status", state);
+            if (dateString != null && macAddress != null) {
+                mseDataDruid.put("timestamp", new DateTime(dateString).withZone(DateTimeZone.UTC).getMillis() / 1000);
+                collector.emit(new Values(macAddress, mseData, mseDataDruid));
+            }
 
-            collector.emit(new Values(macAddress, mseData, mseDataDruid));
         } catch (NullPointerException e) {
             Logger.getLogger(GetMSEdata.class.getName()).log(Level.SEVERE, "Failed processing a MSE map: \n" + mseEvent.toString(), e);
         }
