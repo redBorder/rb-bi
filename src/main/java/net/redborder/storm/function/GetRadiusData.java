@@ -6,16 +6,17 @@
 package net.redborder.storm.function;
 
 import backtype.storm.tuple.Values;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import storm.trident.operation.BaseFunction;
 import storm.trident.operation.TridentCollector;
 import storm.trident.tuple.TridentTuple;
 
 /**
- *
  * @author andresgomez
  */
 public class GetRadiusData extends BaseFunction {
@@ -29,77 +30,92 @@ public class GetRadiusData extends BaseFunction {
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
         Map<String, Object> radiusData = (Map<String, Object>) tuple.getValue(0);
+        Map<String, Object> radiusDruid = new HashMap<>();
         Map<String, Object> radiusCached;
-        if (tuple.size()>1) {
+        String timestamp = null;
+
+        if (tuple.size() > 1) {
             radiusCached = (Map<String, Object>) tuple.getValue(1);
-        }else{
+        } else {
             radiusCached = new HashMap<>();
         }
 
+        Map<String, Object> radiusMap = radiusCached;
+
+        if (radiusData.containsKey("timestamp")) {
+            timestamp = radiusData.get("timestamp").toString();
+        } else {
+            Logger.getLogger(GetRadiusData.class.getName()).log(Level.WARNING, "Radius event hasn't timestamp!");
+            return;
+        }
+
         try {
-            if (radiusData.containsKey("Calling-Station-Id")) {
+            Object clientMacObject = radiusData.get("Calling-Station-Id");
+
+            if (clientMacObject != null) {
 
                 String apMac = null;
                 String ssid = null;
-                String clientMac = null;
                 String clientId = null;
+                String clientMac = clientMacObject.toString();
 
-                clientMac = radiusData.get("Calling-Station-Id").toString();
                 clientMac = clientMac.replace("-", ":");
 
-                if (radiusData.containsKey("Called-Station-Id")) {
-                    String calledStation[] = radiusData.get("Called-Station-Id").toString().split(":");
+                radiusDruid.put("client_mac", clientMac);
+
+
+                Object calledStationObject = radiusData.get("Called-Station-Id");
+
+                if (calledStationObject != null) {
+                    String calledStation[] = calledStationObject.toString().split(":");
 
                     if (calledStation.length != 2) {
                         Logger.getLogger(GetRadiusData.class.getName()).log(Level.WARNING, "Incorrect calledStation format on radius map");
-                        return;
-                    }
+                    } else {
+                        apMac = calledStation[0];
+                        apMac = apMac.replace("-", ":");
+                        ssid = calledStation[1];
 
-                    apMac = calledStation[0];
-                    apMac = apMac.replace("-", ":");
-                    ssid = calledStation[1];
+                        radiusMap.put("ap_mac", apMac);
+                        radiusMap.put("wlan_ssid", ssid);
+
+                    }
 
                 }
 
-                Map<String, Object> radiusDruid = new HashMap<>();
 
-                if (radiusData.containsKey("Framed-IP-Address")) {
-                    String src = radiusData.get("Framed-IP-Address").toString();
+                Object srcObject = radiusData.get("Framed-IP-Address");
+
+                if (srcObject != null) {
+                    String src = srcObject.toString();
                     radiusDruid.put("src", src);
                 }
 
-                if (radiusData.containsKey("NAS-Identifier")) {
-                    String sensorName = radiusData.get("NAS-Identifier").toString();
+                Object sensorNameObject = radiusData.get("NAS-Identifier");
+
+                if (sensorNameObject != null) {
+                    String sensorName = sensorNameObject.toString();
                     radiusDruid.put("sensor_name", sensorName);
                 }
 
-                if (radiusData.containsKey("NAS-IP-Address")) {
-                    String sensorIP = radiusData.get("NAS-IP-Address").toString();
+                Object sensorIpObject = radiusData.get("NAS-IP-Address");
+
+                if (sensorIpObject != null) {
+                    String sensorIP = sensorIpObject.toString();
                     radiusDruid.put("sensor_ip", sensorIP);
                 }
 
-                String timestamp = radiusData.get("timestamp").toString();
-                if (radiusData.containsKey("User-Name")) {
-                    clientId = radiusData.get("User-Name").toString();
-                }
 
-                Map<String, Object> radiusMap = radiusCached;
+                Object clientIdObject = radiusData.get("User-Name");
 
-                if (apMac != null) {
-                    radiusMap.put("ap_mac", apMac);
-                }
-
-                if (ssid != null) {
-                    radiusMap.put("wlan_ssid", ssid);
-                }
-
-                if (clientId != null) {
+                if (clientIdObject != null) {
+                    clientId = clientIdObject.toString();
                     radiusMap.put("client_id", clientId);
                 }
 
+
                 radiusDruid.putAll(radiusMap);
                 radiusDruid.put("timestamp", timestamp);
-                radiusDruid.put("client_mac", clientMac);
                 radiusDruid.put("bytes", 0);
                 radiusDruid.put("pkts", 0);
 

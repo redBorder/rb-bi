@@ -6,6 +6,7 @@
 package net.redborder.storm.function;
 
 import backtype.storm.tuple.Values;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.HashMap;
@@ -15,8 +16,10 @@ import java.util.logging.Logger;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
+import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 import storm.trident.operation.BaseFunction;
 import storm.trident.operation.TridentCollector;
@@ -28,62 +31,81 @@ import storm.trident.tuple.TridentTuple;
  * @author andresgomez
  */
 public class MobileBuilderFunction extends BaseFunction {
-    
+
     boolean debug;
-    
-    public MobileBuilderFunction(boolean debug){
-        this.debug=debug;
+
+    public MobileBuilderFunction(boolean debug) {
+        this.debug = debug;
     }
 
     private Map<String, Object> hnb_register(Document document) {
         Map<String, Object> event = new HashMap<>();
-        
+
         try {
-            String hnbid = document.getElementsByTagName("hnbid").item(0).getTextContent();
-            String location = document.getElementsByTagName("location").item(0).getTextContent();
-            String hnbGeoLocation = document.getElementsByTagName("hnbGeoLocation").item(0).getTextContent();
-            event.put("wireless_station", hnbid);
-            event.put("hnblocation", location);
-            event.put("hnbgeolocation", hnbGeoLocation);
+            Node hnbid = document.getElementsByTagName("hnbid").item(0);
+            Node location = document.getElementsByTagName("location").item(0);
+            Node hnbGeoLocation = document.getElementsByTagName("hnbGeoLocation").item(0);
+
+            if (hnbid != null)
+                event.put("wireless_station", hnbid.getTextContent());
+
+            if (location != null)
+                event.put("hnblocation", location.getTextContent());
+
+            if (hnbGeoLocation != null)
+                event.put("hnbgeolocation", hnbGeoLocation.getTextContent());
+
         } catch (NullPointerException ex) {
             Logger.getLogger(GetMSEdata.class.getName()).log(Level.SEVERE, "Failed reading a UE IP Assign message", ex);
         }
-        
+
         return event;
     }
-    
+
     private Map<String, Object> ue_register(Document document) {
         Map<String, Object> event = new HashMap<>();
-        
+
         try {
-            String imsi = document.getElementsByTagName("imsi").item(0).getTextContent();
-            event.put("client_id", imsi);
+            Node imsi = document.getElementsByTagName("imsi").item(0);
+
+            if (imsi != null)
+                event.put("client_id", imsi.getTextContent());
+
         } catch (NullPointerException ex) {
             Logger.getLogger(GetMSEdata.class.getName()).log(Level.SEVERE, "Failed reading a UE Register message", ex);
         }
-        
+
         return event;
     }
-    
+
     private Map<String, Object> ue_ip_assign(Document document) {
         Map<String, Object> event = new HashMap<>();
-        
+
         try {
-            String imsi = document.getElementsByTagName("imsi").item(0).getTextContent();
-            String apn = document.getElementsByTagName("apn").item(0).getTextContent();
-            String ipAddress = document.getElementsByTagName("ipAddress").item(0).getTextContent();
-            String rat = document.getElementsByTagName("rat").item(0).getTextContent();
-            event.put("client_id", imsi);
-            event.put("wireless_id", apn);
-            event.put("ip", ipAddress);
-            event.put("rat", rat);
+            Node imsi = document.getElementsByTagName("imsi").item(0);
+            Node apn = document.getElementsByTagName("apn").item(0);
+            Node ipAddress = document.getElementsByTagName("ipAddress").item(0);
+            Node rat = document.getElementsByTagName("rat").item(0);
+
+            if (imsi != null)
+                event.put("client_id", imsi.getTextContent());
+
+            if (apn != null)
+                event.put("wireless_id", apn.getTextContent());
+
+            if (ipAddress != null)
+                event.put("ip", ipAddress.getTextContent());
+
+            if (rat != null)
+                event.put("rat", rat.getTextContent());
+
         } catch (NullPointerException ex) {
             Logger.getLogger(GetMSEdata.class.getName()).log(Level.SEVERE, "Failed reading a UE IP Assign message", ex);
         }
-        
+
         return event;
-    }    
-    
+    }
+
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
 
@@ -119,7 +141,7 @@ public class MobileBuilderFunction extends BaseFunction {
                 event = ue_register(document);
                 event.put("path", path);
                 key = (String) event.get("client_id");
-            }              
+            }
         } catch (ParserConfigurationException | SAXException | IOException | NullPointerException ex) {
             Logger.getLogger(GetMSEdata.class.getName()).log(Level.SEVERE, "Failed reading a Mobile XML tuple", ex);
         }

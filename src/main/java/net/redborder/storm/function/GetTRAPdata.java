@@ -24,14 +24,19 @@ public class GetTRAPdata extends BaseFunction {
     public void execute(TridentTuple tuple, TridentCollector collector) {
         Map<String, Object> rssi = (Map<String, Object>) tuple.getValue(0);
 
+        Object macAuxObject = rssi.get(".1.3.6.1.4.1.9.9.599.1.2.32.0");
+        Object clientRssiObject = rssi.get(".1.3.6.1.4.1.9.9.599.1.2.1.0");
+
         try {
-            if (rssi.containsKey(".1.3.6.1.4.1.9.9.599.1.2.32.0") && rssi.containsKey(".1.3.6.1.4.1.9.9.599.1.2.1.0")) {
-                String macAux = rssi.get(".1.3.6.1.4.1.9.9.599.1.2.32.0").toString();
+
+            if (macAuxObject!=null && clientRssiObject!=null) {
+
+                String macAux = macAuxObject.toString();
                 String macAddress = macAux.split("/")[1];
 
                 Map<String, Object> rssiData = new HashMap<>();
 
-                rssiData.put("client_rssi", rssi.get(".1.3.6.1.4.1.9.9.599.1.2.1.0"));
+                rssiData.put("client_rssi", clientRssiObject);
 
                 collector.emit(new Values(macAddress, rssiData));
             }
