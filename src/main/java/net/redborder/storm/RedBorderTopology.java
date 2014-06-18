@@ -314,7 +314,7 @@ public class RedBorderTopology {
         System.out.println("   * location: " + getEnrichment(topics.contains("rb_loc")));
         System.out.println("   * mobile: " + getEnrichment(topics.contains("rb_mobile")));
         System.out.println("   * trap: " + getEnrichment(topics.contains("rb_trap")));
-        System.out.println("   * radius: " + getEnrichment(topics.contains("rb_radius")));
+        System.out.println("   * radius (overwrite_cache: "+ _kafkaConfig.getOverwriteCache("radius") +") : " + getEnrichment(topics.contains("rb_radius")));
         System.out.println("   * darklist: " + getEnrichment(_kafkaConfig.getDarkList()));
 
         return topology;
