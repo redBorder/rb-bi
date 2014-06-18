@@ -32,7 +32,7 @@ public class GetMSEdata extends BaseFunction {
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
         Map<String, Object> mseEvent = (Map<String, Object>) tuple.get(0);
-        Map<String, Object> mseEventContent, location, geoCoordinate, mapInfo, mseData, mseDataDruid;
+        Map<String, Object> mseEventContent, location, geoCoordinate = null, mapInfo, mseData, mseDataDruid;
         String mapHierachy, locationFormat, state;
         String macAddress = null;
         String dateString = null;
@@ -42,12 +42,12 @@ public class GetMSEdata extends BaseFunction {
         try {
             mseEventContent = (Map<String, Object>) mseEvent.get("StreamingNotification");
             location = (Map<String, Object>) mseEventContent.get("location");
-            geoCoordinate = (Map<String, Object>) location.get("geoCoordinate");
-            mapInfo = (Map<String, Object>) location.get("mapInfo");
             mseData = new HashMap<>();
             mseDataDruid = new HashMap<>();
 
             if (location != null) {
+                geoCoordinate = (Map<String, Object>) location.get("geoCoordinate");
+                mapInfo = (Map<String, Object>) location.get("mapInfo");
                 macAddress = (String) location.get("macAddress");
                 mseDataDruid.put("client_mac", macAddress);
 
