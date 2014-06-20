@@ -60,7 +60,7 @@ public class GetMSEdata extends BaseFunction {
 
                 state = (String) location.get("dot11Status");
                 mseDataDruid.put("dot11_status", state);
-                mseData.put("dot11_status", "ASSOCIATED");
+                mseData.put("dot11_status", state);
 
                 if (state != null && state.equals("ASSOCIATED")) {
                     ArrayList ip = (ArrayList) location.get("ipAddress");

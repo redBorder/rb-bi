@@ -8,6 +8,10 @@ echo "Install Trident-Memcached."
 
 mvn -f ./lib/trident-memcached/pom.xml install -Dmaven.test.skip=true
 
+echo "Install Kafka-State."
+
+mvn -f ./lib/kafka-state/pom.xml install -Dmaven.test.skip=true
+
 echo "Build redBorder-Topology."
 
 mvn package

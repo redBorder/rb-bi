@@ -333,8 +333,11 @@ public class RedBorderTopology {
             pw.println("   * rb_radius: " + radiusPartition);
         }
 
-        System.out.println("\n- Riak Servers:" + _riakConfig.getServers().toString());
-        pw.println("\n- Riak Servers:" + _riakConfig.getServers().toString());
+        System.out.println("\n- Zookeeper Servers: " + _kafkaConfig.getZkHost());
+        pw.println("\n- Zookeeper Servers: " + _kafkaConfig.getZkHost());
+
+        System.out.println("\n- Riak Servers: " + _riakConfig.getServers().toString());
+        pw.println("\n- Riak Servers: " + _riakConfig.getServers().toString());
 
         if (_outputTopic != null) {
             System.out.println("   * " + _outputTopic + ": " + _config.getKafkaPartitions(_outputTopic));
