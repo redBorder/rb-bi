@@ -300,80 +300,39 @@ public class RedBorderTopology {
          *  Show info
          */
 
-        FileWriter file = new FileWriter("/opt/rb/var/redBorder-BI/app/topologyInfo");
-        PrintWriter pw = new PrintWriter(file);
+        PrintWriter pw = new PrintWriter(new FileWriter("/opt/rb/var/redBorder-BI/app/topologyInfo"));
 
-        pw.println("----------------------- Topology info: " + "-----------------------");
-        pw.println("- Date topology: " + new Date().toString());
-        pw.println("- Storm workers: " + _config.getWorkers());
-        pw.println("\n- Kafka partitions: ");
+        print(pw, "----------------------- Topology info: " + "-----------------------");
+        print(pw, "- Date topology: " + new Date().toString());
+        print(pw, "- Storm workers: " + _config.getWorkers());
+        print(pw, "\n- Kafka partitions: ");
 
-        System.out.println("----------------------- Topology info: " + "-----------------------");
-        System.out.println("- Storm workers: " + _config.getWorkers());
-        System.out.println("\n- Kafka partitions: ");
+        if (locationPartition > 0) print(pw, "   * rb_loc: " + locationPartition);
+        if (mobilePartition > 0) print(pw, "   * rb_mobile: " + mobilePartition);
+        if (trapPartition > 0) print(pw, "   * rb_trap: " + trapPartition);
+        if (flowPartition > 0) print(pw, "   * rb_flow: " + flowPartition);
+        if (radiusPartition > 0) print(pw, "   * rb_radius: " + radiusPartition);
 
-        if (locationPartition > 0) {
-            System.out.println("   * rb_loc: " + locationPartition);
-            pw.println("   * rb_loc: " + locationPartition);
-        }
-        if (mobilePartition > 0) {
-            System.out.println("   * rb_mobile: " + mobilePartition);
-            pw.println("   * rb_mobile: " + mobilePartition);
-        }
-        if (trapPartition > 0) {
-            System.out.println("   * rb_trap: " + trapPartition);
-            pw.println("   * rb_trap: " + trapPartition);
-        }
-        if (flowPartition > 0) {
-            System.out.println("   * rb_flow: " + flowPartition);
-            pw.println("   * rb_flow: " + flowPartition);
-        }
-        if (radiusPartition > 0) {
-            System.out.println("   * rb_radius: " + radiusPartition);
-            pw.println("   * rb_radius: " + radiusPartition);
-        }
-
-        System.out.println("\n- Zookeeper Servers: " + _kafkaConfig.getZkHost());
-        pw.println("\n- Zookeeper Servers: " + _kafkaConfig.getZkHost());
-
-        System.out.println("\n- Riak Servers: " + _riakConfig.getServers().toString());
-        pw.println("\n- Riak Servers: " + _riakConfig.getServers().toString());
+        print(pw, "\n- Zookeeper Servers: " + _kafkaConfig.getZkHost());
+        print(pw, "\n- Riak Servers: " + _riakConfig.getServers().toString());
 
         if (_outputTopic != null) {
-            System.out.println("   * " + _outputTopic + ": " + _config.getKafkaPartitions(_outputTopic));
-            System.out.println("Flows send to (kafka topic): " + _outputTopic);
-
-            pw.println("   * " + _outputTopic + ": " + _config.getKafkaPartitions(_outputTopic));
-            pw.println("Flows send to (kafka topic): " + _outputTopic);
+            print(pw, "   * " + _outputTopic + ": " + _config.getKafkaPartitions(_outputTopic));
+            print(pw, "Flows send to (kafka topic): " + _outputTopic);
         } else {
-            System.out.println("\n- Tranquility info: ");
-            System.out.println("   * partitions: " + _tranquilityPartitions);
-            System.out.println("   * replicas: " + _tranquilityReplicas);
-            System.out.println("\n Flows send to indexing service. \n");
-
-            pw.println("\n- Tranquility info: ");
-            pw.println("   * partitions: " + _tranquilityPartitions);
-            pw.println("   * replicas: " + _tranquilityReplicas);
-            pw.println("\n Flows send to indexing service. \n");
+            print(pw, "\n- Tranquility info: ");
+            print(pw, "   * partitions: " + _tranquilityPartitions);
+            print(pw, "   * replicas: " + _tranquilityReplicas);
+            print(pw, "\n Flows send to indexing service. \n");
         }
 
-        System.out.println("\n----------------------- Topology Enrichment-----------------------\n");
-        System.out.println(" - flow: ");
-        System.out.println("   * location: " + getEnrichment(topics.contains("rb_loc")));
-        System.out.println("   * mobile: " + getEnrichment(topics.contains("rb_mobile")));
-        System.out.println("   * trap: " + getEnrichment(topics.contains("rb_trap")));
-        System.out.println("   * radius (overwrite_cache: " + _kafkaConfig.getOverwriteCache("radius") + ") : " + getEnrichment(topics.contains("rb_radius")));
-        System.out.println("   * darklist: " + getEnrichment(_kafkaConfig.getDarkList()));
-        System.out.println();
-
-        pw.println("\n----------------------- Topology Enrichment-----------------------\n");
-        pw.println(" - flow: ");
-        pw.println("   * location: " + getEnrichment(topics.contains("rb_loc")));
-        pw.println("   * mobile: " + getEnrichment(topics.contains("rb_mobile")));
-        pw.println("   * trap: " + getEnrichment(topics.contains("rb_trap")));
-        pw.println("   * radius (overwrite_cache: " + _kafkaConfig.getOverwriteCache("radius") + ") : " + getEnrichment(topics.contains("rb_radius")));
-        pw.println("   * darklist: " + getEnrichment(_kafkaConfig.getDarkList()));
-        pw.println();
+        print(pw, "\n----------------------- Topology Enrichment-----------------------\n");
+        print(pw, " - flow: ");
+        print(pw, "   * location: " + getEnrichment(topics.contains("rb_loc")));
+        print(pw, "   * mobile: " + getEnrichment(topics.contains("rb_mobile")));
+        print(pw, "   * trap: " + getEnrichment(topics.contains("rb_trap")));
+        print(pw, "   * radius (overwrite_cache: " + _kafkaConfig.getOverwriteCache("radius") + ") : " + getEnrichment(topics.contains("rb_radius")));
+        print(pw, "   * darklist: " + getEnrichment(_kafkaConfig.getDarkList()));
 
         pw.flush();
 
@@ -402,11 +361,12 @@ public class RedBorderTopology {
     }
 
     private static String getEnrichment(boolean bool) {
-        if (bool) {
-            return "✓";
-        } else {
-            return "x";
-        }
+        return bool ? "✓" : "x";
+    }
+
+    private static void print(PrintWriter pw, String msg) {
+        pw.print(msg + "\n");
+        System.out.println(msg);
     }
 
 }
