@@ -15,6 +15,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.redborder.storm.function.MapperFunction;
 import net.redborder.storm.function.ProducerKafkaFunction;
+import net.redborder.storm.metrics.KafkaMetrics;
+import net.redborder.storm.metrics.ZookeeperMetrics;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -33,13 +35,15 @@ public class ConfigData {
     Map<String, Integer> kafkaPartitions;
     Integer numWorkers;
     int middleManagers;
+    String _zookeeper;
 
     public ConfigData(KafkaConfigFile kafkaConfig) {
         conf = new Config();
         kafkaPartitions = new HashMap<>();
         this.topics = kafkaConfig.getAvaibleTopics();
         RetryPolicy retryPolicy = new ExponentialBackoffRetry(1000, 3);
-        client = CuratorFrameworkFactory.newClient(kafkaConfig.getZkHost(), retryPolicy);
+        _zookeeper=kafkaConfig.getZkHost();
+        client = CuratorFrameworkFactory.newClient(_zookeeper, retryPolicy);
         client.start();
         initKafkaPartitions();
         initWorkers();
@@ -136,6 +140,15 @@ public class ConfigData {
         } else if (_mode.equals("cluster")) {
             conf.put(Config.TOPOLOGY_WORKERS, getWorkers());
             conf.put(Config.TOPOLOGY_MAX_SPOUT_PENDING, 5);
+
+            Map<String, Object> metricsConf = new HashMap<>();
+            List<String> metrics = new ArrayList<>();
+            metrics.add("kafkaOffset");
+
+            metricsConf.put("zookeeper", _zookeeper);
+            metricsConf.put("metrics", metrics);
+            conf.registerMetricsConsumer(ZookeeperMetrics.class, metricsConf, 1);
+
         }
         return conf;
     }

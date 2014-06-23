@@ -1,0 +1,126 @@
+package net.redborder.storm.metrics;
+
+import backtype.storm.metric.api.IMetricsConsumer;
+import backtype.storm.task.IErrorReporter;
+import backtype.storm.task.TopologyContext;
+import org.apache.curator.RetryPolicy;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.retry.ExponentialBackoffRetry;
+
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Created by andresgomez on 23/06/14.
+ */
+public class ZookeeperMetrics implements IMetricsConsumer {
+
+    CuratorFramework client;
+    List<String> metrics;
+
+
+    @Override
+    public void prepare(Map map, Object conf, TopologyContext topologyContext, IErrorReporter iErrorReporter) {
+        Map<String, Object> config = (Map<String, Object>) conf;
+        metrics = (List<String>) config.get("metrics");
+        RetryPolicy retryPolicy = new ExponentialBackoffRetry(1000, 3);
+        client = CuratorFrameworkFactory.newClient(config.get("zookeeper").toString(), retryPolicy);
+        client.start();
+
+        try {
+            if (client.checkExists().forPath("/consumers/rb-storm") == null) {
+                client.create().creatingParentsIfNeeded().forPath("/consumers/rb-storm");
+                System.out.println("Creating /consumers/rb-storm path ...");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    @Override
+    public void handleDataPoints(TaskInfo taskInfo, Collection<DataPoint> dataPoints) {
+
+        for (Metric metric : dataPointsToMetrics(taskInfo, dataPoints)) {
+            try {
+                report(metric, metric.value);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    String clean(String s) {
+        return s.replace('.', '_').replace('/', '_');
+    }
+
+    List<Metric> dataPointsToMetrics(TaskInfo taskInfo,
+                                     Collection<DataPoint> dataPoints) {
+        List<Metric> res = new LinkedList<Metric>();
+
+        String component = clean(taskInfo.srcComponentId);
+        String worker = clean(taskInfo.srcWorkerHost);
+        Integer port = taskInfo.srcWorkerPort;
+        Integer taskId = taskInfo.srcTaskId;
+
+
+        for (DataPoint p : dataPoints) {
+
+            res.add(new Metric(p.name, worker, port, component, taskId, p.value));
+        }
+        return res;
+    }
+
+    public void report(Metric metric, Object value) throws Exception {
+
+        if (metrics.contains(metric.name)) {
+
+            Map<String, Object> jsonInfo = (Map<String, Object>) value;
+
+
+            String ownersPath = "/consumers/rb-storm/owners/" + jsonInfo.get("topic") + "/" + partitionToNumber(jsonInfo.get("partition").toString());
+
+
+            String owners = "rb-storm_" + metric.worker + ":" + metric.port + ":" + metric.component + ":" + metric.taskId;
+
+            if (client.checkExists().forPath(ownersPath) != null)
+                client.setData().forPath(ownersPath, owners.getBytes());
+            else
+                client.create().creatingParentsIfNeeded().forPath(ownersPath, owners.getBytes());
+
+            String offestPath = "/consumers/rb-storm/offsets/" + jsonInfo.get("topic") + "/" + partitionToNumber(jsonInfo.get("partition").toString());
+
+            if (client.checkExists().forPath(offestPath) != null)
+                client.setData().forPath(offestPath, jsonInfo.get("offsets").toString().getBytes());
+            else
+                client.create().creatingParentsIfNeeded().forPath(offestPath, jsonInfo.get("offsets").toString().getBytes());
+
+            String idsPath = "/consumers/rb-storm/ids/" + owners;
+
+            String valuePath = "{ \"pattern\":\"static\", \"subscription\":{ \" " + jsonInfo.get("topic") + "\": 1 }, \"timestamp\":\""+System.currentTimeMillis()+"\", \"version\":1 }";
+
+            if (client.checkExists().forPath(idsPath) != null)
+                client.setData().forPath(idsPath, valuePath.getBytes());
+            else
+                client.create().creatingParentsIfNeeded().forPath(idsPath, valuePath.getBytes());
+
+            System.out.println("Updating zookeeper consumer rb-storm");
+        }
+
+    }
+
+    String partitionToNumber(String partition){
+        String number = partition.substring(partition.indexOf("_") + 1, partition.length());
+
+        return number;
+    }
+
+
+    @Override
+    public void cleanup() {
+        client.close();
+    }
+}

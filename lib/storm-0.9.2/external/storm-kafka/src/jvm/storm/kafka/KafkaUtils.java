@@ -105,10 +105,12 @@ public class KafkaUtils {
                 long totalLatestTimeOffset = 0;
                 long totalLatestEmittedOffset = 0;
                 HashMap ret = new HashMap();
+                ret.put("topic", _topic);
                 if (_partitions != null && _partitions.size() == _partitionToOffset.size()) {
                     for (Map.Entry<Partition, Long> e : _partitionToOffset.entrySet()) {
                         Partition partition = e.getKey();
                         SimpleConsumer consumer = _connections.getConnection(partition);
+
                         if (consumer == null) {
                             LOG.warn("partitionToOffset contains partition not found in _connections. Stale partition data?");
                             return null;
@@ -117,10 +119,16 @@ public class KafkaUtils {
                         long earliestTimeOffset = getOffset(consumer, _topic, partition.partition, kafka.api.OffsetRequest.EarliestTime());
                         if (latestTimeOffset == 0 || earliestTimeOffset == 0) {
                             LOG.warn("No data found in Kafka Partition " + partition.getId());
-                            return null;
+                            ret.put("partition", partition.getId());
+                            long latestEmittedOffset = e.getValue();
+
+                            ret.put("offsets", latestEmittedOffset);
+                            return ret;
                         }
                         long latestEmittedOffset = e.getValue();
                         long spoutLag = latestTimeOffset - latestEmittedOffset;
+                        ret.put("partition", partition.getId());
+                        ret.put("offsets", latestEmittedOffset);
                         ret.put(partition.getId() + "/" + "spoutLag", spoutLag);
                         ret.put(partition.getId() + "/" + "earliestTimeOffset", earliestTimeOffset);
                         ret.put(partition.getId() + "/" + "latestTimeOffset", latestTimeOffset);
