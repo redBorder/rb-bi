@@ -7,6 +7,7 @@ import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.ExponentialBackoffRetry;
+import org.apache.zookeeper.CreateMode;
 
 import java.util.Collection;
 import java.util.LinkedList;
@@ -16,23 +17,22 @@ import java.util.Map;
 /**
  * Created by andresgomez on 23/06/14.
  */
-public class ZookeeperMetrics implements IMetricsConsumer {
+public class KafkaConsumerMonitorMetrics implements IMetricsConsumer {
 
     CuratorFramework client;
-    List<String> metrics;
 
 
     @Override
     public void prepare(Map map, Object conf, TopologyContext topologyContext, IErrorReporter iErrorReporter) {
         Map<String, Object> config = (Map<String, Object>) conf;
-        metrics = (List<String>) config.get("metrics");
         RetryPolicy retryPolicy = new ExponentialBackoffRetry(1000, 3);
         client = CuratorFrameworkFactory.newClient(config.get("zookeeper").toString(), retryPolicy);
         client.start();
 
+
         try {
             if (client.checkExists().forPath("/consumers/rb-storm") == null) {
-                client.create().creatingParentsIfNeeded().forPath("/consumers/rb-storm");
+                client.create().withMode(CreateMode.EPHEMERAL).forPath("/consumers/rb-storm");
                 System.out.println("Creating /consumers/rb-storm path ...");
             }
         } catch (Exception e) {
@@ -76,7 +76,7 @@ public class ZookeeperMetrics implements IMetricsConsumer {
 
     public void report(Metric metric, Object value) throws Exception {
 
-        if (metrics.contains(metric.name)) {
+        if (metric.name.equals("kafkaOffset")) {
 
             Map<String, Object> jsonInfo = (Map<String, Object>) value;
 
@@ -107,7 +107,7 @@ public class ZookeeperMetrics implements IMetricsConsumer {
             else
                 client.create().creatingParentsIfNeeded().forPath(idsPath, valuePath.getBytes());
 
-            System.out.println("Updating zookeeper consumer rb-storm");
+            System.out.println("Updating kafka consumer monitor metrics ... ");
         }
 
     }

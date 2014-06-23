@@ -7,7 +7,6 @@ package net.redborder.storm.util;
 
 import backtype.storm.Config;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,8 +14,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.redborder.storm.function.MapperFunction;
 import net.redborder.storm.function.ProducerKafkaFunction;
-import net.redborder.storm.metrics.KafkaMetrics;
-import net.redborder.storm.metrics.ZookeeperMetrics;
+import net.redborder.storm.metrics.KafkaConsumerMonitorMetrics;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -142,12 +140,9 @@ public class ConfigData {
             conf.put(Config.TOPOLOGY_MAX_SPOUT_PENDING, 5);
 
             Map<String, Object> metricsConf = new HashMap<>();
-            List<String> metrics = new ArrayList<>();
-            metrics.add("kafkaOffset");
-
             metricsConf.put("zookeeper", _zookeeper);
-            metricsConf.put("metrics", metrics);
-            conf.registerMetricsConsumer(ZookeeperMetrics.class, metricsConf, 1);
+
+            conf.registerMetricsConsumer(KafkaConsumerMonitorMetrics.class, metricsConf, 1);
 
         }
         return conf;

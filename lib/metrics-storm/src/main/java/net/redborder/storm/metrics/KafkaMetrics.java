@@ -76,7 +76,7 @@ public class KafkaMetrics implements IMetricsConsumer {
 
         for (DataPoint p : dataPoints) {
 
-            res.add(new Metric(p.name, worker,taskInfo.srcWorkerPort , component,p.value));
+            res.add(new Metric(p.name, worker,taskInfo.srcWorkerPort , component, taskInfo.srcTaskId, p.value));
         }
         return res;
     }
