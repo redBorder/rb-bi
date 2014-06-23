@@ -32,7 +32,7 @@ public class KafkaConsumerMonitorMetrics implements IMetricsConsumer {
 
         try {
             if (client.checkExists().forPath("/consumers/rb-storm") == null) {
-                client.create().withMode(CreateMode.EPHEMERAL).forPath("/consumers/rb-storm");
+                client.create().creatingParentsIfNeeded().forPath("/consumers/rb-storm");
                 System.out.println("Creating /consumers/rb-storm path ...");
             }
         } catch (Exception e) {
@@ -81,38 +81,67 @@ public class KafkaConsumerMonitorMetrics implements IMetricsConsumer {
             Map<String, Object> jsonInfo = (Map<String, Object>) value;
 
 
-            String ownersPath = "/consumers/rb-storm/owners/" + jsonInfo.get("topic") + "/" + partitionToNumber(jsonInfo.get("partition").toString());
+            /*
+                    Owners
+             */
 
+            String ownersPath = "/consumers/rb-storm/owners/" + jsonInfo.get("topic");
+
+            if (client.checkExists().forPath(ownersPath) == null)
+                client.create().creatingParentsIfNeeded().forPath(ownersPath);
+
+            ownersPath = ownersPath + "/" + partitionToNumber(jsonInfo.get("partition").toString());
 
             String owners = "rb-storm_" + metric.worker + ":" + metric.port + ":" + metric.component + ":" + metric.taskId;
 
             if (client.checkExists().forPath(ownersPath) != null)
                 client.setData().forPath(ownersPath, owners.getBytes());
             else
-                client.create().creatingParentsIfNeeded().forPath(ownersPath, owners.getBytes());
+                client.create().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL).forPath(ownersPath, owners.getBytes());
 
-            String offestPath = "/consumers/rb-storm/offsets/" + jsonInfo.get("topic") + "/" + partitionToNumber(jsonInfo.get("partition").toString());
 
-            if (client.checkExists().forPath(offestPath) != null)
-                client.setData().forPath(offestPath, jsonInfo.get("offsets").toString().getBytes());
+            /*
+                    Offsets
+             */
+
+            String offsetsPath = "/consumers/rb-storm/offsets/" + jsonInfo.get("topic") ;
+
+            if (client.checkExists().forPath(offsetsPath) == null)
+                client.create().creatingParentsIfNeeded().forPath(offsetsPath);
+
+            offsetsPath = offsetsPath + "/" + partitionToNumber(jsonInfo.get("partition").toString());
+
+            if (client.checkExists().forPath(offsetsPath) != null)
+                client.setData().forPath(offsetsPath, jsonInfo.get("offsets").toString().getBytes());
             else
-                client.create().creatingParentsIfNeeded().forPath(offestPath, jsonInfo.get("offsets").toString().getBytes());
+                client.create().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL).forPath(offsetsPath, jsonInfo.get("offsets").toString().getBytes());
 
-            String idsPath = "/consumers/rb-storm/ids/" + owners;
 
-            String valuePath = "{ \"pattern\":\"static\", \"subscription\":{ \" " + jsonInfo.get("topic") + "\": 1 }, \"timestamp\":\""+System.currentTimeMillis()+"\", \"version\":1 }";
+            /*
+                    Ids
+             */
+
+            String idsPath = "/consumers/rb-storm/ids";
+
+            if (client.checkExists().forPath(idsPath) == null)
+                client.create().creatingParentsIfNeeded().forPath(idsPath);
+
+
+            idsPath = idsPath + "/" + owners;
+
+            String valuePath = "{ \"pattern\":\"static\", \"subscription\":{ \" " + jsonInfo.get("topic") + "\": 1 }, \"timestamp\":\"" + System.currentTimeMillis() + "\", \"version\":1 }";
 
             if (client.checkExists().forPath(idsPath) != null)
                 client.setData().forPath(idsPath, valuePath.getBytes());
             else
-                client.create().creatingParentsIfNeeded().forPath(idsPath, valuePath.getBytes());
+                client.create().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL).forPath(idsPath, valuePath.getBytes());
 
             System.out.println("Updating kafka consumer monitor metrics ... ");
         }
 
     }
 
-    String partitionToNumber(String partition){
+    String partitionToNumber(String partition) {
         String number = partition.substring(partition.indexOf("_") + 1, partition.length());
 
         return number;
