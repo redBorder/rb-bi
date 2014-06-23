@@ -119,7 +119,9 @@ public class KafkaConfigFile {
                 System.out.println("  - zkConnect: [" + _zkHost + "]");
             }
         } else {
-            Logger.getLogger(KafkaConfigFile.class.getName()).log(Level.SEVERE, "Section not found");
+            if(debug) {
+                Logger.getLogger(KafkaConfigFile.class.getName()).log(Level.SEVERE, "Section not found");
+            }
             _zkHost = "localhost";
         }
     }
