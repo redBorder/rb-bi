@@ -12,6 +12,10 @@ echo "Install Kafka-State."
 
 mvn -f ./lib/kafka-state/pom.xml install -Dmaven.test.skip=true
 
+echo "Install Metrics-Storm."
+
+mvn -f ./lib/metrics-storm/pom.xml install -Dmaven.test.skip=true
+
 echo "Build redBorder-Topology."
 
 mvn package
