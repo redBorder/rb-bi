@@ -32,6 +32,8 @@ public class KafkaConfigFile {
     public KafkaConfigFile(boolean debug) {
         _debug = debug;
 
+        _availableTopics = new ArrayList<>();
+
         try {
             Map<String, Object> map = (Map<String, Object>) Yaml.load(new File(CONFIG_FILE_PATH));
 
@@ -40,7 +42,12 @@ public class KafkaConfigFile {
 
             for (Object value : _production.values()) {
                 Map<String, Object> config = (Map<String, Object>) value;
-                _availableTopics.add(value.toString());
+
+                _availableTopics.add(config.get("input_topic").toString());
+                if (config.get("output_topic") != null) {
+                    _availableTopics.add(config.get("output_topic").toString());
+                }
+
 
                 if (_debug) {
                     System.out.println("Select section: " + value.toString());
@@ -60,10 +67,11 @@ public class KafkaConfigFile {
     /**
      * Getter.
      *
-     * @param section Section to read from the config file
+     * @param section  Section to read from the config file
      * @param property Property to read from the section
      * @return Property read
      */
+
     public String get(String section, String property) {
         Map<String, Object> map = (Map<String, Object>) _production.get(section);
         String result = null;
@@ -115,8 +123,13 @@ public class KafkaConfigFile {
     }
 
     public boolean darklistIsEnabled() {
-        String ret = (String) _general.get("blacklist");
-        return ret != null && ret.equals("true");
+        if(_general != null) {
+            String ret = (String) _general.get("blacklist");
+            return ret != null && ret.equals("true");
+        }else{
+            return false;
+        }
+
     }
 
     public List<String> getAvailableTopics() {

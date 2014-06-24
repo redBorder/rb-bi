@@ -82,26 +82,26 @@ public class RedBorderTopology {
         // Get kafka output topic
         int tranquilitySections = 0;
         _outputTopic = _kafkaConfig.getOutputTopic("traffics");
-        if (_outputTopic != null) tranquilitySections++;
+        if (_outputTopic == null) tranquilitySections++;
         _outputTopicEvent = _kafkaConfig.getOutputTopic("events");
-        if (_outputTopicEvent != null) tranquilitySections++;
+        if (_outputTopicEvent == null) tranquilitySections++;
         _outputTopicMonitor = _kafkaConfig.getOutputTopic("monitor");
-        if (_outputTopicMonitor != null) tranquilitySections++;
+        if (_outputTopicMonitor == null) tranquilitySections++;
 
         // Get tranquility configuration
         if (tranquilitySections > 0) {
-            int capacity = _config.getMiddleManagerCapacity();
+           int capacity = _config.getMiddleManagerCapacity() / tranquilitySections;
 
             if ((capacity % 2) != 0) capacity = capacity - 1;
 
             // TODO
-            /* if (capacity <= 2 * tranquilitySections) {
+            if (capacity <= 2 * tranquilitySections) {
                 _tranquilityPartitions = 1;
                 _tranquilityReplicas = 1;
             } else {
                 _tranquilityPartitions = capacity / 4;
                 _tranquilityReplicas = 2;
-            } */
+            }
             _tranquilityPartitions = 1;
             _tranquilityReplicas = 1;
         }
@@ -109,12 +109,16 @@ public class RedBorderTopology {
 
     public static TridentTopology topology() {
         TridentTopology topology = new TridentTopology();
-        List<String> fields = new ArrayList<>();
+        List<String> fieldsFlow = new ArrayList<>();
+        List<String> fieldsEvent = new ArrayList<>();
+        List<String> fieldsMonitor = new ArrayList<>();
+
+
 
         /* States and Streams*/
         TridentState locationState, mobileState, radiusState, trapState, darklistState;
         RiakState.Factory locationStateFactory, mobileStateFactory, trapStateFactory, radiusStateFactory;
-        Stream locationStream, radiusStream;
+        Stream locationStream = null, radiusStream = null, eventsStream = null, monitorStream = null;
 
         /* Partitions */
         int flowPartition = _config.getKafkaPartitions("rb_flow");
@@ -127,41 +131,54 @@ public class RedBorderTopology {
          *  Flow
          */
 
-        Stream mainStream = topology.newStream("rb_flow", new TridentKafkaSpout(_kafkaConfig, "traffics").builder())
-                .parallelismHint(flowPartition).shuffle().name("Main")
+
+        Stream flowStream = topology.newStream("rb_flow", new TridentKafkaSpout(_kafkaConfig, "traffics").builder())
+                .parallelismHint(flowPartition).shuffle().name("Flows")
                 .each(new Fields("str"), new MapperFunction(_debug, "rb_flow"), new Fields("flows"))
                 .each(new Fields("flows"), new MacVendorFunction(_debug), new Fields("macVendorMap"))
                 .each(new Fields("flows"), new GeoIpFunction(_debug), new Fields("geoIPMap"))
                 .each(new Fields("flows"), new AnalizeHttpUrlFunction(_debug), new Fields("httpUrlMap"));
 
-        fields.add("flows");
-        fields.add("geoIPMap");
-        fields.add("macVendorMap");
-        fields.add("httpUrlMap");
+        fieldsFlow.add("flows");
+        fieldsFlow.add("geoIPMap");
+        fieldsFlow.add("macVendorMap");
+        fieldsFlow.add("httpUrlMap");
 
         /*
          *  Events
          */
 
-        Stream eventsStream = topology.newStream("rb_event", new TridentKafkaSpout(_kafkaConfig, "events").builder())
-                .parallelismHint(eventsPartition).shuffle().name("Events")
-                .each(new Fields("str"), new MapperFunction(_debug), new Fields("event"))
-                .each(new Fields("event"), new MacVendorFunction(_debug), new Fields("macVendorMap"))
-                .each(new Fields("event"), new GeoIpFunction(_debug), new Fields("geoIPMap"));
+        if (_kafkaConfig.contains("events")) {
+
+            eventsStream = topology.newStream("rb_event", new TridentKafkaSpout(_kafkaConfig, "events").builder())
+                    .parallelismHint(eventsPartition).shuffle().name("Events")
+                    .each(new Fields("str"), new MapperFunction(_debug, "rb_event"), new Fields("event"))
+                    .each(new Fields("event"), new MacVendorFunction(_debug), new Fields("macVendorMap"))
+                    .each(new Fields("event"), new GeoIpFunction(_debug), new Fields("geoIPMap"));
+
+            fieldsEvent.add("event");
+            fieldsEvent.add("macVendorMap");
+            fieldsEvent.add("geoIPMap");
+        }
 
         /*
          *  Monitor
          */
 
-        Stream monitorStream = topology.newStream("rb_monitor", new TridentKafkaSpout(_kafkaConfig, "monitor").builder())
-                .parallelismHint(monitorPartition).shuffle().name("Monitor")
-                .each(new Fields("str"), new MapperFunction(_debug), new Fields("finalMap"));
+        if (_kafkaConfig.contains("monitor")) {
+            locationPartition = _config.getKafkaPartitions("rb_loc");
+
+            monitorStream = topology.newStream("rb_monitor", new TridentKafkaSpout(_kafkaConfig, "monitor").builder())
+                    .parallelismHint(monitorPartition).shuffle().name("Monitor")
+                    .each(new Fields("str"), new MapperFunction(_debug, "rb_monitor"), new Fields("finalMap"));
+
+        }
 
         /*
          *  Location
          */
 
-        if (_kafkaConfig.contains("rb_loc")) {
+        if (_kafkaConfig.contains("location")) {
             locationPartition = _config.getKafkaPartitions("rb_loc");
             locationStateFactory = new RiakState.Factory<>("rbbi:location", _riakConfig.getServers(), 8087, Map.class);
             locationState = topology.newStaticState(locationStateFactory);
@@ -183,17 +200,17 @@ public class RedBorderTopology {
                     new MergeMapsFunction(_debug), new Fields("finalMap")));
 
             // Enrich flow stream
-            mainStream = mainStream.stateQuery(locationState, new Fields("flows"),
+            flowStream = flowStream.stateQuery(locationState, new Fields("flows"),
                     new RiakQuery("client_mac", _debug), new Fields("mseMap"));
 
-            fields.add("mseMap");
+            fieldsFlow.add("mseMap");
         }
 
         /*
          *  Mobile
          */
 
-        if (_kafkaConfig.contains("rb_mobile")) {
+        if (_kafkaConfig.contains("mobile")) {
             mobilePartition = _config.getKafkaPartitions("rb_mobile");
             mobileStateFactory = new RiakState.Factory<>("rbbi:mobile", _riakConfig.getServers(), 8087, Map.class);
             mobileState = topology.newStaticState(mobileStateFactory);
@@ -205,21 +222,21 @@ public class RedBorderTopology {
                     .partitionPersist(mobileStateFactory, new Fields("key", "mobileMap"), new RiakUpdater("key", "mobileMap", _debug));
 
             // Enrich flow stream
-            mainStream = mainStream
+            flowStream = flowStream
                     .stateQuery(mobileState, new Fields("flows"), new RiakQuery("src", _debug), new Fields("ipAssignMap"))
                     .stateQuery(mobileState, new Fields("ipAssignMap"), new RiakQuery("imsi", _debug), new Fields("ueRegisterMap"))
                     .stateQuery(mobileState, new Fields("ueRegisterMap"), new RiakQuery("path", _debug), new Fields("hnbRegisterMap"));
 
-            fields.add("ipAssignMap");
-            fields.add("ueRegisterMap");
-            fields.add("hnbRegisterMap");
+            fieldsFlow.add("ipAssignMap");
+            fieldsFlow.add("ueRegisterMap");
+            fieldsFlow.add("hnbRegisterMap");
         }
 
         /*
          *  Trap
          */
 
-        if (_kafkaConfig.contains("rb_trap")) {
+        if (_kafkaConfig.contains("trap")) {
             trapPartition = _config.getKafkaPartitions("rb_trap");
             trapStateFactory = new RiakState.Factory<>("rbbi:trap", _riakConfig.getServers(), 8087, Map.class);
             trapState = topology.newStaticState(trapStateFactory);
@@ -232,17 +249,17 @@ public class RedBorderTopology {
                     .partitionPersist(trapStateFactory, new Fields("rssiKey", "rssiValue"), new RiakUpdater("rssiKey", "rssiValue", _debug));
 
             // Enrich flow stream
-            mainStream = mainStream
+            flowStream = flowStream
                     .stateQuery(trapState, new Fields("flows"), new RiakQuery("client_mac", _debug), new Fields("rssiMap"));
 
-            fields.add("rssiMap");
+            fieldsFlow.add("rssiMap");
         }
 
         /*
          *  Radius
          */
 
-        if (_kafkaConfig.contains("rb_radius")) {
+        if (_kafkaConfig.contains("radius")) {
             radiusPartition = _config.getKafkaPartitions("rb_radius");
             radiusStateFactory = new RiakState.Factory<>("rbbi:radius", _riakConfig.getServers(), 8087, Map.class);
             radiusState = topology.newStaticState(radiusStateFactory);
@@ -282,10 +299,10 @@ public class RedBorderTopology {
                             new MergeMapsFunction(_debug), new Fields("finalMap")));
 
             // Enrich flow stream
-            mainStream = mainStream.stateQuery(radiusState, new Fields("flows"), new RiakQuery("client_mac", _debug),
+            flowStream = flowStream.stateQuery(radiusState, new Fields("flows"), new RiakQuery("client_mac", _debug),
                     new Fields("radiusMap"));
 
-            fields.add("radiusMap");
+            fieldsFlow.add("radiusMap");
         }
 
         /*
@@ -298,31 +315,36 @@ public class RedBorderTopology {
                     _riakConfig.getServers(), 8087, Map.class));
 
             // Enrich flow stream with darklist fields
-            mainStream = mainStream
+            flowStream = flowStream
                     .stateQuery(darklistState, new Fields("flows"), new RiakQuery("src", _debug),
                             new Fields("darklistMap"));
 
-            fields.add("darklistMap");
+            fieldsFlow.add("darklistMap");
         }
 
         /*
          *  Join fields and persist
          */
 
-        persist(mainStream.each(new Fields(fields), new MergeMapsFunction(_debug), new Fields("finalMap"))
+        persist(flowStream.each(new Fields(fieldsFlow), new MergeMapsFunction(_debug), new Fields("finalMap"))
                 .project(new Fields("finalMap"))
                 .parallelismHint(_config.getWorkers())
-                .shuffle().name("Producer")
-                .each(new Fields(), new ThroughputLoggingFilter()));
+                .shuffle().name("Producer"));
 
-        persistEvent(eventsStream.each(new Fields("event", "macVendorMap", "geoIPMap"), new MergeMapsFunction(_debug), new Fields("finalMap"))
-                .project(new Fields("finalMap"))
-                .parallelismHint(_config.getWorkers())
-                .shuffle().name("Event Producer"));
+        if (_kafkaConfig.contains("events")) {
 
-        persistMonitor(monitorStream.project(new Fields("finalMap"))
-                .parallelismHint(_config.getWorkers())
-                .shuffle().name("Monitor Producer"));
+            persistEvent(eventsStream.each(new Fields(fieldsEvent), new MergeMapsFunction(_debug), new Fields("finalMap"))
+                    .project(new Fields("finalMap"))
+                    .parallelismHint(_config.getWorkers())
+                    .shuffle().name("Event Producer"));
+        }
+
+        if (_kafkaConfig.contains("monitor")) {
+
+            persistMonitor(monitorStream.project(new Fields("finalMap"))
+                    .parallelismHint(_config.getWorkers())
+                    .shuffle().name("Monitor Producer"));
+        }
 
         /*
          *  Show info
@@ -362,10 +384,10 @@ public class RedBorderTopology {
 
         print(pw, "\n----------------------- Topology Enrichment-----------------------\n");
         print(pw, " - flow: ");
-        print(pw, "   * location: " + getEnrichment(_kafkaConfig.contains("rb_loc")));
-        print(pw, "   * mobile: " + getEnrichment(_kafkaConfig.contains("rb_mobile")));
-        print(pw, "   * trap: " + getEnrichment(_kafkaConfig.contains("rb_trap")));
-        print(pw, "   * radius (overwrite_cache: " + _kafkaConfig.getOverwriteCache("radius") + ") : " + getEnrichment(_kafkaConfig.contains("rb_radius")));
+        print(pw, "   * location: " + getEnrichment(_kafkaConfig.contains("location")));
+        print(pw, "   * mobile: " + getEnrichment(_kafkaConfig.contains("mobile")));
+        print(pw, "   * trap: " + getEnrichment(_kafkaConfig.contains("trap")));
+        print(pw, "   * radius (overwrite_cache: " + _kafkaConfig.getOverwriteCache("radius") + ") : " + getEnrichment(_kafkaConfig.contains("radius")));
         print(pw, "   * darklist: " + getEnrichment(_kafkaConfig.darklistIsEnabled()));
 
         pw.flush();
