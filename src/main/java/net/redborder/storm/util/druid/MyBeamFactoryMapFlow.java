@@ -53,17 +53,17 @@ public class MyBeamFactoryMapFlow implements BeamFactory<Map<String, Object>> {
     @Override
     public Beam<Map<String, Object>> makeBeam(Map<?, ?> conf, IMetricsContext metrics) {
         try {
-            KafkaConfigFile configFile = new KafkaConfigFile("traffics", debug);
+            KafkaConfigFile configFile = new KafkaConfigFile(debug);
             
             final CuratorFramework curator = CuratorFrameworkFactory
                     .builder()
-                    .connectString(configFile.getZkHost())
+                    .connectString(configFile.getZkHost("traffics"))
                     .retryPolicy(new RetryOneTime(1000))
                     .build();
             
             curator.start();
 
-            final String dataSource = configFile.getTopic();
+            final String dataSource = configFile.getTopic("traffics");
             final List<String> exclusions = ImmutableList.of(
                     "http_url", "http_user_agent", "first_switched", "transaction_id",
                     "flow_end_reason", "flow_sampler_id", "src_name", "dst_name",

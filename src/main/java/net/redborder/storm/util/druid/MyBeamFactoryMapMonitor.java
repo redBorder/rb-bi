@@ -54,19 +54,19 @@ public class MyBeamFactoryMapMonitor implements BeamFactory<Map<String, Object>>
     @Override
     public Beam<Map<String, Object>> makeBeam(Map<?, ?> conf, IMetricsContext metrics) {
         try {
-            KafkaConfigFile configFile = new KafkaConfigFile("monitor", debug);
+            KafkaConfigFile configFile = new KafkaConfigFile(debug);
             
            // final CuratorFramework curator = CuratorFrameworkFactory.newClient(
            //         _zkConnect, new BoundedExponentialBackoffRetry(100, 1000, 5));
             final CuratorFramework curator = CuratorFrameworkFactory
                     .builder()
-                    .connectString(configFile.getZkHost())
+                    .connectString(configFile.getZkHost("monitor"))
                     .retryPolicy(new RetryOneTime(1000))
                     .build();
             
             curator.start();
 
-            final String dataSource = configFile.getTopic();
+            final String dataSource = configFile.getTopic("monitor");
             final List<String> dimensions = ImmutableList.of(
                     "sensor_name", "monitor", "value", "type", "unit");
             final List<String> exclusions = ImmutableList.of(

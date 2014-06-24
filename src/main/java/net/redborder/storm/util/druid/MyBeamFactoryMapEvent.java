@@ -52,17 +52,17 @@ public class MyBeamFactoryMapEvent implements BeamFactory<Map<String, Object>> {
     @Override
     public Beam<Map<String, Object>> makeBeam(Map<?, ?> conf, IMetricsContext metrics) {
         try {
-            KafkaConfigFile configFile = new KafkaConfigFile("events", debug);
+            KafkaConfigFile configFile = new KafkaConfigFile(debug);
 
             final CuratorFramework curator = CuratorFrameworkFactory
                     .builder()
-                    .connectString(configFile.getZkHost())
+                    .connectString(configFile.getZkHost("events"))
                     .retryPolicy(new RetryOneTime(1000))
                     .build();
 
             curator.start();
 
-            final String dataSource = configFile.getTopic();
+            final String dataSource = configFile.getTopic("events");
             final List<String> exclusions = ImmutableList.of("payload", "id",
                     "tcpseq", "tcpack", "tcplen", "tcpwindow", "icmpid",
                     "icmpseq", "dgmlen", "vlan_priority", "vlan_drop",

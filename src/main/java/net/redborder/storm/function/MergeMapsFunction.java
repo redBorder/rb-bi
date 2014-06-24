@@ -18,11 +18,11 @@ import storm.trident.tuple.TridentTuple;
  *
  * @author andresgomez
  */
-public class JoinFlowFunction extends BaseFunction {
+public class MergeMapsFunction extends BaseFunction {
     
     boolean debug;
     
-    public JoinFlowFunction(boolean debug){
+    public MergeMapsFunction(boolean debug){
         this.debug=debug;
     }
 

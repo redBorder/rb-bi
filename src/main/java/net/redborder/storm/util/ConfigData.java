@@ -38,9 +38,9 @@ public class ConfigData {
     public ConfigData(KafkaConfigFile kafkaConfig) {
         conf = new Config();
         kafkaPartitions = new HashMap<>();
-        this.topics = kafkaConfig.getAvaibleTopics();
+        this.topics = kafkaConfig.getAvailableTopics();
         RetryPolicy retryPolicy = new ExponentialBackoffRetry(1000, 3);
-        _zookeeper=kafkaConfig.getZkHost();
+        _zookeeper = kafkaConfig.getZkHost("traffics");
         client = CuratorFrameworkFactory.newClient(_zookeeper, retryPolicy);
         client.start();
         initKafkaPartitions();

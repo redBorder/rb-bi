@@ -25,13 +25,11 @@ public class TridentKafkaSpout {
     /**
      * Constructor
      *
-     * @param config
+     * @param config Config file to read properties from
      * @param section Section of the kafka config file to read properties from.
-     * @throws java.io.FileNotFoundException
      */
     public TridentKafkaSpout(KafkaConfigFile config, String section) {
-        config.setSection(section);
-        _kafkaConfig = new TridentKafkaConfig(new ZkHosts(config.getZkHost()), config.getTopic(), "stormKafka");
+        _kafkaConfig = new TridentKafkaConfig(new ZkHosts(config.getZkHost(section)), config.getTopic(section), "stormKafka");
         _kafkaConfig.scheme = new SchemeAsMultiScheme(new StringScheme());
         _kafkaConfig.bufferSizeBytes = 1024 * 1024 * 4;
         _kafkaConfig.fetchSizeBytes = 1024 * 1024 * 4;
@@ -39,7 +37,7 @@ public class TridentKafkaSpout {
     }
 
     /**
-     * Build the trindetKafkaSpout.
+     * Build the tridentKafkaSpout.
      *
      * @return Trident spout of kafka.
      */

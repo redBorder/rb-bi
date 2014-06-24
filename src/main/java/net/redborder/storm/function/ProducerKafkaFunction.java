@@ -36,7 +36,7 @@ public class ProducerKafkaFunction extends BaseFunction {
 
     public ProducerKafkaFunction(KafkaConfigFile config, String topic) {
         RetryPolicy retryPolicy = new ExponentialBackoffRetry(1000, 3);
-        CuratorFramework client = CuratorFrameworkFactory.newClient(config.getZkHost(), retryPolicy);
+        CuratorFramework client = CuratorFrameworkFactory.newClient(config.getZkHost("traffics"), retryPolicy);
         _brokerList = new String();
         client.start();
         
