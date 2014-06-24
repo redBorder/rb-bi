@@ -103,7 +103,7 @@ public class Metrics2KafkaConsumer implements IMetricsConsumer {
             System.out.println("Sending metric : " + metric.name + " ...");
 
             map.put("timestamp", System.currentTimeMillis()/1000);
-            map.put("monitor", metric.name + "_per_instance");
+            map.put("monitor", metric.name);
             map.put("sensor_name", metric.worker);
 
 
