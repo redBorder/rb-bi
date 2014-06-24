@@ -128,7 +128,7 @@ public class RedBorderTopology {
 
         Stream mainStream = topology.newStream("rb_flow", new TridentKafkaSpout(_kafkaConfig, "traffics").builder())
                 .parallelismHint(flowPartition).shuffle().name("Main")
-                .each(new Fields("str"), new MapperFunction(_debug), new Fields("flows"))
+                .each(new Fields("str"), new MapperFunction(_debug, "rb_flow"), new Fields("flows"))
                 .each(new Fields("flows"), new MacVendorFunction(_debug), new Fields("macVendorMap"))
                 .each(new Fields("flows"), new GeoIpFunction(_debug), new Fields("geoIPMap"))
                 .each(new Fields("flows"), new AnalizeHttpUrlFunction(_debug), new Fields("httpUrlMap"));
@@ -150,7 +150,7 @@ public class RedBorderTopology {
             // Get msg
             locationStream = topology.newStream("rb_loc", new TridentKafkaSpout(_kafkaConfig, "location").builder())
                     .name("Location").parallelismHint(locationPartition).shuffle()
-                    .each(new Fields("str"), new MapperFunction(_debug), new Fields("mse_map"))
+                    .each(new Fields("str"), new MapperFunction(_debug, "rb_loc"), new Fields("mse_map"))
                     .each(new Fields("mse_map"), new GetMSEdata(_debug), new Fields("src_mac", "mse_data", "mse_data_druid"))
                     .each(new Fields("mse_data_druid"), new MacVendorFunction(_debug), new Fields("mseMacVendorMap"))
                     .each(new Fields("mse_data_druid"), new GeoIpFunction(_debug), new Fields("mseGeoIPMap"));
@@ -208,7 +208,7 @@ public class RedBorderTopology {
             // Get msg and save it to enrich later on
             topology.newStream("rb_trap", new TridentKafkaSpout(_kafkaConfig, "trap").builder())
                     .name("Trap").parallelismHint(trapPartition).shuffle()
-                    .each(new Fields("str"), new MapperFunction(_debug), new Fields("rssi"))
+                    .each(new Fields("str"), new MapperFunction(_debug, "rb_trap"), new Fields("rssi"))
                     .each(new Fields("rssi"), new GetTRAPdata(), new Fields("rssiKey", "rssiValue"))
                     .partitionPersist(trapStateFactory, new Fields("rssiKey", "rssiValue"), new RiakUpdater("rssiKey", "rssiValue", _debug));
 
@@ -231,7 +231,7 @@ public class RedBorderTopology {
             // Get msg
             radiusStream = topology.newStream("rb_radius", new TridentKafkaSpout(_kafkaConfig, "radius").builder())
                     .name("Radius").parallelismHint(radiusPartition).shuffle()
-                    .each(new Fields("str"), new MapperFunction(_debug), new Fields("radius"));
+                    .each(new Fields("str"), new MapperFunction(_debug, "rb_radius"), new Fields("radius"));
 
             if (_kafkaConfig.getOverwriteCache("radius")) {
                 // Get the radius data from the radius message

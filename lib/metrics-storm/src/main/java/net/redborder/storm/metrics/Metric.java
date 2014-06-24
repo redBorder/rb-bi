@@ -9,6 +9,7 @@ public class Metric {
     String component;
     Integer port;
     Integer taskId;
+    long timestamp;
     Object value;
 
     public Metric(String name, String worker, Integer port, String component, Integer taskId, Object value) {
