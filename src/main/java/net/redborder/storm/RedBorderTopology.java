@@ -42,12 +42,9 @@ public class RedBorderTopology {
     static boolean _debug = false;
 
     public static void main(String[] args) throws AlreadyAliveException, InvalidTopologyException {
-
         String topologyName = "redBorder-Topology";
-        TridentTopology topology = null;
 
         if (args.length < 1) {
-
             System.out.println("./storm jar {name_jar} {main_class} {local|cluster} [_debug]");
         } else {
             if (args.length == 2) {
@@ -60,19 +57,12 @@ public class RedBorderTopology {
             }
 
             init();
-            try {
-                 topology = topology();
-            }catch (IOException ex){
-                System.out.println("Error writting info file:" +ex);
-                System.exit(1);
-            }
+            TridentTopology topology = topology();
 
             if (args[0].equalsIgnoreCase("local")) {
                 Config conf = _config.getConfig(args[0]);
-
                 LocalCluster cluster = new LocalCluster();
                 cluster.submitTopology(topologyName, conf, topology.build());
-
             } else if (args[0].equalsIgnoreCase("cluster")) {
                 Config conf = _config.getConfig(args[0]);
                 StormSubmitter.submitTopology(topologyName, conf, topology.build());
@@ -107,7 +97,7 @@ public class RedBorderTopology {
         }
     }
 
-    public static TridentTopology topology() throws IOException {
+    public static TridentTopology topology() {
         TridentTopology topology = new TridentTopology();
         List<String> fields = new ArrayList<>();
         List<String> topics = _kafkaConfig.getAvaibleTopics();
@@ -300,7 +290,13 @@ public class RedBorderTopology {
          *  Show info
          */
 
-        PrintWriter pw = new PrintWriter(new FileWriter("/opt/rb/var/redBorder-BI/app/topologyInfo"));
+        PrintWriter pw = null;
+
+        try {
+            pw = new PrintWriter(new FileWriter("/opt/rb/var/redBorder-BI/app/topologyInfo"));
+        } catch (IOException e) {
+            System.out.println("Error writing info file:" + e);
+        }
 
         print(pw, "----------------------- Topology info: " + "-----------------------");
         print(pw, "- Date topology: " + new Date().toString());
@@ -365,7 +361,7 @@ public class RedBorderTopology {
     }
 
     private static void print(PrintWriter pw, String msg) {
-        pw.print(msg + "\n");
+        if (pw != null) pw.print(msg + "\n");
         System.out.println(msg);
     }
 
