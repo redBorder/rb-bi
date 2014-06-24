@@ -7,6 +7,7 @@ package net.redborder.storm.util;
 
 import backtype.storm.Config;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +16,7 @@ import java.util.logging.Logger;
 import net.redborder.storm.function.MapperFunction;
 import net.redborder.storm.function.ProducerKafkaFunction;
 import net.redborder.storm.metrics.KafkaConsumerMonitorMetrics;
+import net.redborder.storm.metrics.Metrics2KafkaConsumer;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -139,10 +141,25 @@ public class ConfigData {
             conf.put(Config.TOPOLOGY_WORKERS, getWorkers());
             conf.put(Config.TOPOLOGY_MAX_SPOUT_PENDING, 5);
 
-            Map<String, Object> metricsConf = new HashMap<>();
-            metricsConf.put("zookeeper", _zookeeper);
+            /*
+                    Metrics
+             */
 
-            conf.registerMetricsConsumer(KafkaConsumerMonitorMetrics.class, metricsConf, 1);
+            Map<String, Object> zkMetricsConf = new HashMap<>();
+            zkMetricsConf.put("zookeeper", _zookeeper);
+            conf.registerMetricsConsumer(KafkaConsumerMonitorMetrics.class, zkMetricsConf, 1);
+
+            Map<String, Object> functionMetricsConf = new HashMap<>();
+
+            List<String> metrics = new ArrayList<>();
+
+            metrics.add("throughput");
+
+            functionMetricsConf.put("metrics", metrics );
+            functionMetricsConf.put("topic", "rb_monitor");
+
+            conf.registerMetricsConsumer(Metrics2KafkaConsumer.class, functionMetricsConf, 1);
+
 
         }
         return conf;

@@ -17,35 +17,44 @@ import java.util.logging.Level;
 /**
  * Created by andresgomez on 23/06/14.
  */
-public class KafkaMetrics implements IMetricsConsumer {
+public class Metrics2KafkaConsumer implements IMetricsConsumer {
 
     Producer<String, String> producer;
     ObjectMapper _mapper;
     String metricsJSON;
     List<String> metrics;
+    String _topic;
+    Map<String, Long> counter;
+    long timestamp=0;
 
 
-    public static final Logger LOG = LoggerFactory.getLogger(KafkaMetrics.class);
+    public static final Logger LOG = LoggerFactory.getLogger(Metrics2KafkaConsumer.class);
 
     @Override
-    public void prepare(Map map, Object o, TopologyContext topologyContext, IErrorReporter iErrorReporter) {
+    public void prepare(Map map, Object conf, TopologyContext topologyContext, IErrorReporter iErrorReporter) {
+        Map<String, Object> config = (Map<String, Object>) conf;
 
         Properties props = new Properties();
         props.put("metadata.broker.list", "192.168.101.204:9092, 192.168.101.205:9092, 192.168.101.206:9092");
         props.put("serializer.class", "kafka.serializer.StringEncoder");
         props.put("partitioner.class", "net.redborder.storm.metrics.SimplePartitioner");
-        props.put("request.required.acks", "0");
+        props.put("request.required.acks", "1");
         props.put("message.send.max.retries", "10");
 
-        ProducerConfig config = new ProducerConfig(props);
+        ProducerConfig configKafka = new ProducerConfig(props);
 
-        metrics = (List<String>) o;
+        metrics = (List<String>) config.get("metrics");
+
+        _topic = config.get("topic").toString();
+
 
         System.out.println("Metrics to kafka: " + metrics.toString());
 
-        producer = new Producer<String, String>(config);
+        producer = new Producer<String, String>(configKafka);
 
         _mapper = new ObjectMapper();
+
+        counter = new HashMap<String, Long>();
 
 
     }
@@ -60,9 +69,8 @@ public class KafkaMetrics implements IMetricsConsumer {
 
     @Override
     public void cleanup() {
-
+        producer.close();
     }
-
 
 
 
@@ -76,7 +84,7 @@ public class KafkaMetrics implements IMetricsConsumer {
 
         for (DataPoint p : dataPoints) {
 
-            res.add(new Metric(p.name, worker,taskInfo.srcWorkerPort , component, taskInfo.srcTaskId, p.value));
+            res.add(new Metric(p.name, worker, taskInfo.srcWorkerPort , component, taskInfo.srcTaskId, p.value));
         }
         return res;
     }
@@ -88,20 +96,24 @@ public class KafkaMetrics implements IMetricsConsumer {
     public void report(Metric metric, Object value) {
 
 
-        if(metrics.contains(metric.name)) {
+        if(metric.name.contains("throughput_")) {
 
             Map<String, Object> map = (Map<String, Object>) value;
-            map.put("metric_name", metric.name);
-            map.put("worker", metric.worker);
-            map.put("componentId", metric.component);
+
+            System.out.println("Sending metric : " + metric.name + " ...");
+
+            map.put("timestamp", System.currentTimeMillis()/1000);
+            map.put("monitor", metric.name);
+            map.put("sensor_name", metric.worker);
+
 
             try {
                 metricsJSON = _mapper.writeValueAsString(map);
             } catch (IOException ex) {
-                java.util.logging.Logger.getLogger(KafkaMetrics.class.getName()).log(Level.SEVERE, null, ex);
+                java.util.logging.Logger.getLogger(Metrics2KafkaConsumer.class.getName()).log(Level.SEVERE, null, ex);
             }
 
-            KeyedMessage<String, String> data = new KeyedMessage<String, String>("rb_metrics", metricsJSON);
+            KeyedMessage<String, String> data = new KeyedMessage<String, String>(_topic, metricsJSON);
 
             producer.send(data);
         }
