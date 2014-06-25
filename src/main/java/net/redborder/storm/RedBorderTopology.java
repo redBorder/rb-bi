@@ -86,15 +86,20 @@ public class RedBorderTopology {
         _outputTopicEvent = _kafkaConfig.getOutputTopic("events");
         if (_outputTopicEvent == null) tranquilitySections++;
         _outputTopicMonitor = _kafkaConfig.getOutputTopic("monitor");
-        if (_outputTopicMonitor == null) tranquilitySections++;
+        // if (_outputTopicMonitor == null) tranquilitySections++;
 
         // Get tranquility configuration
         if (tranquilitySections > 0) {
-           int capacity = _config.getMiddleManagerCapacity() / tranquilitySections;
+           int capacity = _config.getMiddleManagerCapacity();
+
+            if(_kafkaConfig.contains("monitor")){
+                capacity = capacity - 2;
+            }
+
+            capacity = capacity /tranquilitySections;
 
             if ((capacity % 2) != 0) capacity = capacity - 1;
 
-            // TODO
             if (capacity <= 2 * tranquilitySections) {
                 _tranquilityPartitions = 1;
                 _tranquilityReplicas = 1;
@@ -405,7 +410,7 @@ public class RedBorderTopology {
                     .parallelismHint(flowPrePartitions);
         } else {
             StateFactory druidStateFlow = new TridentBeamStateFactory<>(
-                    new MyBeamFactoryMapFlow(_tranquilityPartitions, _tranquilityReplicas, _debug));
+                    new MyBeamFactoryMapFlow(2, 1, _debug));
 
             ret = s.partitionPersist(druidStateFlow, new Fields("finalMap"), new TridentBeamStateUpdater())
                     .parallelismHint(_tranquilityPartitions);
@@ -426,7 +431,7 @@ public class RedBorderTopology {
                     .parallelismHint(eventPrePartitions);
         } else {
             StateFactory druidStateEvent = new TridentBeamStateFactory<>(
-                    new MyBeamFactoryMapEvent(_tranquilityPartitions, _tranquilityReplicas, _debug));
+                    new MyBeamFactoryMapEvent(1, 1, _debug));
 
             ret = s.partitionPersist(druidStateEvent, new Fields("finalMap"), new TridentBeamStateUpdater())
                     .parallelismHint(_tranquilityPartitions);
@@ -447,10 +452,10 @@ public class RedBorderTopology {
                     .parallelismHint(monitorPrePartitions);
         } else {
             StateFactory druidStateMonitor = new TridentBeamStateFactory<>(
-                    new MyBeamFactoryMapMonitor(_tranquilityPartitions, _tranquilityReplicas, _debug));
+                    new MyBeamFactoryMapMonitor(1, 1, _debug));
 
             ret = s.partitionPersist(druidStateMonitor, new Fields("finalMap"), new TridentBeamStateUpdater())
-                    .parallelismHint(_tranquilityPartitions);
+                    .parallelismHint(1);
         }
 
         return ret;
