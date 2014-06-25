@@ -102,6 +102,7 @@ public class RedBorderTopology {
                 _tranquilityPartitions = capacity / 4;
                 _tranquilityReplicas = 2;
             }
+
             _tranquilityPartitions = 1;
             _tranquilityReplicas = 1;
         }
@@ -111,9 +112,6 @@ public class RedBorderTopology {
         TridentTopology topology = new TridentTopology();
         List<String> fieldsFlow = new ArrayList<>();
         List<String> fieldsEvent = new ArrayList<>();
-        List<String> fieldsMonitor = new ArrayList<>();
-
-
 
         /* States and Streams*/
         TridentState locationState, mobileState, radiusState, trapState, darklistState;
