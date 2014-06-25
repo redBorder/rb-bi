@@ -29,74 +29,89 @@ import org.codehaus.jackson.map.ObjectMapper;
  */
 public class ConfigData {
 
-    CuratorFramework client;
-    Config conf;
-    List<String> topics;
-    Map<String, Integer> kafkaPartitions;
-    Integer numWorkers;
-    int middleManagers;
-    String _zookeeper;
+    public static boolean debug;
 
-    public ConfigData(KafkaConfigFile kafkaConfig) {
-        conf = new Config();
-        kafkaPartitions = new HashMap<>();
-        this.topics = kafkaConfig.getAvailableTopics();
+    private CuratorFramework _curator;
+    private Config _conf;
+    private ConfigFile _configFile;
+    private List<String> _topics;
+    private Map<String, Integer> _kafkaPartitions;
+    private Map<String, Integer> _tranquilityPartitions;
+    private Integer _numWorkers;
+    private int _middleManagers;
+    private String _zookeeper;
+
+    public ConfigData() {
+        _conf = new Config();
+        _configFile = new ConfigFile();
+        _kafkaPartitions = new HashMap<>();
+        _topics = _configFile.getAvailableTopics();
+        _zookeeper = _configFile.getZkHost();
+        debug = false;
+        getZkData();
+        getTranquilityPartitions();
+    }
+
+    private void getZkData() {
         RetryPolicy retryPolicy = new ExponentialBackoffRetry(1000, 3);
-        _zookeeper = kafkaConfig.getZkHost("traffics");
-        client = CuratorFrameworkFactory.newClient(_zookeeper, retryPolicy);
-        client.start();
+        _curator = CuratorFrameworkFactory.newClient(_zookeeper, retryPolicy);
+        _curator.start();
         initKafkaPartitions();
         initWorkers();
         initMiddleManagerCapacity();
-        client.close();
+        _curator.close();
     }
 
     private void initKafkaPartitions() {
         List<String> partitionsList;
 
-        for (String topic : topics) {
+        for (String topic : _topics) {
             try {
-                partitionsList = client.getChildren().forPath("/brokers/topics/" + topic + "/partitions");
-                kafkaPartitions.put(topic, partitionsList.size());
+                partitionsList = _curator.getChildren().forPath("/brokers/_topics/" + topic + "/partitions");
+                _kafkaPartitions.put(topic, partitionsList.size());
             } catch (Exception ex) {
                 Logger.getLogger(ConfigData.class.getName()).log(Level.SEVERE, "No partitions found. Default: 2", ex);
-                kafkaPartitions.put(topic, 2);
+                _kafkaPartitions.put(topic, 2);
             }
         }
 
     }
 
     public int getKafkaPartitions(String topic) {
-        return kafkaPartitions.get(topic);
+        return _kafkaPartitions.get(topic);
     }
 
     private void initWorkers() {
 
         List<String> workersList;
         try {
-            workersList = client.getChildren().forPath("/storm/supervisors");
-            numWorkers = workersList.size();
+            workersList = _curator.getChildren().forPath("/storm/supervisors");
+            _numWorkers = workersList.size();
         } catch (Exception ex) {
             Logger.getLogger(ConfigData.class.getName()).log(Level.SEVERE, "No supervisor found. Default: 1", ex);
-            numWorkers = 1;
+            _numWorkers = 1;
         }
 
     }
 
     public int getWorkers() {
-        return numWorkers;
+        return _numWorkers;
     }
 
     private void initMiddleManagerCapacity() {
-        
+        int servers = 0;
+        int minimum = 99999;
+        int total = 0;
+        int capacity;
+
         try {
-            List<String> middleManagersList = client.getChildren().forPath("/druid/indexer/announcements");
+            List<String> middleManagersList = _curator.getChildren().forPath("/druid/indexer/announcements");
 
             for (String middleManager : middleManagersList) {
                 String jsonString = null;
 
                 try {
-                    jsonString = new String(client.getData().forPath("/druid/indexer/announcements/" + middleManager), "UTF-8");
+                    jsonString = new String(_curator.getData().forPath("/druid/indexer/announcements/" + middleManager), "UTF-8");
                 } catch (Exception ex) {
                     Logger.getLogger(ProducerKafkaFunction.class.getName()).log(Level.SEVERE, null, ex);
                 }
@@ -107,8 +122,10 @@ public class ConfigData {
 
                     try {
                         json = mapper.readValue(jsonString, Map.class);
-                        middleManagers = (Integer) json.get("capacity") + middleManagers;
-
+                        Integer nodeCapacity = (Integer) json.get("capacity");
+                        if (minimum > nodeCapacity) minimum = nodeCapacity;
+                        total = nodeCapacity + total;
+                        servers++;
                     } catch (IOException | NullPointerException ex) {
                         Logger.getLogger(MapperFunction.class.getName()).log(Level.SEVERE, "Failed converting a JSON tuple to a Map class", ex);
                     }
@@ -118,51 +135,117 @@ public class ConfigData {
             Logger.getLogger(ConfigData.class.getName()).log(Level.SEVERE, "No middle managers found, maybe use kafka to kafka. Default: 1");
         }
 
-        if (middleManagers == 0) {
-            middleManagers = 1;
+        if (servers == 0) {
+            servers = 1;
+            total = 3;
+            minimum = 3;
         }
+
+        if (tranquilityReplication() == 1) {
+            capacity = total;
+        } else {
+            capacity = minimum * servers;
+        }
+
+        _middleManagers = capacity;
     }
 
     public int getMiddleManagerCapacity() {
-        return middleManagers;
+        return _middleManagers;
     }
 
-    /**
-     * Getter.
-     *
-     * @param _mode
-     * @return the config of storm topology.
-     */
-    public Config getConfig(String _mode) {
-        if (_mode.equals("local")) {
-            conf.setMaxTaskParallelism(1);
-            conf.setDebug(false);
-        } else if (_mode.equals("cluster")) {
-            conf.put(Config.TOPOLOGY_WORKERS, getWorkers());
-            conf.put(Config.TOPOLOGY_MAX_SPOUT_PENDING, 5);
+    public Config setConfig(String mode) {
+        if (mode.equals("local")) {
+            _conf.setMaxTaskParallelism(1);
+            _conf.setDebug(false);
+        } else if (mode.equals("cluster")) {
+            _conf.put(Config.TOPOLOGY_WORKERS, getWorkers());
+            _conf.put(Config.TOPOLOGY_MAX_SPOUT_PENDING, 5);
 
-            /*
-                    Metrics
-             */
-
+            /*  Metrics  */
             Map<String, Object> zkMetricsConf = new HashMap<>();
             zkMetricsConf.put("zookeeper", _zookeeper);
-            conf.registerMetricsConsumer(KafkaConsumerMonitorMetrics.class, zkMetricsConf, 1);
+            _conf.registerMetricsConsumer(KafkaConsumerMonitorMetrics.class, zkMetricsConf, 1);
 
             Map<String, Object> functionMetricsConf = new HashMap<>();
-
             List<String> metrics = new ArrayList<>();
 
             metrics.add("throughput");
-
             functionMetricsConf.put("metrics", metrics );
             functionMetricsConf.put("topic", "rb_monitor");
 
-            conf.registerMetricsConsumer(Metrics2KafkaConsumer.class, functionMetricsConf, 1);
-
-
+            _conf.registerMetricsConsumer(Metrics2KafkaConsumer.class, functionMetricsConf, 1);
         }
-        return conf;
+
+        return _conf;
     }
 
+    public void getTranquilityPartitions() {
+        int capacity = getMiddleManagerCapacity();
+        int replication = tranquilityReplication();
+        int divider = 0;
+        int slot;
+
+        if (tranquilityEnabled("traffics")) divider = divider + 2;
+        if (tranquilityEnabled("events")) divider = divider + 2;
+        if (tranquilityEnabled("monitor")) divider++;
+
+        if (divider > 0) {
+            if (capacity >= divider * replication * 2) {
+                slot = (int) Math.floor(capacity / (replication * 2)) / divider;
+                _tranquilityPartitions = new HashMap<>();
+                _tranquilityPartitions.put("traffics", slot * 2);
+                _tranquilityPartitions.put("events", slot * 2);
+                _tranquilityPartitions.put("monitor", slot);
+            } else {
+                Logger.getLogger(ConfigData.class.getName()).log(Level.SEVERE,
+                        "Not enough middle manager capacity");
+            }
+        }
+    }
+
+    public int tranquilityPartitions(String section) {
+        Integer partitions = _tranquilityPartitions.get(section);
+        return partitions == null ? 1 : partitions;
+    }
+
+    public int tranquilityReplication() {
+        return _configFile.getTranquilityReplication();
+    }
+
+    public boolean contains(String section) {
+        return _configFile.contains(section);
+    }
+
+    public String getTopic(String section) {
+        return _configFile.getTopic(section);
+    }
+
+    public String getOutputTopic(String section) {
+        return _configFile.getOutputTopic(section);
+    }
+
+    public boolean tranquilityEnabled(String section) {
+        return _configFile.getOutputTopic(section) == null;
+    }
+
+    public boolean getOverwriteCache(String section) {
+        return _configFile.getOverwriteCache(section);
+    }
+
+    public String getZkHost() {
+        return _configFile.getZkHost();
+    }
+
+    public boolean darklistIsEnabled() {
+        return _configFile.darklistIsEnabled();
+    }
+
+    public List<String> getRiakServers() {
+        return _configFile.getRiakServers();
+    }
+
+    public void setDebug(boolean val) {
+        debug = val;
+    }
 }

@@ -30,11 +30,6 @@ public class MacVendorFunction extends BaseFunction {
 
     private final String _ouiFilePath = "/opt/rb/etc/objects/oui-vendors";
     Map<String, String> _ouiMap;
-    boolean debug;
-    
-    public MacVendorFunction(boolean debug){
-        this.debug=debug;
-    }
 
     @Override
     public void prepare(Map conf, TridentOperationContext context) {

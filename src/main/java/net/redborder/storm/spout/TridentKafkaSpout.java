@@ -6,8 +6,8 @@
 package net.redborder.storm.spout;
 
 import backtype.storm.spout.SchemeAsMultiScheme;
-import java.io.FileNotFoundException;
-import net.redborder.storm.util.KafkaConfigFile;
+
+import net.redborder.storm.util.ConfigData;
 import storm.kafka.StringScheme;
 import storm.kafka.ZkHosts;
 import storm.kafka.trident.TransactionalTridentKafkaSpout;
@@ -28,8 +28,8 @@ public class TridentKafkaSpout {
      * @param config Config file to read properties from
      * @param section Section of the kafka config file to read properties from.
      */
-    public TridentKafkaSpout(KafkaConfigFile config, String section) {
-        _kafkaConfig = new TridentKafkaConfig(new ZkHosts(config.getZkHost(section)), config.getTopic(section), "stormKafka");
+    public TridentKafkaSpout(ConfigData config, String section) {
+        _kafkaConfig = new TridentKafkaConfig(new ZkHosts(config.getZkHost()), config.getTopic(section), "stormKafka");
         _kafkaConfig.scheme = new SchemeAsMultiScheme(new StringScheme());
         _kafkaConfig.bufferSizeBytes = 1024 * 1024 * 4;
         _kafkaConfig.fetchSizeBytes = 1024 * 1024 * 4;
@@ -42,7 +42,6 @@ public class TridentKafkaSpout {
      * @return Trident spout of kafka.
      */
     public TransactionalTridentKafkaSpout builder() {
-        //Logger.getLogger(KafkaConfigFile.class.getName()).log(Level.INFO, "Reading from topic " + _configFile.getTopic());
         return new TransactionalTridentKafkaSpout(_kafkaConfig);
     }
 

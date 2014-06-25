@@ -21,12 +21,6 @@ import storm.trident.tuple.TridentTuple;
  */
 public class GetRadiusData extends BaseFunction {
 
-    boolean debug;
-
-    public GetRadiusData(boolean debug) {
-        this.debug = debug;
-    }
-
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
         Map<String, Object> radiusData = (Map<String, Object>) tuple.getValue(0);
@@ -53,7 +47,6 @@ public class GetRadiusData extends BaseFunction {
             Object clientMacObject = radiusData.get("Calling-Station-Id");
 
             if (clientMacObject != null) {
-
                 String apMac = null;
                 String ssid = null;
                 String clientId = null;
@@ -63,9 +56,7 @@ public class GetRadiusData extends BaseFunction {
 
                 radiusDruid.put("client_mac", clientMac);
 
-
                 Object calledStationObject = radiusData.get("Called-Station-Id");
-
                 if (calledStationObject != null) {
                     String calledStation[] = calledStationObject.toString().split(":");
 
@@ -78,41 +69,32 @@ public class GetRadiusData extends BaseFunction {
 
                         radiusMap.put("ap_mac", apMac);
                         radiusMap.put("wlan_ssid", ssid);
-
                     }
-
                 }
 
-
                 Object srcObject = radiusData.get("Framed-IP-Address");
-
                 if (srcObject != null) {
                     String src = srcObject.toString();
                     radiusDruid.put("src", src);
                 }
 
                 Object sensorNameObject = radiusData.get("NAS-Identifier");
-
                 if (sensorNameObject != null) {
                     String sensorName = sensorNameObject.toString();
                     radiusDruid.put("sensor_name", sensorName);
                 }
 
                 Object sensorIpObject = radiusData.get("NAS-IP-Address");
-
                 if (sensorIpObject != null) {
                     String sensorIP = sensorIpObject.toString();
                     radiusDruid.put("sensor_ip", sensorIP);
                 }
 
-
                 Object clientIdObject = radiusData.get("User-Name");
-
                 if (clientIdObject != null) {
                     clientId = clientIdObject.toString();
                     radiusMap.put("client_id", clientId);
                 }
-
 
                 radiusDruid.putAll(radiusMap);
                 radiusDruid.put("timestamp", timestamp);

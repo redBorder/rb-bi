@@ -19,12 +19,6 @@ import storm.trident.tuple.TridentTuple;
  * @author andresgomez
  */
 public class MergeMapsFunction extends BaseFunction {
-    
-    boolean debug;
-    
-    public MergeMapsFunction(boolean debug){
-        this.debug=debug;
-    }
 
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {

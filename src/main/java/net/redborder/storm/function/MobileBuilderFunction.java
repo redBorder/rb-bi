@@ -32,12 +32,6 @@ import storm.trident.tuple.TridentTuple;
  */
 public class MobileBuilderFunction extends BaseFunction {
 
-    boolean debug;
-
-    public MobileBuilderFunction(boolean debug) {
-        this.debug = debug;
-    }
-
     private Map<String, Object> hnb_register(Document document) {
         Map<String, Object> event = new HashMap<>();
 

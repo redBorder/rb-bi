@@ -28,14 +28,12 @@ public class RiakQuery extends BaseQueryFunction<MapState<Map<String, Object>>, 
     String _generalkey;
     boolean debug;
 
-    public RiakQuery(String key, boolean debug) {
+    public RiakQuery(String key) {
         _key = key;
         _generalkey = "";
-        this.debug = debug;
     }
 
-    public RiakQuery(String key, String generalKey, boolean debug) {
-        this(key, debug);
+    public RiakQuery(String key, String generalKey) {
         _generalkey = "rbbi:" + generalKey + ":";
     }
 

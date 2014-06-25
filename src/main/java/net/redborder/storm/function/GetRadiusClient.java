@@ -8,6 +8,8 @@ package net.redborder.storm.function;
 import backtype.storm.tuple.Values;
 import java.util.HashMap;
 import java.util.Map;
+
+import net.redborder.storm.util.ConfigData;
 import storm.trident.operation.BaseFunction;
 import storm.trident.operation.Function;
 import storm.trident.operation.TridentCollector;
@@ -19,12 +21,6 @@ import storm.trident.tuple.TridentTuple;
  * @author andresgomez
  */
 public class GetRadiusClient extends BaseFunction {
-    
-    boolean debug;
-    
-    public GetRadiusClient(boolean debug){
-        this.debug=debug;
-    }
 
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
@@ -37,7 +33,7 @@ public class GetRadiusClient extends BaseFunction {
         
         radiusMap.put("client_mac", clientMac);
         
-        if(debug){
+        if (ConfigData.debug) {
             System.out.println(GetRadiusClient.class +" - Radius client to query: " + clientMac);
         }
         

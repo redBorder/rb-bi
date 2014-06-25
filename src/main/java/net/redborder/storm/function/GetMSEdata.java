@@ -22,12 +22,6 @@ import storm.trident.tuple.TridentTuple;
  * @author andresgomez
  */
 public class GetMSEdata extends BaseFunction {
-    
-    boolean debug;
-    
-    public GetMSEdata(boolean debug){
-        this.debug=debug;
-    }
 
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {

@@ -18,14 +18,12 @@ import com.metamx.tranquility.druid.DruidLocation;
 import com.metamx.tranquility.druid.DruidRollup;
 import com.metamx.tranquility.storm.BeamFactory;
 import com.metamx.tranquility.typeclass.Timestamper;
-import net.redborder.storm.util.KafkaConfigFile;
 import io.druid.data.input.impl.TimestampSpec;
+import net.redborder.storm.util.ConfigData;
 import io.druid.granularity.QueryGranularity;
 import io.druid.query.aggregation.AggregatorFactory;
 import io.druid.query.aggregation.CountAggregatorFactory;
-import io.druid.query.aggregation.DoubleSumAggregatorFactory;
-import io.druid.query.aggregation.MaxAggregatorFactory;
-import io.druid.query.aggregation.MinAggregatorFactory;
+import io.druid.query.aggregation.LongSumAggregatorFactory;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.joda.time.DateTime;
@@ -37,45 +35,47 @@ import org.apache.curator.retry.RetryOneTime;
 
 /**
  * BeamFactory is used to make the BeamStateMonitor to Tranquility.
+ *
  * @author andresgomez
  */
-public class MyBeamFactoryMapMonitor implements BeamFactory<Map<String, Object>> {
-
+public class BeamFlow implements BeamFactory<Map<String, Object>> {
+    
     int partitions;
     int replicas;
-    boolean debug;
+    ConfigData config;
     
-    public MyBeamFactoryMapMonitor(int partitions, int replicas, boolean debug){
-        this.partitions=partitions;
-        this.replicas=replicas;
-        this.debug=debug;
+    public BeamFlow(int partitions, int replicas, ConfigData config){
+        this.partitions = partitions;
+        this.replicas = replicas;
+        this.config = config;
     }
-    
+
     @Override
     public Beam<Map<String, Object>> makeBeam(Map<?, ?> conf, IMetricsContext metrics) {
         try {
-            KafkaConfigFile configFile = new KafkaConfigFile(debug);
-            
-           // final CuratorFramework curator = CuratorFrameworkFactory.newClient(
-           //         _zkConnect, new BoundedExponentialBackoffRetry(100, 1000, 5));
             final CuratorFramework curator = CuratorFrameworkFactory
                     .builder()
-                    .connectString(configFile.getZkHost("monitor"))
+                    .connectString(config.getZkHost())
                     .retryPolicy(new RetryOneTime(1000))
                     .build();
             
             curator.start();
 
-            final String dataSource = configFile.getTopic("monitor");
-            final List<String> dimensions = ImmutableList.of(
-                    "sensor_name", "monitor", "value", "type", "unit");
+            final String dataSource = config.getTopic("traffics");
             final List<String> exclusions = ImmutableList.of(
-            "unit", "type");
+                    "http_url", "http_user_agent", "first_switched", "transaction_id",
+                    "flow_end_reason", "flow_sampler_id", "src_name", "dst_name",
+                    "vlan_name", "src_port_name", "dst_port_name", "l4_proto_name",
+                    "tcp_flags", "srv_port_name", "type", "src_country", "dst_country",
+                    "sta_mac_address_unit", "application_id", "engine_id", "src_as",
+                    "dst_as", "second", "bytes", "pkts", "sta_mac_address_lat",
+                    "sta_mac_address_long", "src_net", "dst_net",
+                    "first_switched", "last_switched");
             final List<AggregatorFactory> aggregators = ImmutableList.<AggregatorFactory>of(
                     new CountAggregatorFactory("events"),
-                    new DoubleSumAggregatorFactory("sum_value", "value"),
-                    new MaxAggregatorFactory("max_value", "value"),
-                    new MinAggregatorFactory("min_value", "value"));
+                    new LongSumAggregatorFactory("sum_bytes", "bytes"),
+                    new LongSumAggregatorFactory("sum_pkts", "pkts")
+            );
 
             final DruidBeams.Builder<Map<String, Object>> builder = DruidBeams
                     .builder(
@@ -84,7 +84,7 @@ public class MyBeamFactoryMapMonitor implements BeamFactory<Map<String, Object>>
                                 public DateTime timestamp(Map<String, Object> theMap) {
                                     Long date = Long.parseLong(theMap.get("timestamp").toString());
                                     date = date * 1000;
-                                    return new DateTime(date.longValue());   
+                                    return new DateTime(date.longValue());
                                 }
                             }
                     )
@@ -99,9 +99,9 @@ public class MyBeamFactoryMapMonitor implements BeamFactory<Map<String, Object>>
                             )
                     )
                     .rollup(DruidRollup.create(DruidDimensions.schemalessWithExclusions(exclusions), aggregators, QueryGranularity.MINUTE))
-                    .tuning(ClusteredBeamTuning.create(Granularity.HOUR, new Period("PT0M"), new Period("PT30M"), partitions, replicas))
+                    .tuning(ClusteredBeamTuning.create(Granularity.HOUR, new Period("PT0M"), new Period("PT15M"), partitions, replicas))
                     .timestampSpec(new TimestampSpec("timestamp", "posix"));
-
+            
             final Beam<Map<String, Object>> beam = builder.buildBeam();
 
             return beam;

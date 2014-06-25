@@ -25,19 +25,17 @@ import storm.trident.tuple.TridentTuple;
  */
 public class MapperFunction extends BaseFunction {
 
-    ObjectMapper mapper;
-    boolean debug;
+    ObjectMapper _mapper;
     CountMetric _metric;
     String _metricName;
-    public MapperFunction(boolean debug, String metric){
-        this.debug=debug;
-        _metricName=metric;
+
+    public MapperFunction(String metric){
+        _metricName = metric;
     }
 
     @Override
     public void prepare(Map conf, TridentOperationContext context) {
-         mapper = new ObjectMapper();
-
+         _mapper = new ObjectMapper();
         _metric = context.registerMetric("throughput_" + _metricName,  new CountMetric(), 50);
     }
 
@@ -45,9 +43,9 @@ public class MapperFunction extends BaseFunction {
     public void execute(TridentTuple tuple, TridentCollector collector) {
         String jsonEvent = (String) tuple.getValue(0);
         if (jsonEvent != null && jsonEvent.length() > 0) {
-            Map<String, Object> event = null;
+            Map<String, Object> event;
             try {
-                event = mapper.readValue(jsonEvent, Map.class);
+                event = _mapper.readValue(jsonEvent, Map.class);
                 _metric.incrEvent();
                 collector.emit(new Values(event));
             } catch (IOException | NullPointerException ex) {

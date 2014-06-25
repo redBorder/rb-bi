@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import net.redborder.storm.util.ConfigData;
 import storm.trident.operation.TridentCollector;
 import storm.trident.state.BaseStateUpdater;
 import storm.trident.state.map.MapState;
@@ -25,17 +27,15 @@ public class RiakUpdater extends BaseStateUpdater<MapState<Map<String, Object>>>
     String _key;
     String _value;
     String _generalKey;
-    boolean debug;
 
-    public RiakUpdater(String key, String value, boolean debug) {
+    public RiakUpdater(String key, String value) {
         _key = key;
         _value = value;
         _generalKey = "";
-        this.debug = debug;
     }
 
-    public RiakUpdater(String key, String value, String generalKey, boolean debug) {
-        this(key, value, debug);
+    public RiakUpdater(String key, String value, String generalKey) {
+        this(key, value);
         _generalKey = "rbbi:" + generalKey + ":";
     }
 
@@ -49,7 +49,7 @@ public class RiakUpdater extends BaseStateUpdater<MapState<Map<String, Object>>>
             keys.add(l);
             events.add((Map<String, Object>) t.getValueByField(_value));
 
-            if (debug) {
+            if (ConfigData.debug) {
                 System.out.println("SAVED TO RIAK KEY: " + _generalKey + t.getValueByField(_key)
                         + " VALUE: " + t.getValueByField(_value));
             }

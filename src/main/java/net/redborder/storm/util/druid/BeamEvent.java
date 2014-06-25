@@ -19,7 +19,7 @@ import com.metamx.tranquility.druid.DruidRollup;
 import com.metamx.tranquility.storm.BeamFactory;
 import com.metamx.tranquility.typeclass.Timestamper;
 import io.druid.data.input.impl.TimestampSpec;
-import net.redborder.storm.util.KafkaConfigFile;
+import net.redborder.storm.util.ConfigData;
 import io.druid.granularity.QueryGranularity;
 import io.druid.query.aggregation.AggregatorFactory;
 import io.druid.query.aggregation.CountAggregatorFactory;
@@ -37,32 +37,30 @@ import org.apache.curator.retry.RetryOneTime;
  *
  * @author andresgomez
  */
-public class MyBeamFactoryMapEvent implements BeamFactory<Map<String, Object>> {
+public class BeamEvent implements BeamFactory<Map<String, Object>> {
 
     int partitions;
     int replicas;
-    boolean debug;
+    ConfigData config;
 
-    public MyBeamFactoryMapEvent(int partitions, int replicas, boolean debug) {
+    public BeamEvent(int partitions, int replicas, ConfigData config) {
         this.partitions = partitions;
         this.replicas = replicas;
-        this.debug = debug;
+        this.config = config;
     }
 
     @Override
     public Beam<Map<String, Object>> makeBeam(Map<?, ?> conf, IMetricsContext metrics) {
         try {
-            KafkaConfigFile configFile = new KafkaConfigFile(debug);
-
             final CuratorFramework curator = CuratorFrameworkFactory
                     .builder()
-                    .connectString(configFile.getZkHost("events"))
+                    .connectString(config.getZkHost())
                     .retryPolicy(new RetryOneTime(1000))
                     .build();
 
             curator.start();
 
-            final String dataSource = configFile.getTopic("events");
+            final String dataSource = config.getTopic("events");
             final List<String> exclusions = ImmutableList.of("payload", "id",
                     "tcpseq", "tcpack", "tcplen", "tcpwindow", "icmpid",
                     "icmpseq", "dgmlen", "vlan_priority", "vlan_drop",
