@@ -11,19 +11,19 @@ import java.util.Map;
 public class CountMetric implements IMetric {
 
     Map<String, Object> metrics;
-    long events;
+    Double events;
 
     public CountMetric(){
         metrics = new HashMap<String, Object>();
-        events=0;
+        events=0.000;
     }
 
     @Override
     public Object getValueAndReset() {
 
-        metrics.put("value", events/50);
+        metrics.put("value", String.valueOf(events/50));
 
-        events = 0;
+        events = 0.000;
 
         return metrics;
     }

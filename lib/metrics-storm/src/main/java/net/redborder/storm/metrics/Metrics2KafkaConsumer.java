@@ -24,7 +24,6 @@ public class Metrics2KafkaConsumer implements IMetricsConsumer {
     String metricsJSON;
     List<String> metrics;
     String _topic;
-    Map<String, Long> counter;
     long timestamp=0;
 
 
@@ -53,8 +52,6 @@ public class Metrics2KafkaConsumer implements IMetricsConsumer {
         producer = new Producer<String, String>(configKafka);
 
         _mapper = new ObjectMapper();
-
-        counter = new HashMap<String, Long>();
 
 
     }
