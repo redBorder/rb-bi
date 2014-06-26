@@ -111,7 +111,7 @@ public class RedBorderTopology {
 
         /* Monitor */
         if (_config.contains("monitor")) {
-            locationPartition = _config.getKafkaPartitions("rb_loc");
+            locationPartition = _config.getKafkaPartitions("rb_monitor");
 
             monitorStream = topology.newStream("rb_monitor", new TridentKafkaSpout(_config, "monitor").builder())
                     .parallelismHint(monitorPartition).shuffle().name("Monitor")

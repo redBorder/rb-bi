@@ -78,7 +78,8 @@ public class ConfigData {
     }
 
     public int getKafkaPartitions(String topic) {
-        return _kafkaPartitions.get(topic);
+        Integer ret = _kafkaPartitions.get(topic);
+        return ret != null ? ret : 0;
     }
 
     private void initWorkers() {
