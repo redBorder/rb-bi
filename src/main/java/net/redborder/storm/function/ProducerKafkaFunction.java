@@ -14,7 +14,7 @@ import java.util.logging.Logger;
 import kafka.javaapi.producer.Producer;
 import kafka.producer.KeyedMessage;
 import kafka.producer.ProducerConfig;
-import net.redborder.storm.util.ConfigFile;
+import net.redborder.storm.util.ConfigData;
 import org.apache.curator.*;
 import org.apache.curator.framework.*;
 import org.apache.curator.retry.ExponentialBackoffRetry;
@@ -34,10 +34,9 @@ public class ProducerKafkaFunction extends BaseFunction {
     String _brokerList;
     String _topic;
 
-    public ProducerKafkaFunction(ConfigFile config, String topic) {
+    public ProducerKafkaFunction(ConfigData config, String topic) {
         RetryPolicy retryPolicy = new ExponentialBackoffRetry(1000, 3);
         CuratorFramework client = CuratorFrameworkFactory.newClient(config.getZkHost(), retryPolicy);
-        _brokerList = new String();
         client.start();
         
         List<String> ids = null;
@@ -61,7 +60,7 @@ public class ProducerKafkaFunction extends BaseFunction {
             
             if (jsonString != null) {
                 ObjectMapper mapper = new ObjectMapper();
-                Map<String, Object> json = null;
+                Map<String, Object> json;
 
                 try {
                     json = mapper.readValue(jsonString, Map.class);

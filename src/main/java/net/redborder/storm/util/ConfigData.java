@@ -46,7 +46,7 @@ public class ConfigData {
         _configFile = new ConfigFile();
         _kafkaPartitions = new HashMap<>();
         _topics = _configFile.getAvailableTopics();
-        _zookeeper = _configFile.getZkHost();
+        _zookeeper = getZkHost();
         debug = false;
         getZkData();
         getTranquilityPartitions();
@@ -67,7 +67,7 @@ public class ConfigData {
 
         for (String topic : _topics) {
             try {
-                partitionsList = _curator.getChildren().forPath("/brokers/_topics/" + topic + "/partitions");
+                partitionsList = _curator.getChildren().forPath("/brokers/topics/" + topic + "/partitions");
                 _kafkaPartitions.put(topic, partitionsList.size());
             } catch (Exception ex) {
                 Logger.getLogger(ConfigData.class.getName()).log(Level.SEVERE, "No partitions found. Default: 2", ex);
@@ -82,8 +82,8 @@ public class ConfigData {
     }
 
     private void initWorkers() {
-
         List<String> workersList;
+
         try {
             workersList = _curator.getChildren().forPath("/storm/supervisors");
             _numWorkers = workersList.size();
@@ -91,7 +91,6 @@ public class ConfigData {
             Logger.getLogger(ConfigData.class.getName()).log(Level.SEVERE, "No supervisor found. Default: 1", ex);
             _numWorkers = 1;
         }
-
     }
 
     public int getWorkers() {
@@ -108,37 +107,24 @@ public class ConfigData {
             List<String> middleManagersList = _curator.getChildren().forPath("/druid/indexer/announcements");
 
             for (String middleManager : middleManagersList) {
-                String jsonString = null;
+                String jsonString = new String(_curator.getData().forPath("/druid/indexer/announcements/" + middleManager), "UTF-8");
+                ObjectMapper mapper = new ObjectMapper();
+                Map<String, Object> json = mapper.readValue(jsonString, Map.class);
+                Integer nodeCapacity = (Integer) json.get("capacity");
 
-                try {
-                    jsonString = new String(_curator.getData().forPath("/druid/indexer/announcements/" + middleManager), "UTF-8");
-                } catch (Exception ex) {
-                    Logger.getLogger(ProducerKafkaFunction.class.getName()).log(Level.SEVERE, null, ex);
-                }
-
-                if (jsonString != null) {
-                    ObjectMapper mapper = new ObjectMapper();
-                    Map<String, Object> json;
-
-                    try {
-                        json = mapper.readValue(jsonString, Map.class);
-                        Integer nodeCapacity = (Integer) json.get("capacity");
-                        if (minimum > nodeCapacity) minimum = nodeCapacity;
-                        total = nodeCapacity + total;
-                        servers++;
-                    } catch (IOException | NullPointerException ex) {
-                        Logger.getLogger(MapperFunction.class.getName()).log(Level.SEVERE, "Failed converting a JSON tuple to a Map class", ex);
-                    }
-                }
+                if (minimum > nodeCapacity) minimum = nodeCapacity;
+                total = nodeCapacity + total;
+                servers++;
             }
+        } catch (IOException | NullPointerException ex) {
+            Logger.getLogger(ConfigData.class.getName()).log(Level.SEVERE, "Failed converting a JSON tuple to a Map class", ex);
         } catch (Exception ex) {
             Logger.getLogger(ConfigData.class.getName()).log(Level.SEVERE, "No middle managers found, maybe use kafka to kafka. Default: 1");
         }
 
         if (servers == 0) {
             servers = 1;
-            total = 3;
-            minimum = 3;
+            total = minimum = 3;
         }
 
         if (tranquilityReplication() == 1) {
@@ -210,7 +196,7 @@ public class ConfigData {
     }
 
     public int tranquilityReplication() {
-        return _configFile.getTranquilityReplication();
+        return _configFile.getFromGeneral("tranquility_replication");
     }
 
     public boolean contains(String section) {
@@ -218,31 +204,44 @@ public class ConfigData {
     }
 
     public String getTopic(String section) {
-        return _configFile.getTopic(section);
+        return _configFile.get(section, "input_topic");
     }
 
     public String getOutputTopic(String section) {
-        return _configFile.getOutputTopic(section);
+        return _configFile.get(section, "output_topic");
     }
 
     public boolean tranquilityEnabled(String section) {
-        return _configFile.getOutputTopic(section) == null;
+        return getOutputTopic(section) == null;
     }
 
     public boolean getOverwriteCache(String section) {
-        return _configFile.getOverwriteCache(section);
+        String ret = _configFile.get(section, "overwrite_cache");
+        return ret != null && ret.equals("true");
     }
 
     public String getZkHost() {
-        return _configFile.getZkHost();
+        return _configFile.getFromGeneral("zk_connect");
     }
 
     public boolean darklistIsEnabled() {
-        return _configFile.darklistIsEnabled();
+        Boolean ret = _configFile.getFromGeneral("blacklist");
+        return ret != null && ret;
     }
 
     public List<String> getRiakServers() {
-        return _configFile.getRiakServers();
+        List<String> servers = _configFile.getFromGeneral("riak_servers");
+        List<String> riakServers;
+
+        if (servers != null) {
+            riakServers = servers;
+        } else {
+            Logger.getLogger(ConfigFile.class.getName()).log(Level.SEVERE, "No riak servers on config file");
+            riakServers = new ArrayList<>();
+            riakServers.add("localhost");
+        }
+
+        return riakServers;
     }
 
     public void setDebug(boolean val) {

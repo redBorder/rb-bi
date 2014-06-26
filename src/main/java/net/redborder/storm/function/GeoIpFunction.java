@@ -14,7 +14,9 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
-import net.redborder.storm.util.CheckIp;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
+
 import storm.trident.operation.BaseFunction;
 import storm.trident.operation.TridentCollector;
 import storm.trident.operation.TridentOperationContext;
@@ -26,6 +28,11 @@ import storm.trident.tuple.TridentTuple;
  * @author andresgomez
  */
 public class GeoIpFunction extends BaseFunction {
+
+    public static Pattern VALID_IPV4_PATTERN = null;
+    public static Pattern VALID_IPV6_PATTERN = null;
+    private static final String ipv4Pattern = "(([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.){3}([01]?\\d\\d?|2[0-4]\\d|25[0-5])";
+    private static final String ipv6Pattern = "([0-9a-f]{1,4}:){7}([0-9a-f]){1,4}";
 
     final String CITY_DB_PATH = "/opt/rb/share/GeoIP/city.dat";
     final String CITY_V6_DB_PATH = "/opt/rb/share/GeoIP/cityv6.dat";
@@ -44,13 +51,17 @@ public class GeoIpFunction extends BaseFunction {
             _city6 = new LookupService(CITY_V6_DB_PATH, LookupService.GEOIP_MEMORY_CACHE);
             _asn = new LookupService(ASN_DB_PATH, LookupService.GEOIP_MEMORY_CACHE);
             _asn6 = new LookupService(ASN_V6_DB_PATH, LookupService.GEOIP_MEMORY_CACHE);
+            VALID_IPV4_PATTERN = Pattern.compile(ipv4Pattern, Pattern.CASE_INSENSITIVE);
+            VALID_IPV6_PATTERN = Pattern.compile(ipv6Pattern, Pattern.CASE_INSENSITIVE);
         } catch (IOException ex) {
             Logger.getLogger(GeoIpFunction.class.getName()).log(Level.SEVERE, ex.toString());
+        } catch (PatternSyntaxException e) {
+            Logger.getLogger(GeoIpFunction.class.getName()).log(Level.SEVERE, "Unable to compile IP check patterns");
         }
     }
 
     private String getCountryCode(String ip) {
-        Matcher match = CheckIp.VALID_IPV4_PATTERN.matcher(ip);
+        Matcher match = VALID_IPV4_PATTERN.matcher(ip);
         String countryCode = null;
         Location location;
 
@@ -68,7 +79,7 @@ public class GeoIpFunction extends BaseFunction {
     }
     
     private String getAsnName(String ip) {
-        Matcher match = CheckIp.VALID_IPV4_PATTERN.matcher(ip);
+        Matcher match = VALID_IPV4_PATTERN.matcher(ip);
         String asnName = null;
         String asnInfo = null;
         

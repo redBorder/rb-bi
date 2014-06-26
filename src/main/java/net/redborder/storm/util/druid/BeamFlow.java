@@ -19,7 +19,6 @@ import com.metamx.tranquility.druid.DruidRollup;
 import com.metamx.tranquility.storm.BeamFactory;
 import com.metamx.tranquility.typeclass.Timestamper;
 import io.druid.data.input.impl.TimestampSpec;
-import net.redborder.storm.util.ConfigData;
 import io.druid.granularity.QueryGranularity;
 import io.druid.query.aggregation.AggregatorFactory;
 import io.druid.query.aggregation.CountAggregatorFactory;
@@ -42,12 +41,12 @@ public class BeamFlow implements BeamFactory<Map<String, Object>> {
     
     int partitions;
     int replicas;
-    ConfigData config;
+    String zk;
     
-    public BeamFlow(int partitions, int replicas, ConfigData config){
+    public BeamFlow(int partitions, int replicas, String zk){
         this.partitions = partitions;
         this.replicas = replicas;
-        this.config = config;
+        this.zk = zk;
     }
 
     @Override
@@ -55,13 +54,13 @@ public class BeamFlow implements BeamFactory<Map<String, Object>> {
         try {
             final CuratorFramework curator = CuratorFrameworkFactory
                     .builder()
-                    .connectString(config.getZkHost())
+                    .connectString(zk)
                     .retryPolicy(new RetryOneTime(1000))
                     .build();
             
             curator.start();
 
-            final String dataSource = config.getTopic("traffics");
+            final String dataSource = "rb_flow";
             final List<String> exclusions = ImmutableList.of(
                     "http_url", "http_user_agent", "first_switched", "transaction_id",
                     "flow_end_reason", "flow_sampler_id", "src_name", "dst_name",

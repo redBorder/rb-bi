@@ -258,7 +258,7 @@ public class RedBorderTopology {
                 flowStream.each(new Fields(fieldsFlow), new MergeMapsFunction(), new Fields("finalMap"))
                 .project(new Fields("finalMap"))
                 .parallelismHint(_config.getWorkers())
-                .shuffle().name("Producer"));
+                .shuffle().name("Flow Producer"));
 
         if (_config.contains("events")) {
             persist("events",
@@ -338,15 +338,16 @@ public class RedBorderTopology {
         } else {
             BeamFactory bf;
             TridentBeamStateFactory druidState;
+            String zkHost = _config.getZkHost();
 
             if (topic.equals("traffics")) {
-                bf = new BeamFlow(partitions, replication, _config);
+                bf = new BeamFlow(partitions, replication, zkHost);
                 druidState = new TridentBeamStateFactory<BeamFlow>(bf);
             } else if (topic.equals("events")) {
-                bf = new BeamEvent(partitions, replication, _config);
+                bf = new BeamEvent(partitions, replication, zkHost);
                 druidState = new TridentBeamStateFactory<BeamEvent>(bf);
             } else {
-                bf = new BeamMonitor(partitions, replication, _config);
+                bf = new BeamMonitor(partitions, replication, zkHost);
                 druidState = new TridentBeamStateFactory<BeamMonitor>(bf);
             }
 

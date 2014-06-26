@@ -20,7 +20,7 @@ import org.ho.yaml.Yaml;
  */
 public class ConfigFile {
 
-    private final String CONFIG_FILE_PATH = "/opt/rb/etc/redBorder-BI/zk_config.yml";
+    private final String CONFIG_FILE_PATH = "/opt/rb/etc/redBorder-BI/config.yml";
     private Map<String, Object> _sections;
     private Map<String, Object> _general;
     private List<String> _availableTopics;
@@ -69,15 +69,32 @@ public class ConfigFile {
      * @return Property read
      */
 
-    public String get(String section, String property) {
-        Map<String, Object> map = (Map<String, Object>) _sections.get(section);
-        String result = null;
+    public <T> T get(String section, String property) {
+        Map<T, Object> map = (Map<T, Object>) _sections.get(section);
+        T result = null;
 
         if (map != null) {
-            result = (String) map.get(property);
+            result = (T) map.get(property);
         }
 
         return result;
+    }
+
+    /**
+     * Getter.
+     *
+     * @param property Property to read from the general section
+     * @return Property read
+     */
+
+    public <T> T getFromGeneral(String property) {
+        T ret = null;
+
+        if(_general != null) {
+            ret = (T) _general.get(property);
+        }
+
+        return ret;
     }
 
     /**
@@ -90,102 +107,6 @@ public class ConfigFile {
         return _sections.containsKey(section);
     }
 
-    /**
-     * Getter.
-     *
-     * @param section Section to read from the config file
-     * @return name topic
-     */
-    public String getTopic(String section) {
-        return get(section, "input_topic");
-    }
-
-    /**
-     * Getter.
-     *
-     * @param section Section to read from the config file
-     * @return output topic name
-     */
-    public String getOutputTopic(String section) {
-        return get(section, "output_topic");
-    }
-
-    /**
-     * Getter.
-     *
-     * @param section Section to read from the config file
-     * @return true if must overwrite cache for that section
-     */
-    public boolean getOverwriteCache(String section) {
-        String ret = get(section, "overwrite_cache");
-        return ret != null && ret.equals("true");
-    }
-
-    /**
-     * Getter.
-     *
-     * @return zookeeper host.
-     */
-    public String getZkHost() {
-        String ret = null;
-
-        if(_general != null) {
-            ret = (String) _general.get("zk_connect");
-        }
-
-        return ret;
-    }
-
-    /**
-     * Getter.
-     *
-     * @return darklist enabled or not
-     */
-    public boolean darklistIsEnabled() {
-        if(_general != null) {
-            String ret = (String) _general.get("blacklist");
-            return ret != null && ret.equals("true");
-        } else {
-            return false;
-        }
-
-    }
-
-    /**
-     * Getter.
-     *
-     * @return List of riak servers
-     */
-    public List<String> getRiakServers() {
-        List<String> servers = (List<String>) _general.get("riak_servers");
-        List<String> riakServers;
-
-        if (servers != null) {
-            riakServers = servers;
-        } else {
-            Logger.getLogger(ConfigFile.class.getName()).log(Level.SEVERE, "No riak servers on config file");
-            riakServers = new ArrayList<>();
-            riakServers.add("localhost");
-
-        }
-
-        return riakServers;
-    }
-
-    /**
-     * Getter.
-     *
-     * @return Tranquility replication factor
-     */
-    public Integer getTranquilityReplication() {
-        Integer ret = null;
-
-        if(_general != null) {
-            ret = (Integer) _general.get("tranquility_replication");
-        }
-
-        return ret;
-    }
 
     /**
      * Getter.

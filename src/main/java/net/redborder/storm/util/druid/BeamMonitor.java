@@ -9,7 +9,6 @@ import backtype.storm.task.IMetricsContext;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.metamx.common.Granularity;
-import com.metamx.common.scala.config;
 import com.metamx.tranquility.beam.Beam;
 import com.metamx.tranquility.beam.ClusteredBeamTuning;
 import com.metamx.tranquility.druid.DruidBeams;
@@ -19,8 +18,6 @@ import com.metamx.tranquility.druid.DruidLocation;
 import com.metamx.tranquility.druid.DruidRollup;
 import com.metamx.tranquility.storm.BeamFactory;
 import com.metamx.tranquility.typeclass.Timestamper;
-import net.redborder.storm.util.ConfigData;
-import net.redborder.storm.util.ConfigFile;
 import io.druid.data.input.impl.TimestampSpec;
 import io.druid.granularity.QueryGranularity;
 import io.druid.query.aggregation.AggregatorFactory;
@@ -45,12 +42,12 @@ public class BeamMonitor implements BeamFactory<Map<String, Object>> {
 
     int partitions;
     int replicas;
-    ConfigData config;
+    String zk;
     
-    public BeamMonitor(int partitions, int replicas, ConfigData config) {
+    public BeamMonitor(int partitions, int replicas, String zk) {
         this.partitions = partitions;
         this.replicas = replicas;
-        this.config = config;
+        this.zk = zk;
     }
     
     @Override
@@ -58,13 +55,13 @@ public class BeamMonitor implements BeamFactory<Map<String, Object>> {
         try {
             final CuratorFramework curator = CuratorFrameworkFactory
                     .builder()
-                    .connectString(config.getZkHost())
+                    .connectString(zk)
                     .retryPolicy(new RetryOneTime(1000))
                     .build();
             
             curator.start();
 
-            final String dataSource = config.getTopic("monitor");
+            final String dataSource = "rb_monitor";
             final List<String> exclusions = ImmutableList.of("unit", "type");
             final List<AggregatorFactory> aggregators = ImmutableList.<AggregatorFactory>of(
                     new CountAggregatorFactory("events"),
