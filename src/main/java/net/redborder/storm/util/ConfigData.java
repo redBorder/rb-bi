@@ -225,7 +225,7 @@ public class ConfigData {
     }
 
     public boolean darklistIsEnabled() {
-        Boolean ret = _configFile.getFromGeneral("blacklist");
+        Boolean ret = _configFile.getFromGeneral("darklist");
         return ret != null && ret;
     }
 
