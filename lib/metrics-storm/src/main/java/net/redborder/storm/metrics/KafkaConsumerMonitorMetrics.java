@@ -22,6 +22,7 @@ public class KafkaConsumerMonitorMetrics implements IMetricsConsumer {
     CuratorFramework client;
 
 
+
     @Override
     public void prepare(Map map, Object conf, TopologyContext topologyContext, IErrorReporter iErrorReporter) {
         Map<String, Object> config = (Map<String, Object>) conf;

@@ -6,7 +6,13 @@ import backtype.storm.task.TopologyContext;
 import kafka.javaapi.producer.Producer;
 import kafka.producer.KeyedMessage;
 import kafka.producer.ProducerConfig;
-import org.codehaus.jackson.map.ObjectMapper;
+import org.apache.curator.RetryPolicy;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.retry.ExponentialBackoffRetry;
+
+import org.boon.json.JsonFactory;
+import org.boon.json.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,11 +26,13 @@ import java.util.logging.Level;
 public class Metrics2KafkaConsumer implements IMetricsConsumer {
 
     Producer<String, String> producer;
-    ObjectMapper _mapper;
+    org.codehaus.jackson.map.ObjectMapper _mapper;
     String metricsJSON;
     List<String> metrics;
     String _topic;
     long timestamp=0;
+    String _brokerList = new String();
+
 
 
     public static final Logger LOG = LoggerFactory.getLogger(Metrics2KafkaConsumer.class);
@@ -33,8 +41,49 @@ public class Metrics2KafkaConsumer implements IMetricsConsumer {
     public void prepare(Map map, Object conf, TopologyContext topologyContext, IErrorReporter iErrorReporter) {
         Map<String, Object> config = (Map<String, Object>) conf;
 
+        RetryPolicy retryPolicy = new ExponentialBackoffRetry(1000, 3);
+        CuratorFramework client = CuratorFrameworkFactory.newClient(config.get("zookeeper").toString(), retryPolicy);
+        client.start();
+
+        List<String> ids = null;
+        boolean first = true;
+
+        try {
+            ids = client.getChildren().forPath("/brokers/ids");
+        } catch (Exception ex) {
+            java.util.logging.Logger.getLogger(Metrics2KafkaConsumer.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        for (String id : ids) {
+            String jsonString = null;
+
+            try {
+                jsonString = new String(client.getData().forPath("/brokers/ids/" + id), "UTF-8");
+            } catch (Exception ex) {
+                java.util.logging.Logger.getLogger(Metrics2KafkaConsumer.class.getName()).log(Level.SEVERE, null, ex);
+            }
+
+            if (jsonString != null) {
+                ObjectMapper mapper = JsonFactory.create();
+                Map<String, Object> json = null;
+
+                try {
+                    json = mapper.readValue(jsonString, Map.class);
+
+                    if (first) {
+                        _brokerList = _brokerList.concat(json.get("host") + ":" + json.get("port"));
+                        first = false;
+                    } else {
+                        _brokerList = _brokerList.concat("," + json.get("host") + ":" + json.get("port"));
+                    }
+                } catch (NullPointerException ex) {
+                    java.util.logging.Logger.getLogger(Metrics2KafkaConsumer.class.getName()).log(Level.SEVERE, "Failed converting a JSON tuple to a Map class", ex);
+                }
+            }
+        }
+
         Properties props = new Properties();
-        props.put("metadata.broker.list", "192.168.101.204:9092, 192.168.101.205:9092, 192.168.101.206:9092");
+        props.put("metadata.broker.list", _brokerList);
         props.put("serializer.class", "kafka.serializer.StringEncoder");
         props.put("partitioner.class", "net.redborder.storm.metrics.SimplePartitioner");
         props.put("request.required.acks", "1");
@@ -51,7 +100,7 @@ public class Metrics2KafkaConsumer implements IMetricsConsumer {
 
         producer = new Producer<String, String>(configKafka);
 
-        _mapper = new ObjectMapper();
+        _mapper = new org.codehaus.jackson.map.ObjectMapper();
 
 
     }

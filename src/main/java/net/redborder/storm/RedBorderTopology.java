@@ -254,11 +254,14 @@ public class RedBorderTopology {
         }
 
         /* Join fields and persist */
-        persist("traffics",
-                flowStream.each(new Fields(fieldsFlow), new MergeMapsFunction(), new Fields("finalMap"))
-                .project(new Fields("finalMap"))
-                .parallelismHint(_config.getWorkers())
-                .shuffle().name("Flow Producer"));
+
+        if(_config.contains("traffics")) {
+            persist("traffics",
+                    flowStream.each(new Fields(fieldsFlow), new MergeMapsFunction(), new Fields("finalMap"))
+                            .project(new Fields("finalMap"))
+                            .parallelismHint(_config.getWorkers())
+                            .shuffle().name("Flow Producer"));
+        }
 
         if (_config.contains("events")) {
             persist("events",
@@ -287,7 +290,7 @@ public class RedBorderTopology {
         print(pw, "----------------------- Topology info: -----------------------");
         print(pw, "- Date topology: " + new Date().toString());
         print(pw, "- Storm workers: " + _config.getWorkers());
-        print(pw, "\n- Kafka partitions: ");
+        print(pw, "- Kafka partitions: ");
 
         if (locationPartition > 0) print(pw, "   * rb_loc: " + locationPartition);
         if (mobilePartition > 0) print(pw, "   * rb_mobile: " + mobilePartition);
@@ -295,21 +298,21 @@ public class RedBorderTopology {
         if (flowPartition > 0) print(pw, "   * rb_flow: " + flowPartition);
         if (radiusPartition > 0) print(pw, "   * rb_radius: " + radiusPartition);
 
-        print(pw, "\n- Zookeeper Servers: " + _config.getZkHost());
-        print(pw, "\n- Riak Servers: " + _config.getRiakServers().toString());
+        print(pw, "- Zookeeper Servers: " + _config.getZkHost());
+        print(pw, "- Riak Servers: " + _config.getRiakServers().toString());
 
         if (_config.tranquilityEnabled("traffics")) {
-            print(pw, "\n- Tranquility info: ");
+            print(pw, "- Tranquility info: ");
             print(pw, "   * partitions: " + _config.tranquilityPartitions("traffics"));
             print(pw, "   * replicas: " + _config.tranquilityReplication());
-            print(pw, "\n Flows send to indexing service. \n");
+            print(pw, " Flows send to indexing service.");
         } else {
             String output = _config.getOutputTopic("traffics");
             print(pw, "   * " + output + ": " + _config.getKafkaPartitions(output));
             print(pw, "Flows send to (kafka topic): " + output);
         }
 
-        print(pw, "\n----------------------- Topology Enrichment -----------------------\n");
+        print(pw, "\n----------------------- Topology Enrichment -----------------------");
         print(pw, " - flow: ");
         print(pw, "   * location: " + getEnrichment(_config.contains("location")));
         print(pw, "   * mobile: " + getEnrichment(_config.contains("mobile")));
@@ -318,7 +321,7 @@ public class RedBorderTopology {
         print(pw, "   * darklist: " + getEnrichment(_config.darklistIsEnabled()));
 
 
-        print(pw, "\n----------------------- Topology Metrics -----------------------\n");
+        print(pw, "\n----------------------- Topology Metrics -----------------------");
         print(pw, " - KafkaOffsetsConsumerMonitor: " + getEnrichment(true));
         print(pw, " - Metrics2KafkaConsumer: ");
         print(pw, "   * Throughput: " + getEnrichment(_config.getMetrics()));

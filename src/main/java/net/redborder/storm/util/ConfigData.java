@@ -160,6 +160,7 @@ public class ConfigData {
                 List<String> metrics = new ArrayList<>();
 
                 metrics.add("throughput");
+                functionMetricsConf.put("zookeeper", _zookeeper);
                 functionMetricsConf.put("metrics", metrics);
                 functionMetricsConf.put("topic", "rb_monitor");
 

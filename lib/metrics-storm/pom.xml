@@ -26,6 +26,13 @@
             </exclusions>
         </dependency>
 
+        <!-- Boon JSON Parser -->
+        <dependency>
+            <groupId>io.fastjson</groupId>
+            <artifactId>boon</artifactId>
+            <version>0.11</version>
+        </dependency>
+
         <!-- Storm -->
         <dependency>
             <groupId>org.apache.storm</groupId>
