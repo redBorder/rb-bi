@@ -13,8 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import net.redborder.storm.function.MapperFunction;
-import net.redborder.storm.function.ProducerKafkaFunction;
+
 import net.redborder.storm.metrics.KafkaConsumerMonitorMetrics;
 import net.redborder.storm.metrics.Metrics2KafkaConsumer;
 import org.apache.curator.RetryPolicy;
