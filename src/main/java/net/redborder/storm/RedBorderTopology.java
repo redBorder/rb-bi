@@ -284,7 +284,7 @@ public class RedBorderTopology {
             System.out.println("Error writing info file:" + e);
         }
 
-        print(pw, "----------------------- Topology info: " + "-----------------------");
+        print(pw, "----------------------- Topology info: -----------------------");
         print(pw, "- Date topology: " + new Date().toString());
         print(pw, "- Storm workers: " + _config.getWorkers());
         print(pw, "\n- Kafka partitions: ");
@@ -309,7 +309,7 @@ public class RedBorderTopology {
             print(pw, "Flows send to (kafka topic): " + output);
         }
 
-        print(pw, "\n----------------------- Topology Enrichment-----------------------\n");
+        print(pw, "\n----------------------- Topology Enrichment -----------------------\n");
         print(pw, " - flow: ");
         print(pw, "   * location: " + getEnrichment(_config.contains("location")));
         print(pw, "   * mobile: " + getEnrichment(_config.contains("mobile")));
@@ -318,7 +318,7 @@ public class RedBorderTopology {
         print(pw, "   * darklist: " + getEnrichment(_config.darklistIsEnabled()));
 
 
-        print(pw, "\n----------------------- Topology Metrics-----------------------\n");
+        print(pw, "\n----------------------- Topology Metrics -----------------------\n");
         print(pw, " - KafkaOffsetsConsumerMonitor: " + getEnrichment(true));
         print(pw, " - Metrics2KafkaConsumer: ");
         print(pw, "   * Throughput: " + getEnrichment(_config.getMetrics()));

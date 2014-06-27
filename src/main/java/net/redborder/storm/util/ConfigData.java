@@ -218,7 +218,7 @@ public class ConfigData {
     }
 
     public boolean tranquilityEnabled(String section) {
-        return getOutputTopic(section) == null;
+        return _configFile.contains(section) && getOutputTopic(section) == null;
     }
 
     public boolean getOverwriteCache(String section) {
