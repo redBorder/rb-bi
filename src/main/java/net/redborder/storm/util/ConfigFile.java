@@ -70,7 +70,7 @@ public class ConfigFile {
      */
 
     public <T> T get(String section, String property) {
-        Map<T, Object> map = (Map<T, Object>) _sections.get(section);
+        Map<String, Object> map = (Map<String, Object>) _sections.get(section);
         T result = null;
 
         if (map != null) {

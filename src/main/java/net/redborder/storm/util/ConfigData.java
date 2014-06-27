@@ -154,14 +154,19 @@ public class ConfigData {
             zkMetricsConf.put("zookeeper", _zookeeper);
             _conf.registerMetricsConsumer(KafkaConsumerMonitorMetrics.class, zkMetricsConf, 1);
 
-            Map<String, Object> functionMetricsConf = new HashMap<>();
-            List<String> metrics = new ArrayList<>();
 
-            metrics.add("throughput");
-            functionMetricsConf.put("metrics", metrics );
-            functionMetricsConf.put("topic", "rb_monitor");
+            if(getMetrics()) {
 
-            _conf.registerMetricsConsumer(Metrics2KafkaConsumer.class, functionMetricsConf, 1);
+                Map<String, Object> functionMetricsConf = new HashMap<>();
+                List<String> metrics = new ArrayList<>();
+
+                metrics.add("throughput");
+                functionMetricsConf.put("metrics", metrics);
+                functionMetricsConf.put("topic", "rb_monitor");
+
+                _conf.registerMetricsConsumer(Metrics2KafkaConsumer.class, functionMetricsConf, 1);
+
+            }
         }
 
         return _conf;
@@ -219,6 +224,11 @@ public class ConfigData {
     public boolean getOverwriteCache(String section) {
         String ret = _configFile.get(section, "overwrite_cache");
         return ret != null && ret.equals("true");
+    }
+
+    public boolean getMetrics(){
+        Boolean ret = _configFile.getFromGeneral("metrics");
+        return ret != null && ret;
     }
 
     public String getZkHost() {

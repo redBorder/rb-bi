@@ -317,6 +317,12 @@ public class RedBorderTopology {
         print(pw, "   * radius (overwrite_cache: " + _config.getOverwriteCache("radius") + ") : " + getEnrichment(_config.contains("radius")));
         print(pw, "   * darklist: " + getEnrichment(_config.darklistIsEnabled()));
 
+
+        print(pw, "\n----------------------- Topology Metrics-----------------------\n");
+        print(pw, " - KafkaOffsetsConsumerMonitor: " + getEnrichment(true));
+        print(pw, " - Metrics2KafkaConsumer: ");
+        print(pw, "   * Throughput: " + getEnrichment(_config.getMetrics()));
+
         pw.flush();
 
         return topology;
