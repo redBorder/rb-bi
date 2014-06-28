@@ -324,7 +324,8 @@ public class RedBorderTopology {
         print(pw, "\n----------------------- Topology Metrics -----------------------");
         print(pw, " - KafkaOffsetsConsumerMonitor: " + getEnrichment(true));
         print(pw, " - Metrics2KafkaConsumer: ");
-        print(pw, "   * Throughput: " + getEnrichment(_config.getMetrics()));
+        print(pw, "   * Throughput: " + getEnrichment(_config.getMetrics()) + "\n");
+
 
         pw.flush();
 

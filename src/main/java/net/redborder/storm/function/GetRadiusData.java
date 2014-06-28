@@ -67,8 +67,8 @@ public class GetRadiusData extends BaseFunction {
                         apMac = apMac.replace("-", ":");
                         ssid = calledStation[1];
 
-                        radiusMap.put("ap_mac", apMac);
-                        radiusMap.put("wlan_ssid", ssid);
+                        radiusMap.put("wireless_station", apMac);
+                        radiusMap.put("wireless_id", ssid);
                     }
                 }
 
