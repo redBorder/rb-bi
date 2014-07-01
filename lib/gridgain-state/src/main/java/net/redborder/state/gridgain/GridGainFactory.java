@@ -32,6 +32,24 @@ public class GridGainFactory<K, V> implements StateFactory {
 
         Grid grid = null;
 
+
+
+        if (GridGain.state("storm").equals(org.gridgain.grid.GridGainState.STARTED)) {
+            grid = GridGain.grid("storm");
+        } else {
+            try {
+                grid = GridGain.start(makeConfig());
+            } catch (GridException e) {
+                e.printStackTrace();
+            }
+        }
+
+        GridCache<K, V> map = grid.cache(_cacheName);
+        return NonTransactionalMap.build(new GridGainState<K, V>(map));
+    }
+
+
+    public GridConfiguration makeConfig(){
         GridConfiguration conf = new GridConfiguration();
 
         conf.setGridName("storm");
@@ -69,17 +87,6 @@ public class GridGainFactory<K, V> implements StateFactory {
         conf.setCacheConfiguration(cacheDarkList, cacheMobile, cacheRadius
                 , cacheLocation, cacheTrap);
 
-        if (GridGain.state("storm").equals(org.gridgain.grid.GridGainState.STARTED)) {
-            grid = GridGain.grid("storm");
-        } else {
-            try {
-                grid = GridGain.start(conf);
-            } catch (GridException e) {
-                e.printStackTrace();
-            }
-        }
-
-        GridCache<K, V> map = grid.cache(_cacheName);
-        return NonTransactionalMap.build(new GridGainState<K, V>(map));
+        return conf;
     }
 }
