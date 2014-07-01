@@ -134,7 +134,7 @@ public class RedBorderTopology {
 
             // Save it to enrich later on
             locationStream.partitionPersist(locationStateFactory, new Fields("src_mac", "mse_data"),
-                    new RiakUpdater("src_mac", "mse_data"));
+                    new StateUpdater("src_mac", "mse_data"));
 
             // Generate a flow msg
             persist("traffics",
@@ -143,7 +143,7 @@ public class RedBorderTopology {
 
             // Enrich flow stream
             flowStream = flowStream.stateQuery(locationState, new Fields("flows"),
-                    new RiakQuery("client_mac"), new Fields("mseMap"));
+                    new StateQuery("client_mac"), new Fields("mseMap"));
 
             fieldsFlow.add("mseMap");
         }
@@ -158,13 +158,13 @@ public class RedBorderTopology {
             topology.newStream("rb_mobile", new TridentKafkaSpout(_config, "mobile").builder())
                     .name("Mobile").parallelismHint(mobilePartition).shuffle()
                     .each(new Fields("str"), new MobileBuilderFunction(), new Fields("key", "mobileMap"))
-                    .partitionPersist(mobileStateFactory, new Fields("key", "mobileMap"), new RiakUpdater("key", "mobileMap"));
+                    .partitionPersist(mobileStateFactory, new Fields("key", "mobileMap"), new StateUpdater("key", "mobileMap"));
 
             // Enrich flow stream
             flowStream = flowStream
-                    .stateQuery(mobileState, new Fields("flows"), new RiakQuery("src"), new Fields("ipAssignMap"))
-                    .stateQuery(mobileState, new Fields("ipAssignMap"), new RiakQuery("imsi"), new Fields("ueRegisterMap"))
-                    .stateQuery(mobileState, new Fields("ueRegisterMap"), new RiakQuery("path"), new Fields("hnbRegisterMap"));
+                    .stateQuery(mobileState, new Fields("flows"), new StateQuery("src"), new Fields("ipAssignMap"))
+                    .stateQuery(mobileState, new Fields("ipAssignMap"), new StateQuery("imsi"), new Fields("ueRegisterMap"))
+                    .stateQuery(mobileState, new Fields("ueRegisterMap"), new StateQuery("path"), new Fields("hnbRegisterMap"));
 
             fieldsFlow.add("ipAssignMap");
             fieldsFlow.add("ueRegisterMap");
@@ -182,11 +182,11 @@ public class RedBorderTopology {
                     .name("Trap").parallelismHint(trapPartition).shuffle()
                     .each(new Fields("str"), new MapperFunction("rb_trap"), new Fields("rssi"))
                     .each(new Fields("rssi"), new GetTRAPdata(), new Fields("rssiKey", "rssiValue"))
-                    .partitionPersist(trapStateFactory, new Fields("rssiKey", "rssiValue"), new RiakUpdater("rssiKey", "rssiValue"));
+                    .partitionPersist(trapStateFactory, new Fields("rssiKey", "rssiValue"), new StateUpdater("rssiKey", "rssiValue"));
 
             // Enrich flow stream
             flowStream = flowStream
-                    .stateQuery(trapState, new Fields("flows"), new RiakQuery("client_mac"), new Fields("rssiMap"));
+                    .stateQuery(trapState, new Fields("flows"), new StateQuery("client_mac"), new Fields("rssiMap"));
 
             fieldsFlow.add("rssiMap");
         }
@@ -213,7 +213,7 @@ public class RedBorderTopology {
                 // specified on the radius message
                 radiusStream = radiusStream
                         .each(new Fields("radius"), new GetRadiusClient(), new Fields("clientMap"))
-                        .stateQuery(radiusState, new Fields("clientMap"), new RiakQuery("client_mac"),
+                        .stateQuery(radiusState, new Fields("clientMap"), new StateQuery("client_mac"),
                                 new Fields("radiusCached"))
                         .each(new Fields("radius", "radiusCached"), new GetRadiusData(),
                                 new Fields("radiusKey", "radiusData", "radiusDruid"));
@@ -222,7 +222,7 @@ public class RedBorderTopology {
             // Save msg to enrich later on
             radiusState = radiusStream.project(new Fields("radiusKey", "radiusData"))
                     .partitionPersist(radiusStateFactory, new Fields("radiusKey", "radiusData"),
-                            new RiakUpdater("radiusKey", "radiusData"));
+                            new StateUpdater("radiusKey", "radiusData"));
 
             // Generate a flow msg
             persist("traffics",
@@ -233,7 +233,7 @@ public class RedBorderTopology {
                             new MergeMapsFunction(), new Fields("finalMap")));
 
             // Enrich flow stream
-            flowStream = flowStream.stateQuery(radiusState, new Fields("flows"), new RiakQuery("client_mac"),
+            flowStream = flowStream.stateQuery(radiusState, new Fields("flows"), new StateQuery("client_mac"),
                     new Fields("radiusMap"));
 
             fieldsFlow.add("radiusMap");
@@ -247,7 +247,7 @@ public class RedBorderTopology {
 
             // Enrich flow stream with darklist fields
             flowStream = flowStream
-                    .stateQuery(darklistState, new Fields("flows"), new RiakQuery("src"),
+                    .stateQuery(darklistState, new Fields("flows"), new StateQuery("src"),
                             new Fields("darklistMap"));
 
             fieldsFlow.add("darklistMap");
