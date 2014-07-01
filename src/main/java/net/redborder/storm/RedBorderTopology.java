@@ -75,7 +75,7 @@ public class RedBorderTopology {
 
         /* States and Streams*/
         TridentState locationState, mobileState, radiusState, trapState, darklistState;
-         GridGainFactory locationStateFactory, mobileStateFactory, trapStateFactory, radiusStateFactory;
+        GridGainFactory locationStateFactory, mobileStateFactory, trapStateFactory, radiusStateFactory;
         Stream locationStream, radiusStream, eventsStream = null, monitorStream = null;
 
         /* Partitions */
@@ -141,7 +141,7 @@ public class RedBorderTopology {
             // Generate a flow msg
             persist("traffics",
                     locationStream.each(new Fields("mse_data_druid", "mseMacVendorMap", "mseGeoIPMap"),
-                    new MergeMapsFunction(), new Fields("finalMap")));
+                            new MergeMapsFunction(), new Fields("finalMap")));
 
             // Enrich flow stream
             flowStream = flowStream.stateQuery(locationState, new Fields("flows"),
@@ -229,10 +229,10 @@ public class RedBorderTopology {
             // Generate a flow msg
             persist("traffics",
                     radiusStream
-                    .each(new Fields("radiusDruid"), new MacVendorFunction(), new Fields("radiusMacVendorMap"))
-                    .each(new Fields("radiusDruid"), new GeoIpFunction(), new Fields("radiusGeoIPMap"))
-                    .each(new Fields("radiusDruid", "radiusMacVendorMap", "radiusGeoIPMap"),
-                            new MergeMapsFunction(), new Fields("finalMap")));
+                            .each(new Fields("radiusDruid"), new MacVendorFunction(), new Fields("radiusMacVendorMap"))
+                            .each(new Fields("radiusDruid"), new GeoIpFunction(), new Fields("radiusGeoIPMap"))
+                            .each(new Fields("radiusDruid", "radiusMacVendorMap", "radiusGeoIPMap"),
+                                    new MergeMapsFunction(), new Fields("finalMap")));
 
             // Enrich flow stream
             flowStream = flowStream.stateQuery(radiusState, new Fields("flows"), new RiakQuery("client_mac"),
@@ -256,7 +256,7 @@ public class RedBorderTopology {
 
         /* Join fields and persist */
 
-        if(_config.contains("traffics")) {
+        if (_config.contains("traffics")) {
             persist("traffics",
                     flowStream.each(new Fields(fieldsFlow), new MergeMapsFunction(), new Fields("finalMap"))
                             .project(new Fields("finalMap"))
@@ -267,16 +267,16 @@ public class RedBorderTopology {
         if (_config.contains("events")) {
             persist("events",
                     eventsStream.each(new Fields(fieldsEvent), new MergeMapsFunction(), new Fields("finalMap"))
-                    .project(new Fields("finalMap"))
-                    .parallelismHint(_config.getWorkers())
-                    .shuffle().name("Event Producer"));
+                            .project(new Fields("finalMap"))
+                            .parallelismHint(_config.getWorkers())
+                            .shuffle().name("Event Producer"));
         }
 
         if (_config.contains("monitor")) {
             persist("monitor",
                     monitorStream.project(new Fields("finalMap"))
-                    .parallelismHint(_config.getWorkers())
-                    .shuffle().name("Monitor Producer"));
+                            .parallelismHint(_config.getWorkers())
+                            .shuffle().name("Monitor Producer"));
         }
 
         /* Show info */

@@ -1,9 +1,11 @@
 package net.redborder.state.gridgain;
 
+import java.io.Serializable;
+
 /**
  * Created by andresgomez on 30/06/14.
  */
-public class GridGainOptions {
+public class GridGainOptions implements Serializable{
 
     public GridGainOptions(){
 
