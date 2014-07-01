@@ -254,4 +254,16 @@ public class ConfigData {
 
         return riakServers;
     }
+
+    public List<String> getEnrichs() {
+        List<String> enrichs = new ArrayList<>();
+
+        if (darklistIsEnabled()) enrichs.add("darklist");
+        if (_configFile.contains("radius")) enrichs.add("radius");
+        if (_configFile.contains("mobile")) enrichs.add("mobile");
+        if (_configFile.contains("location")) enrichs.add("location");
+        if (_configFile.contains("trap")) enrichs.add("trap");
+
+        return enrichs;
+    }
 }
