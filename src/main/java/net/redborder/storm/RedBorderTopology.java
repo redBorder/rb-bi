@@ -20,9 +20,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import net.redborder.state.gridgain.GridGainClient;
 import net.redborder.state.gridgain.GridGainFactory;
-import net.redborder.state.gridgain.GridGainOptions;
 import net.redborder.storm.function.*;
 import net.redborder.storm.spout.TridentKafkaSpout;
 import net.redborder.storm.state.*;
@@ -30,7 +28,6 @@ import net.redborder.storm.util.ConfigData;
 import net.redborder.storm.util.druid.BeamEvent;
 import net.redborder.storm.util.druid.BeamFlow;
 import net.redborder.storm.util.druid.BeamMonitor;
-import org.gridgain.client.GridClient;
 import storm.trident.Stream;
 import storm.trident.TridentState;
 import storm.trident.TridentTopology;
@@ -78,8 +75,6 @@ public class RedBorderTopology {
         TridentState locationState, mobileState, radiusState, trapState, darklistState;
         GridGainFactory locationStateFactory, mobileStateFactory, trapStateFactory, radiusStateFactory;
         Stream locationStream, radiusStream, eventsStream = null, monitorStream = null;
-
-        GridGainClient.create();
 
         /* Partitions */
         int flowPartition = _config.getKafkaPartitions("rb_flow");
