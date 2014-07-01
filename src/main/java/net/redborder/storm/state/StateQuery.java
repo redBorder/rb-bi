@@ -52,6 +52,8 @@ public class StateQuery extends BaseQueryFunction<MapState<Map<String, Object>>,
         List<Object> keysToRequest = new ArrayList<>();
         List<String> keysToAppend = new ArrayList<>();
 
+        System.out.println("HOLA: " + ConfigData.debug);
+
         for (TridentTuple t : tuples) {
             Map<String, Object> flow = (Map<String, Object>) t.getValue(0);
             String key = (String) flow.get(_key);
