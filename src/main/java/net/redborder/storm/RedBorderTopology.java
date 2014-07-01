@@ -45,7 +45,7 @@ public class RedBorderTopology {
 
             if (args.length == 2) {
                 if (args[1].equals("debug")) {
-                    _config.setDebug(true);
+                    _config.debug = true;
                 } else {
                     System.out.println("./storm jar {name_jar} {main_class} {local|cluster} [debug]");
                 }
@@ -287,7 +287,7 @@ public class RedBorderTopology {
         }
 
         print(pw, "----------------------- Topology info: -----------------------");
-        print(pw, "- Debug: " + (ConfigData.debug ? "ON" : "OFF"));
+        print(pw, "- Debug: " + (_config.debug ? "ON" : "OFF"));
         print(pw, "- Date topology: " + new Date().toString());
         print(pw, "- Storm workers: " + _config.getWorkers());
         print(pw, "- Kafka partitions: ");
