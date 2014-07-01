@@ -41,7 +41,7 @@ public class ConfigData {
 
     public ConfigData() {
         _conf = new Config();
-        _configFile = new ConfigFile();
+        _configFile = new ConfigFile(debug);
         _kafkaPartitions = new HashMap<>();
         _topics = _configFile.getAvailableTopics();
         _zookeeper = getZkHost();
