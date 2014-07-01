@@ -220,7 +220,7 @@ public class RedBorderTopology {
             }
 
             // Save msg to enrich later on
-            radiusState = radiusStream.project(new Fields("radiusKey", "radiusData"))
+            radiusStream.project(new Fields("radiusKey", "radiusData"))
                     .partitionPersist(radiusStateFactory, new Fields("radiusKey", "radiusData"),
                             new StateUpdater("radiusKey", "radiusData"));
 
