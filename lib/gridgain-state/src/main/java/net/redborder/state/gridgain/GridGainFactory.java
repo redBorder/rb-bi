@@ -20,50 +20,19 @@ import java.util.Map;
  */
 public class GridGainFactory<K, V> implements StateFactory {
 
-    GridGainOptions _options;
+    String _cacheName;
 
-    public GridGainFactory(GridGainOptions options) {
-        _options = options;
-
+    public GridGainFactory(String cacheName){
+        _cacheName=cacheName;
     }
+
 
     @Override
     public State makeState(Map configStorm, IMetricsContext iMetricsContext, int i, int i2) {
 
-        GridCacheConfiguration cacheConf = new GridCacheConfiguration();
-        cacheConf.setDistributionMode(GridCacheDistributionMode.CLIENT_ONLY);
+        Grid _grid = GridGain.grid();
 
-
-        GridConfiguration conf = new GridConfiguration();
-
-        switch (_options.cacheMode) {
-            case 0:
-                cacheConf.setCacheMode(GridCacheMode.LOCAL);
-                break;
-            case 1:
-                cacheConf.setCacheMode(GridCacheMode.REPLICATED);
-                break;
-            case 2:
-                cacheConf.setCacheMode(GridCacheMode.PARTITIONED);
-                break;
-        }
-
-        cacheConf.setName(_options.cacheName);
-        cacheConf.setBackups(_options.backups);
-
-        conf.setCacheConfiguration(cacheConf);
-
-        GridCache<K, V> map = null;
-
-        try {
-
-            Grid grid = GridGain.start(conf);
-            map = grid.cache(_options.cacheName);
-
-        } catch (GridException e) {
-            e.printStackTrace();
-        }
-
+        GridCache<K,V> map = _grid.cache(_cacheName);
         return NonTransactionalMap.build(new GridGainState<K, V>(map));
     }
 }

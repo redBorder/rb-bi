@@ -20,6 +20,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import net.redborder.state.gridgain.GridGainClient;
 import net.redborder.state.gridgain.GridGainFactory;
 import net.redborder.state.gridgain.GridGainOptions;
 import net.redborder.storm.function.*;
@@ -29,6 +30,7 @@ import net.redborder.storm.util.ConfigData;
 import net.redborder.storm.util.druid.BeamEvent;
 import net.redborder.storm.util.druid.BeamFlow;
 import net.redborder.storm.util.druid.BeamMonitor;
+import org.gridgain.client.GridClient;
 import storm.trident.Stream;
 import storm.trident.TridentState;
 import storm.trident.TridentTopology;
@@ -77,6 +79,8 @@ public class RedBorderTopology {
         GridGainFactory locationStateFactory, mobileStateFactory, trapStateFactory, radiusStateFactory;
         Stream locationStream, radiusStream, eventsStream = null, monitorStream = null;
 
+        GridGainClient.create();
+
         /* Partitions */
         int flowPartition = _config.getKafkaPartitions("rb_flow");
         int eventsPartition = _config.getKafkaPartitions("rb_event");
@@ -122,7 +126,7 @@ public class RedBorderTopology {
         /* Location */
         if (_config.contains("location")) {
             locationPartition = _config.getKafkaPartitions("rb_loc");
-            locationStateFactory = new GridGainFactory<String, Map<String, Object>>(new GridGainOptions("location", 2, 0));
+            locationStateFactory = new GridGainFactory<String, Map<String, Object>>("location");
             locationState = topology.newStaticState(locationStateFactory);
 
             // Get msg
@@ -152,7 +156,7 @@ public class RedBorderTopology {
         /* Mobile */
         if (_config.contains("mobile")) {
             mobilePartition = _config.getKafkaPartitions("rb_mobile");
-            mobileStateFactory = new GridGainFactory<String, Map<String, Object>>(new GridGainOptions("mobile", 2, 0));
+            mobileStateFactory = new GridGainFactory<String, Map<String, Object>>("mobile");
             mobileState = topology.newStaticState(mobileStateFactory);
 
             // Get msg and save it to enrich later on
@@ -175,7 +179,7 @@ public class RedBorderTopology {
         /* Trap */
         if (_config.contains("trap")) {
             trapPartition = _config.getKafkaPartitions("rb_trap");
-            trapStateFactory = new GridGainFactory<String, Map<String, Object>>(new GridGainOptions("trap", 2, 0));
+            trapStateFactory = new GridGainFactory<String, Map<String, Object>>("trap");
             trapState = topology.newStaticState(trapStateFactory);
 
             // Get msg and save it to enrich later on
@@ -195,7 +199,7 @@ public class RedBorderTopology {
         /* Radius */
         if (_config.contains("radius")) {
             radiusPartition = _config.getKafkaPartitions("rb_radius");
-            radiusStateFactory = new GridGainFactory<String, Map<String, Object>>(new GridGainOptions("radius", 2, 0));
+            radiusStateFactory = new GridGainFactory<String, Map<String, Object>>("radius");
             radiusState = topology.newStaticState(radiusStateFactory);
 
             // Get msg
@@ -243,7 +247,7 @@ public class RedBorderTopology {
         /* Darklist */
         if (_config.darklistIsEnabled()) {
             // Create a static state to query the database
-            darklistState = topology.newStaticState(new GridGainFactory<String, Map<String, Object>>(new GridGainOptions("darklist", 2, 1)));
+            darklistState = topology.newStaticState(new GridGainFactory<String, Map<String, Object>>("darklist"));
 
             // Enrich flow stream with darklist fields
             flowStream = flowStream

@@ -8,7 +8,7 @@ import java.io.Serializable;
 public class GridGainOptions implements Serializable{
 
     public GridGainOptions(){
-
+        build();
     }
 
 
@@ -16,6 +16,7 @@ public class GridGainOptions implements Serializable{
         this.backups=backups;
         this.cacheMode=cacheMode;
         this.cacheName=cacheName;
+        build();
     }
 
     /*
@@ -36,4 +37,9 @@ public class GridGainOptions implements Serializable{
         Numbers of backups to can restore cached.
      */
     Integer backups = 0;
+
+
+    public void build(){
+
+    }
 }

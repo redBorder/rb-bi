@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="
+       http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="grid.cfg" class="org.gridgain.grid.GridConfiguration">
+        <property name="name" value="storm"/>
+        <!-- Cache configurations. -->
+        <property name="cacheConfiguration">
+            <list>
+
+                <bean class="org.gridgain.grid.cache.GridCacheConfiguration">
+                    <property name="name" value="darklist"/>
+                    <property name="cacheMode" value="PARTITIONED"/>
+                    <property name="distributionMode" value="CLIENT_ONLY"/>
+                    <property name="backups" value="1"/>
+                    <property name="startSize" value="#{2 * 1024 * 1024}"/>
+                    <property name="offHeapMaxMemory" value="0"/>
+                    <property name="preloadBatchSize" value="#{1024 * 1024}"/>
+                    <property name="preloadThrottle" value="0"/>
+                    <property name="preloadThreadPoolSize" value="4"/>
+                 </bean>
+
+                 <bean class="org.gridgain.grid.cache.GridCacheConfiguration">
+                    <property name="name" value="mobile"/>
+                    <property name="cacheMode" value="PARTITIONED"/>
+                    <property name="distributionMode" value="CLIENT_ONLY"/>
+                 </bean>
+
+                 <bean class="org.gridgain.grid.cache.GridCacheConfiguration">
+                    <property name="name" value="trap"/>
+                    <property name="cacheMode" value="PARTITIONED"/>
+                    <property name="distributionMode" value="CLIENT_ONLY"/>
+                 </bean>
+
+                 <bean class="org.gridgain.grid.cache.GridCacheConfiguration">
+                    <property name="name" value="radius"/>
+                    <property name="cacheMode" value="PARTITIONED"/>
+                    <property name="distributionMode" value="CLIENT_ONLY"/>
+                 </bean>
+
+
+                 <bean class="org.gridgain.grid.cache.GridCacheConfiguration">
+                    <property name="name" value="location"/>
+                    <property name="cacheMode" value="PARTITIONED"/>
+                    <property name="distributionMode" value="CLIENT_ONLY"/>
+                 </bean>
+
+            </list>
+        </property>
+
+    </bean>
+</beans>
