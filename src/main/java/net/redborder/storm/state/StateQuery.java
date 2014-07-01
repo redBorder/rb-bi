@@ -16,6 +16,7 @@ import java.util.logging.Logger;
 
 import net.redborder.storm.util.ConfigData;
 import storm.trident.operation.TridentCollector;
+import storm.trident.operation.TridentOperationContext;
 import storm.trident.state.BaseQueryFunction;
 import storm.trident.state.map.MapState;
 import storm.trident.tuple.TridentTuple;
@@ -28,6 +29,7 @@ public class StateQuery extends BaseQueryFunction<MapState<Map<String, Object>>,
 
     String _key;
     String _generalkey;
+    private boolean _debug;
 
     public StateQuery(String key) {
         _key = key;
@@ -36,6 +38,11 @@ public class StateQuery extends BaseQueryFunction<MapState<Map<String, Object>>,
 
     public StateQuery(String key, String generalKey) {
         _generalkey = "rbbi:" + generalKey + ":";
+    }
+
+    @Override
+    public void prepare(Map conf, TridentOperationContext context) {
+        _debug = (boolean) conf.get("rbDebug");
     }
 
     @Override
@@ -60,7 +67,7 @@ public class StateQuery extends BaseQueryFunction<MapState<Map<String, Object>>,
             }
         }
 
-        if (ConfigData.debug) {
+        if (_debug) {
             System.out.println("BatchSize " + tuples.size()
                     + " RequestedToRiak: " + keysToRequest.size());
         }
@@ -76,7 +83,7 @@ public class StateQuery extends BaseQueryFunction<MapState<Map<String, Object>>,
 
             try {
                 memcachedData = state.multiGet(keysToMemcached);
-                if (ConfigData.debug) {
+                if (_debug) {
                     System.out.println("RiakResponse: " + memcachedData.toString());
                 }
             } catch (ReportedFailedException e) {

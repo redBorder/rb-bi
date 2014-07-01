@@ -28,8 +28,7 @@ import org.codehaus.jackson.map.ObjectMapper;
  */
 public class ConfigData {
 
-    public static boolean debug;
-
+    public boolean debug;
     private CuratorFramework _curator;
     private Config _conf;
     private ConfigFile _configFile;
@@ -147,6 +146,7 @@ public class ConfigData {
         } else if (mode.equals("cluster")) {
             _conf.put(Config.TOPOLOGY_WORKERS, getWorkers());
             _conf.put(Config.TOPOLOGY_MAX_SPOUT_PENDING, 5);
+            _conf.put("rbDebug", debug);
 
             /*  Metrics  */
             Map<String, Object> zkMetricsConf = new HashMap<>();
@@ -253,9 +253,5 @@ public class ConfigData {
         }
 
         return riakServers;
-    }
-
-    public void setDebug(boolean val) {
-        debug = val;
     }
 }

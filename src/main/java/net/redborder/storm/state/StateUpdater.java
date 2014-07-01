@@ -14,6 +14,7 @@ import java.util.logging.Logger;
 
 import net.redborder.storm.util.ConfigData;
 import storm.trident.operation.TridentCollector;
+import storm.trident.operation.TridentOperationContext;
 import storm.trident.state.BaseStateUpdater;
 import storm.trident.state.map.MapState;
 import storm.trident.tuple.TridentTuple;
@@ -27,6 +28,7 @@ public class StateUpdater extends BaseStateUpdater<MapState<Map<String, Object>>
     String _key;
     String _value;
     String _generalKey;
+    private boolean _debug;
 
     public StateUpdater(String key, String value) {
         _key = key;
@@ -40,6 +42,11 @@ public class StateUpdater extends BaseStateUpdater<MapState<Map<String, Object>>
     }
 
     @Override
+    public void prepare(Map conf, TridentOperationContext context) {
+        _debug = (boolean) conf.get("rbDebug");
+    }
+
+    @Override
     public void updateState(MapState<Map<String, Object>> state, List<TridentTuple> tuples, TridentCollector collector) {
         List<Map<String, Object>> events = new ArrayList<>();
         List<List<Object>> keys = new ArrayList<>();
@@ -49,7 +56,7 @@ public class StateUpdater extends BaseStateUpdater<MapState<Map<String, Object>>
             keys.add(l);
             events.add((Map<String, Object>) t.getValueByField(_value));
 
-            if (ConfigData.debug) {
+            if (_debug) {
                 System.out.println("SAVED TO RIAK KEY: " + _generalKey + t.getValueByField(_key)
                         + " VALUE: " + t.getValueByField(_value));
             }
