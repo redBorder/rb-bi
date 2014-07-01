@@ -123,7 +123,7 @@ public class RedBorderTopology {
         /* Location */
         if (_config.contains("location")) {
             locationPartition = _config.getKafkaPartitions("rb_loc");
-            locationStateFactory = new GridGainFactory<String, Map<String, Object>>(new GridGainOptions("rbbi:location", 2, 0));
+            locationStateFactory = new GridGainFactory<String, Map<String, Object>>(new GridGainOptions("location", 2, 0));
             locationState = topology.newStaticState(locationStateFactory);
 
             // Get msg
@@ -153,7 +153,7 @@ public class RedBorderTopology {
         /* Mobile */
         if (_config.contains("mobile")) {
             mobilePartition = _config.getKafkaPartitions("rb_mobile");
-            mobileStateFactory = new GridGainFactory<String, Map<String, Object>>(new GridGainOptions("rbbi:mobile", 2, 0));
+            mobileStateFactory = new GridGainFactory<String, Map<String, Object>>(new GridGainOptions("mobile", 2, 0));
             mobileState = topology.newStaticState(mobileStateFactory);
 
             // Get msg and save it to enrich later on
@@ -176,7 +176,7 @@ public class RedBorderTopology {
         /* Trap */
         if (_config.contains("trap")) {
             trapPartition = _config.getKafkaPartitions("rb_trap");
-            trapStateFactory = new GridGainFactory<String, Map<String, Object>>(new GridGainOptions("rbbi:trap", 2, 0));
+            trapStateFactory = new GridGainFactory<String, Map<String, Object>>(new GridGainOptions("trap", 2, 0));
             trapState = topology.newStaticState(trapStateFactory);
 
             // Get msg and save it to enrich later on
@@ -196,7 +196,7 @@ public class RedBorderTopology {
         /* Radius */
         if (_config.contains("radius")) {
             radiusPartition = _config.getKafkaPartitions("rb_radius");
-            radiusStateFactory = new GridGainFactory<String, Map<String, Object>>(new GridGainOptions("rbbi:radius", 2, 0));
+            radiusStateFactory = new GridGainFactory<String, Map<String, Object>>(new GridGainOptions("radius", 2, 0));
             radiusState = topology.newStaticState(radiusStateFactory);
 
             // Get msg
