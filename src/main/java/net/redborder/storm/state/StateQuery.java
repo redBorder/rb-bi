@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import net.redborder.storm.util.ConfigData;
 import storm.trident.operation.TridentCollector;
 import storm.trident.operation.TridentOperationContext;
 import storm.trident.state.BaseQueryFunction;
@@ -23,18 +25,18 @@ import storm.trident.tuple.TridentTuple;
  *
  * @author andresgomez
  */
-public class RiakQuery extends BaseQueryFunction<MapState<Map<String, Object>>, Map<String, Object>> {
+public class StateQuery extends BaseQueryFunction<MapState<Map<String, Object>>, Map<String, Object>> {
 
     String _key;
     String _generalkey;
     private boolean _debug;
 
-    public RiakQuery(String key) {
+    public StateQuery(String key) {
         _key = key;
         _generalkey = "";
     }
 
-    public RiakQuery(String key, String generalKey) {
+    public StateQuery(String key, String generalKey) {
         _generalkey = "rbbi:" + generalKey + ":";
     }
 
@@ -65,7 +67,7 @@ public class RiakQuery extends BaseQueryFunction<MapState<Map<String, Object>>, 
             }
         }
 
-        if (_debug) {
+        if (ConfigData.debug) {
             System.out.println("BatchSize " + tuples.size()
                     + " RequestedToRiak: " + keysToRequest.size());
         }
@@ -85,7 +87,7 @@ public class RiakQuery extends BaseQueryFunction<MapState<Map<String, Object>>, 
                     System.out.println("RiakResponse: " + memcachedData.toString());
                 }
             } catch (ReportedFailedException e) {
-                Logger.getLogger(RiakQuery.class.getName()).log(Level.WARNING, null, e);
+                Logger.getLogger(StateQuery.class.getName()).log(Level.WARNING, null, e);
             }
         }
 
