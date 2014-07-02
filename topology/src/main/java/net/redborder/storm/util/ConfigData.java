@@ -6,6 +6,14 @@
 package net.redborder.storm.util;
 
 import backtype.storm.Config;
+import net.redborder.metrics.KafkaConsumerMonitorMetrics;
+import net.redborder.metrics.Metrics2KafkaConsumer;
+import org.apache.curator.RetryPolicy;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.retry.ExponentialBackoffRetry;
+import org.codehaus.jackson.map.ObjectMapper;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,14 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import net.redborder.storm.metrics.KafkaConsumerMonitorMetrics;
-import net.redborder.metrics.Metrics2KafkaConsumer;
-import org.apache.curator.RetryPolicy;
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.CuratorFrameworkFactory;
-import org.apache.curator.retry.ExponentialBackoffRetry;
-import org.codehaus.jackson.map.ObjectMapper;
 
 /**
  *
