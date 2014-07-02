@@ -22,19 +22,19 @@ import storm.trident.tuple.TridentTuple;
  *
  * @author andresgomez
  */
-public class StateUpdater extends BaseStateUpdater<MapState<Map<String, Object>>> {
+public class RiakUpdater extends BaseStateUpdater<MapState<Map<String, Object>>> {
 
     String _key;
     String _value;
     String _generalKey;
 
-    public StateUpdater(String key, String value) {
+    public RiakUpdater(String key, String value) {
         _key = key;
         _value = value;
         _generalKey = "";
     }
 
-    public StateUpdater(String key, String value, String generalKey) {
+    public RiakUpdater(String key, String value, String generalKey) {
         this(key, value);
         _generalKey = "rbbi:" + generalKey + ":";
     }
@@ -58,7 +58,7 @@ public class StateUpdater extends BaseStateUpdater<MapState<Map<String, Object>>
         try {
             state.multiPut(keys, events);
         } catch (ReportedFailedException e) {
-            Logger.getLogger(StateUpdater.class.getName()).log(Level.WARNING, null, e);
+            Logger.getLogger(RiakUpdater.class.getName()).log(Level.WARNING, null, e);
         }
     }
 
