@@ -28,7 +28,7 @@ public class ConfigFile {
     /**
      * Constructor
      */
-    public ConfigFile() {
+    public ConfigFile(boolean debug) {
         _availableTopics = new ArrayList<>();
 
         try {
@@ -46,7 +46,7 @@ public class ConfigFile {
                 }
 
 
-                if (ConfigData.debug) {
+                if (debug) {
                     System.out.println("Select section: " + value.toString());
                     System.out.println("  - inputTopic: [" + config.get("input_topic") + "]");
                     System.out.println("  - outputTopic: [" + config.get("output_topic") + "]");

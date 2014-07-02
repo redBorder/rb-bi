@@ -140,7 +140,7 @@
 
         <!-- Metrics -->
         <dependency>
-            <groupId>redBorder-storm</groupId>
+            <groupId>net.redborder.storm</groupId>
             <artifactId>metrics-kafka</artifactId>
             <version>1.1</version>
         </dependency>
@@ -195,7 +195,6 @@
                     <includeProjectDependencies>true</includeProjectDependencies>
                     <includePluginDependencies>false</includePluginDependencies>
                     <classpathScope>compile</classpathScope>
-                    <mainClass>${storm.topology}</mainClass>
                 </configuration>
             </plugin>
 
