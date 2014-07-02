@@ -334,21 +334,21 @@ public class RedBorderTopology {
 
     private static TridentState persist(String topic, Stream s) {
         String outputTopic = _config.getOutputTopic(topic);
-        int partitions = _config.tranquilityPartitions(topic);
-        int replication = _config.tranquilityReplication();
         TridentState ret;
 
         if (outputTopic != null) {
-            int flowPrePartitions = _config.getKafkaPartitions(outputTopic);
+            int prePartitions = _config.getKafkaPartitions(outputTopic);
 
             ret = s.each(new Fields("finalMap"), new MapToJSONFunction(), new Fields("jsonString"))
                     .partitionPersist(KafkaState.nonTransactional(_config.getZkHost()),
                             new Fields("jsonString"), new KafkaStateUpdater("jsonString", outputTopic))
-                    .parallelismHint(flowPrePartitions);
+                    .parallelismHint(prePartitions);
         } else {
             BeamFactory bf;
             TridentBeamStateFactory druidState;
             String zkHost = _config.getZkHost();
+            int partitions = _config.tranquilityPartitions(topic);
+            int replication = _config.tranquilityReplication();
 
             if (topic.equals("traffics")) {
                 bf = new BeamFlow(partitions, replication, zkHost);

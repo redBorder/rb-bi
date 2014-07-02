@@ -44,6 +44,7 @@ public class ConfigData {
         _conf = new Config();
         _configFile = new ConfigFile(debug);
         _kafkaPartitions = new HashMap<>();
+        _tranquilityPartitions = new HashMap<>();
         _topics = _configFile.getAvailableTopics();
         _zookeeper = getZkHost();
         debug = false;
@@ -185,7 +186,6 @@ public class ConfigData {
         if (divider > 0) {
             if (capacity >= divider * replication * 2) {
                 slot = (int) Math.floor(capacity / (replication * 2)) / divider;
-                _tranquilityPartitions = new HashMap<>();
                 _tranquilityPartitions.put("traffics", slot * 2);
                 _tranquilityPartitions.put("events", slot * 2);
                 _tranquilityPartitions.put("monitor", slot);
