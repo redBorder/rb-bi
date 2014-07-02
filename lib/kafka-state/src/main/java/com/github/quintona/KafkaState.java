@@ -1,7 +1,11 @@
 package com.github.quintona;
 
 import backtype.storm.task.IMetricsContext;
-import org.boon.json.ObjectMapper;
+import org.codehaus.jackson.JsonParseException;
+import org.codehaus.jackson.map.JsonMappingException;
+import org.codehaus.jackson.map.ObjectMapper;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -15,7 +19,6 @@ import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.ExponentialBackoffRetry;
-import org.boon.json.JsonFactory;
 import storm.trident.state.State;
 import storm.trident.state.StateFactory;
 
@@ -66,7 +69,7 @@ public class KafkaState<T> implements State {
             }
 
             if (jsonString != null) {
-                ObjectMapper mapper = JsonFactory.create();
+                ObjectMapper mapper = new ObjectMapper();
                 Map<String, Object> json = null;
 
                 try {
@@ -78,7 +81,7 @@ public class KafkaState<T> implements State {
                     } else {
                         _brokerList = _brokerList.concat("," + json.get("host") + ":" + json.get("port"));
                     }
-                } catch (NullPointerException ex) {
+                } catch (NullPointerException | IOException ex) {
                     Logger.getLogger(KafkaState.class.getName()).log(Level.SEVERE, "Failed converting a JSON tuple to a Map class", ex);
                 }
             }
