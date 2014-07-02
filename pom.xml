@@ -8,7 +8,7 @@
     <packaging>pom</packaging>
 
     <name>redBorder-BI</name>
-    <url>http://maven.apache.org</url>
+    <url>http://redborder.net</url>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
