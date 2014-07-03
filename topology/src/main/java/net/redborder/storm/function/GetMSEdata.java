@@ -6,11 +6,13 @@
 package net.redborder.storm.function;
 
 import backtype.storm.tuple.Values;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import storm.trident.operation.BaseFunction;
@@ -18,7 +20,6 @@ import storm.trident.operation.TridentCollector;
 import storm.trident.tuple.TridentTuple;
 
 /**
- *
  * @author andresgomez
  */
 public class GetMSEdata extends BaseFunction {
@@ -46,11 +47,14 @@ public class GetMSEdata extends BaseFunction {
                 mseDataDruid.put("client_mac", macAddress);
 
                 mapHierachy = (String) mapInfo.get("mapHierarchyString");
-                zone = mapHierachy.split(">");
 
-                mseData.put("client_campus", zone[0]);
-                mseData.put("client_building", zone[1]);
-                mseData.put("client_floor", zone[2]);
+                if (mapHierachy != null) {
+                    zone = mapHierachy.split(">");
+
+                    mseData.put("client_campus", zone[0]);
+                    mseData.put("client_building", zone[1]);
+                    mseData.put("client_floor", zone[2]);
+                }
 
                 state = (String) location.get("dot11Status");
                 mseDataDruid.put("dot11_status", state);
@@ -102,5 +106,5 @@ public class GetMSEdata extends BaseFunction {
             Logger.getLogger(GetMSEdata.class.getName()).log(Level.SEVERE, "Failed processing a MSE map: \n" + mseEvent.toString(), e);
         }
     }
-    
+
 }
