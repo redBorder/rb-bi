@@ -178,6 +178,7 @@ public class ConfigData {
         int replication = tranquilityReplication();
         int divider = 0;
         int slot;
+        _tranquilityPartitions = new HashMap<>();
 
         if (tranquilityEnabled("traffics")) divider = divider + 2;
         if (tranquilityEnabled("events")) divider = divider + 2;
