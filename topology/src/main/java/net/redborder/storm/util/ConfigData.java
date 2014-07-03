@@ -177,6 +177,7 @@ public class ConfigData {
         int replication = tranquilityReplication();
         int divider = 0;
         int slot;
+        _tranquilityPartitions = new HashMap<>();
 
         if (tranquilityEnabled("traffics")) divider = divider + 2;
         if (tranquilityEnabled("events")) divider = divider + 2;
@@ -185,7 +186,6 @@ public class ConfigData {
         if (divider > 0) {
             if (capacity >= divider * replication * 2) {
                 slot = (int) Math.floor(capacity / (replication * 2)) / divider;
-                _tranquilityPartitions = new HashMap<>();
                 _tranquilityPartitions.put("traffics", slot * 2);
                 _tranquilityPartitions.put("events", slot * 2);
                 _tranquilityPartitions.put("monitor", slot);

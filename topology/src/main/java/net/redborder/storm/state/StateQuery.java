@@ -31,6 +31,10 @@ public class StateQuery extends BaseQueryFunction<MapState<Map<String, Object>>,
     String _generalkey;
     private boolean _debug;
 
+    public StateQuery(){
+
+    }
+
     public StateQuery(String key) {
         _key = key;
         _generalkey = "";

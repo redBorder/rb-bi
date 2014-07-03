@@ -74,7 +74,7 @@ public class RedBorderTopology {
         /* States and Streams*/
         TridentState locationState, mobileState, radiusState, trapState, darklistState;
         GridGainFactory locationStateFactory, mobileStateFactory, trapStateFactory, radiusStateFactory;
-        Stream locationStream, radiusStream, eventsStream = null, monitorStream = null;
+        Stream locationStream, radiusStream, flowStream = null, eventsStream = null, monitorStream = null;
 
         /* Partitions */
         int flowPartition = _config.getKafkaPartitions("rb_flow");
@@ -84,17 +84,19 @@ public class RedBorderTopology {
         radiusPartition = trapPartition = locationPartition = mobilePartition = 0;
 
         /* Flow */
-        Stream flowStream = topology.newStream("rb_flow", new TridentKafkaSpout(_config, "traffics").builder())
-                .parallelismHint(flowPartition).shuffle().name("Flows")
-                .each(new Fields("str"), new MapperFunction("rb_flow"), new Fields("flows"))
-                .each(new Fields("flows"), new MacVendorFunction(), new Fields("macVendorMap"))
-                .each(new Fields("flows"), new GeoIpFunction(), new Fields("geoIPMap"))
-                .each(new Fields("flows"), new AnalizeHttpUrlFunction(), new Fields("httpUrlMap"));
+        if (_config.contains("traffics")) {
+             flowStream = topology.newStream("rb_flow", new TridentKafkaSpout(_config, "traffics").builder())
+                    .parallelismHint(flowPartition).shuffle().name("Flows")
+                    .each(new Fields("str"), new MapperFunction("rb_flow"), new Fields("flows"))
+                    .each(new Fields("flows"), new MacVendorFunction(), new Fields("macVendorMap"))
+                    .each(new Fields("flows"), new GeoIpFunction(), new Fields("geoIPMap"))
+                    .each(new Fields("flows"), new AnalizeHttpUrlFunction(), new Fields("httpUrlMap"));
 
-        fieldsFlow.add("flows");
-        fieldsFlow.add("geoIPMap");
-        fieldsFlow.add("macVendorMap");
-        fieldsFlow.add("httpUrlMap");
+            fieldsFlow.add("flows");
+            fieldsFlow.add("geoIPMap");
+            fieldsFlow.add("macVendorMap");
+            fieldsFlow.add("httpUrlMap");
+        }
 
         /* Events */
         if (_config.contains("events")) {
@@ -136,16 +138,18 @@ public class RedBorderTopology {
             locationStream.partitionPersist(locationStateFactory, new Fields("src_mac", "mse_data"),
                     new StateUpdater("src_mac", "mse_data"));
 
-            // Generate a flow msg
-            persist("traffics",
-                    locationStream.each(new Fields("mse_data_druid", "mseMacVendorMap", "mseGeoIPMap"),
-                            new MergeMapsFunction(), new Fields("finalMap")));
+            if(_config.contains("traffics")) {
+                // Generate a flow msg
+                persist("traffics",
+                        locationStream.each(new Fields("mse_data_druid", "mseMacVendorMap", "mseGeoIPMap"),
+                                new MergeMapsFunction(), new Fields("finalMap")));
 
-            // Enrich flow stream
-            flowStream = flowStream.stateQuery(locationState, new Fields("flows"),
-                    new StateQuery("client_mac"), new Fields("mseMap"));
+                // Enrich flow stream
+                flowStream = flowStream.stateQuery(locationState, new Fields("flows"),
+                        new LocationQuery("client_mac"), new Fields("mseMap"));
 
-            fieldsFlow.add("mseMap");
+                fieldsFlow.add("mseMap");
+            }
         }
 
         /* Mobile */
@@ -245,11 +249,24 @@ public class RedBorderTopology {
             darklistState = topology.newStaticState(new GridGainFactory<String, Map<String, Object>>("darklist", _config.getEnrichs()));
 
             // Enrich flow stream with darklist fields
-            flowStream = flowStream
-                    .stateQuery(darklistState, new Fields("flows"), new StateQuery("src"),
-                            new Fields("darklistMap"));
+            if(_config.contains("traffics")) {
+                flowStream = flowStream
+                        .stateQuery(darklistState, new Fields("flows"), new StateQuery("src"),
+                                new Fields("darklistMap"));
 
-            fieldsFlow.add("darklistMap");
+                fieldsFlow.add("darklistMap");
+            }
+
+
+            // Enrich event stream with darklist fields
+            if(_config.contains("events")){
+                eventsStream = eventsStream
+                        .stateQuery(darklistState, new Fields("event"), new StateQuery("src"),
+                                new Fields("darklistMap"));
+
+                fieldsEvent.add("darklistMap");
+            }
+
         }
 
         /* Join fields and persist */
