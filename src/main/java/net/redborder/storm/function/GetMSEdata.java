@@ -46,11 +46,14 @@ public class GetMSEdata extends BaseFunction {
                 mseDataDruid.put("client_mac", macAddress);
 
                 mapHierachy = (String) mapInfo.get("mapHierarchyString");
-                zone = mapHierachy.split(">");
 
-                mseData.put("client_campus", zone[0]);
-                mseData.put("client_building", zone[1]);
-                mseData.put("client_floor", zone[2]);
+                if(mapHierachy!=null) {
+                    zone = mapHierachy.split(">");
+
+                    mseData.put("client_campus", zone[0]);
+                    mseData.put("client_building", zone[1]);
+                    mseData.put("client_floor", zone[2]);
+                }
 
                 state = (String) location.get("dot11Status");
                 mseDataDruid.put("dot11_status", state);
@@ -98,7 +101,7 @@ public class GetMSEdata extends BaseFunction {
                 collector.emit(new Values(macAddress, mseData, mseDataDruid));
             }
 
-        } catch (NullPointerException e) {
+        } catch (Exception  e) {
             Logger.getLogger(GetMSEdata.class.getName()).log(Level.SEVERE, "Failed processing a MSE map: \n" + mseEvent.toString(), e);
         }
     }
