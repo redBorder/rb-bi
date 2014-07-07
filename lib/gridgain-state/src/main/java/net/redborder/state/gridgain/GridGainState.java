@@ -12,26 +12,30 @@ import java.util.Map;
 /**
  * Created by andresgomez on 30/06/14.
  */
-public class GridGainState<K,V> implements IBackingMap<V> {
+public class GridGainState implements IBackingMap<Map<String, Map<String, Object>>> {
 
-    GridCache<K, V> _map;
+    GridCache<String, Map<String, Object>> _map;
 
-    public GridGainState(GridCache<K, V> map){
+    public GridGainState(GridCache<String, Map<String, Object>> map){
         _map=map;
 
     }
 
     @Override
-    public List<V> multiGet(List<List<Object>> lists) {
-
-        List<K> keys = new ArrayList<K>();
+    public List<Map<String, Map<String, Object>>> multiGet(List<List<Object>> lists){
+        List<String> keys = new ArrayList<String>();
 
         for(List key : lists){
-            keys.add((K) key.get(0));
+            keys.add((String) key.get(0));
         }
 
         try {
-            return new ArrayList<V>(_map.getAll(keys).values());
+
+            List<Map<String, Map<String, Object>>> values = new ArrayList<>();
+
+            values.add(_map.getAll(keys));
+
+            return values;
         } catch (GridException e) {
             e.printStackTrace();
         }
@@ -40,18 +44,10 @@ public class GridGainState<K,V> implements IBackingMap<V> {
     }
 
     @Override
-    public void multiPut(List<List<Object>> keys, List<V> values) {
-
-        Map<K, V> mapToSave = new HashMap<K, V>();
-
-        for(int i=0; i<keys.size(); i++){
-
-            mapToSave.put((K) keys.get(i).get(0), values.get(i));
-
-        }
+    public void multiPut(List<List<Object>> keys, List<Map<String, Map<String, Object>>> values) {
 
         try {
-            _map.putAll(mapToSave);
+            _map.putAll(values.get(0));
         } catch (GridException e) {
             e.printStackTrace();
         }

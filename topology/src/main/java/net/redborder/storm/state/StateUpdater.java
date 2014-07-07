@@ -7,6 +7,7 @@ package net.redborder.storm.state;
 
 import backtype.storm.topology.ReportedFailedException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -23,12 +24,14 @@ import storm.trident.tuple.TridentTuple;
  *
  * @author andresgomez
  */
-public class StateUpdater extends BaseStateUpdater<MapState<Map<String, Object>>> {
+public class StateUpdater extends BaseStateUpdater<MapState<Map<String, Map<String, Object>>>> {
 
     String _key;
     String _value;
     String _generalKey;
     private boolean _debug;
+    Map<String, Map<String, Object>> keyValue = new HashMap<>();
+
 
     public StateUpdater(String key, String value) {
         _key = key;
@@ -47,20 +50,22 @@ public class StateUpdater extends BaseStateUpdater<MapState<Map<String, Object>>
     }
 
     @Override
-    public void updateState(MapState<Map<String, Object>> state, List<TridentTuple> tuples, TridentCollector collector) {
-        List<Map<String, Object>> events = new ArrayList<>();
+    public void updateState(MapState<Map<String, Map<String, Object>>> state, List<TridentTuple> tuples, TridentCollector collector) {
+        List<Map<String, Map<String, Object>>> events = new ArrayList<>();
         List<List<Object>> keys = new ArrayList<>();
         for (TridentTuple t : tuples) {
             List<Object> l = new ArrayList<>();
             l.add(_generalKey + t.getValueByField(_key));
             keys.add(l);
-            events.add((Map<String, Object>) t.getValueByField(_value));
+            keyValue.put(l.toString(), (Map<String, Object>) t.getValueByField(_value));
 
             if (_debug) {
                 System.out.println("SAVED TO RIAK KEY: " + _generalKey + t.getValueByField(_key)
                         + " VALUE: " + t.getValueByField(_value));
             }
         }
+
+        events.add(keyValue);
 
         try {
             state.multiPut(keys, events);

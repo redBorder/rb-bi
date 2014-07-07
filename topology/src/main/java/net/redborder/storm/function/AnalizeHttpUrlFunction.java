@@ -25,7 +25,7 @@ public class AnalizeHttpUrlFunction extends BaseFunction {
     public void execute(TridentTuple tuple, TridentCollector collector) {
         Map<String, Object> event = (Map<String, Object>) tuple.getValue(0);
         this.event = event;
-        
+        System.out.println("HTTP:" + event.toString());
         if (event.containsValue("http_host")) {
             String httpHost = event.get("http_host").toString();
             System.out.println("http_host is: " + httpHost);

@@ -20,7 +20,7 @@ import java.util.Map;
 /**
  * Created by andresgomez on 30/06/14.
  */
-public class GridGainFactory<K, V> implements StateFactory {
+public class GridGainFactory implements StateFactory {
 
     String _cacheName;
     List<String> _topics;
@@ -35,8 +35,8 @@ public class GridGainFactory<K, V> implements StateFactory {
     public State makeState(Map configStorm, IMetricsContext iMetricsContext, int i, int i2) {
         Grid grid = null;
 
-        if (GridGain.state("storm").equals(org.gridgain.grid.GridGainState.STARTED)) {
-            grid = GridGain.grid("storm");
+        if (GridGain.state().equals(org.gridgain.grid.GridGainState.STARTED)) {
+            grid = GridGain.grid();
         } else {
             try {
                 grid = GridGain.start(makeConfig());
@@ -45,15 +45,14 @@ public class GridGainFactory<K, V> implements StateFactory {
             }
         }
 
-        GridCache<K, V> map = grid.cache(_cacheName);
-        return NonTransactionalMap.build(new GridGainState<K, V>(map));
+        GridCache<String, Map<String, Object>> map = grid.cache(_cacheName);
+        return NonTransactionalMap.build(new GridGainState(map));
     }
 
 
     public GridConfiguration makeConfig(){
         GridConfiguration conf = new GridConfiguration();
         List<GridCacheConfiguration> caches = new ArrayList<GridCacheConfiguration>();
-        conf.setGridName("storm");
 
         if (_topics.contains("darklist")) {
             GridCacheConfiguration cacheDarkList = new GridCacheConfiguration();

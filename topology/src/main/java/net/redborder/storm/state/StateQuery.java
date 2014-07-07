@@ -25,7 +25,7 @@ import storm.trident.tuple.TridentTuple;
  *
  * @author andresgomez
  */
-public class StateQuery extends BaseQueryFunction<MapState<Map<String, Object>>, Map<String, Object>> {
+public class StateQuery extends BaseQueryFunction<MapState<Map<String, Map<String, Object>>>, Map<String, Object>> {
 
     String _key;
     String _generalkey;
@@ -50,8 +50,9 @@ public class StateQuery extends BaseQueryFunction<MapState<Map<String, Object>>,
     }
 
     @Override
-    public List<Map<String, Object>> batchRetrieve(MapState<Map<String, Object>> state, List<TridentTuple> tuples) {
-        List<Map<String, Object>> memcachedData = null;
+    public List<Map<String, Object>> batchRetrieve(MapState<Map<String, Map<String, Object>>> state, List<TridentTuple> tuples) {
+        List<Map<String, Map<String, Object>>> memcachedData = null;
+        Map<String, Map<String, Object>> queryData = null;
         List<Map<String, Object>> result = new ArrayList<>();
         List<Object> keysToRequest = new ArrayList<>();
         List<String> keysToAppend = new ArrayList<>();
@@ -87,6 +88,7 @@ public class StateQuery extends BaseQueryFunction<MapState<Map<String, Object>>,
 
             try {
                 memcachedData = state.multiGet(keysToMemcached);
+                queryData = memcachedData.get(0);
                 if (_debug) {
                     System.out.println("RiakResponse: " + memcachedData.toString());
                 }
@@ -97,8 +99,8 @@ public class StateQuery extends BaseQueryFunction<MapState<Map<String, Object>>,
 
         for (String key : keysToAppend) {
             if (key != null && memcachedData != null
-                    && !memcachedData.isEmpty() && keysToRequest.contains(key)) {
-                result.add(memcachedData.get(keysToRequest.indexOf(key)));
+                    && !memcachedData.isEmpty() && keysToRequest.contains(key) && queryData.containsKey(key)) {
+                result.add(queryData.get(key));
             } else {
                 result.add(null);
             }
