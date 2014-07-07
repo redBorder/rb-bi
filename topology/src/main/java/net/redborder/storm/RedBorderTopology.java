@@ -11,6 +11,19 @@ import com.github.quintona.KafkaStateUpdater;
 import com.metamx.tranquility.storm.BeamFactory;
 import com.metamx.tranquility.storm.TridentBeamStateFactory;
 import com.metamx.tranquility.storm.TridentBeamStateUpdater;
+import net.redborder.state.gridgain.GridGainFactory;
+import net.redborder.storm.function.*;
+import net.redborder.storm.spout.TridentKafkaSpout;
+import net.redborder.storm.state.LocationQuery;
+import net.redborder.storm.state.StateQuery;
+import net.redborder.storm.state.StateUpdater;
+import net.redborder.storm.util.ConfigData;
+import net.redborder.storm.util.druid.BeamEvent;
+import net.redborder.storm.util.druid.BeamFlow;
+import net.redborder.storm.util.druid.BeamMonitor;
+import storm.trident.Stream;
+import storm.trident.TridentState;
+import storm.trident.TridentTopology;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -19,18 +32,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-
-import net.redborder.state.gridgain.GridGainFactory;
-import net.redborder.storm.function.*;
-import net.redborder.storm.spout.TridentKafkaSpout;
-import net.redborder.storm.state.*;
-import net.redborder.storm.util.ConfigData;
-import net.redborder.storm.util.druid.BeamEvent;
-import net.redborder.storm.util.druid.BeamFlow;
-import net.redborder.storm.util.druid.BeamMonitor;
-import storm.trident.Stream;
-import storm.trident.TridentState;
-import storm.trident.TridentTopology;
 
 public class RedBorderTopology {
 
@@ -272,7 +273,8 @@ public class RedBorderTopology {
         /* Join fields and persist */
         if (_config.contains("traffics")) {
             persist("traffics",
-                    flowStream.each(new Fields(fieldsFlow), new MergeMapsFunction(), new Fields("finalMap"))
+                    flowStream.each(new Fields(fieldsFlow), new MergeMapsFunction(), new Fields("mergedMap"))
+                            .each(new Fields("mergedMap"), new SeparateLongTimeFlowFunction(), new Fields("finalMap"))
                             .project(new Fields("finalMap"))
                             .parallelismHint(_config.getWorkers())
                             .shuffle().name("Flow Producer"));
