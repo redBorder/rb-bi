@@ -88,11 +88,12 @@ public class StateQuery extends BaseQueryFunction<MapState<Map<String, Map<Strin
 
             try {
                 memcachedData = state.multiGet(keysToMemcached);
-                if (memcachedData != null)
+                if (memcachedData != null) {
                     queryData = memcachedData.get(0);
 
-                if (_debug) {
-                    System.out.println("RiakResponse: " + memcachedData.toString());
+                    if (_debug) {
+                        System.out.println("RiakResponse: " + memcachedData.toString());
+                    }
                 }
             } catch (ReportedFailedException e) {
                 Logger.getLogger(StateQuery.class.getName()).log(Level.WARNING, null, e);
