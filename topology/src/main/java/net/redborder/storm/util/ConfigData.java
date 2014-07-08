@@ -44,6 +44,7 @@ public class ConfigData {
         _configFile = new ConfigFile(debug);
         _kafkaPartitions = new HashMap<>();
         _topics = _configFile.getAvailableTopics();
+        _tranquilityPartitions = new HashMap<>();
         _zookeeper = getZkHost();
         debug = false;
         getZkData();
@@ -177,7 +178,6 @@ public class ConfigData {
         int replication = tranquilityReplication();
         int divider = 0;
         int slot;
-        _tranquilityPartitions = new HashMap<>();
 
         if (tranquilityEnabled("traffics")) divider = divider + 2;
         if (tranquilityEnabled("events")) divider = divider + 2;
