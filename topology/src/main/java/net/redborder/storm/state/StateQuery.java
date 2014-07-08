@@ -7,6 +7,7 @@ package net.redborder.storm.state;
 
 import backtype.storm.topology.ReportedFailedException;
 import backtype.storm.tuple.Values;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -22,7 +23,6 @@ import storm.trident.state.map.MapState;
 import storm.trident.tuple.TridentTuple;
 
 /**
- *
  * @author andresgomez
  */
 public class StateQuery extends BaseQueryFunction<MapState<Map<String, Map<String, Object>>>, Map<String, Object>> {
@@ -31,7 +31,7 @@ public class StateQuery extends BaseQueryFunction<MapState<Map<String, Map<Strin
     String _generalkey;
     private boolean _debug;
 
-    public StateQuery(){
+    public StateQuery() {
 
     }
 
@@ -88,7 +88,9 @@ public class StateQuery extends BaseQueryFunction<MapState<Map<String, Map<Strin
 
             try {
                 memcachedData = state.multiGet(keysToMemcached);
-                queryData = memcachedData.get(0);
+                if (memcachedData != null)
+                    queryData = memcachedData.get(0);
+
                 if (_debug) {
                     System.out.println("RiakResponse: " + memcachedData.toString());
                 }
