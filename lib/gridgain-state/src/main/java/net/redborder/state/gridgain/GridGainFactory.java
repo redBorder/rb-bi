@@ -1,6 +1,7 @@
 package net.redborder.state.gridgain;
 
 import backtype.storm.task.IMetricsContext;
+import backtype.storm.utils.Utils;
 import org.gridgain.grid.Grid;
 import org.gridgain.grid.GridConfiguration;
 import org.gridgain.grid.GridException;
@@ -35,14 +36,10 @@ public class GridGainFactory implements StateFactory {
     public State makeState(Map configStorm, IMetricsContext iMetricsContext, int i, int i2) {
         Grid grid = null;
 
-        if (GridGain.state().equals(org.gridgain.grid.GridGainState.STARTED)) {
+        try {
+            grid = GridGain.start(makeConfig());
+        } catch (GridException e) {
             grid = GridGain.grid();
-        } else {
-            try {
-                grid = GridGain.start(makeConfig());
-            } catch (GridException e) {
-                e.printStackTrace();
-            }
         }
 
         GridCache<String, Map<String, Object>> map = grid.cache(_cacheName);
@@ -50,7 +47,7 @@ public class GridGainFactory implements StateFactory {
     }
 
 
-    public GridConfiguration makeConfig(){
+    public GridConfiguration makeConfig() {
         GridConfiguration conf = new GridConfiguration();
         List<GridCacheConfiguration> caches = new ArrayList<GridCacheConfiguration>();
 
