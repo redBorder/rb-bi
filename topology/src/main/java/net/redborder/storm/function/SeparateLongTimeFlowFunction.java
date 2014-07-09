@@ -21,11 +21,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
  * @author andresgomez
  */
 public class SeparateLongTimeFlowFunction extends BaseFunction {
-    
+
     boolean _debug;
 
     @Override
@@ -34,7 +33,7 @@ public class SeparateLongTimeFlowFunction extends BaseFunction {
     }
 
     public final int DELAYED_REALTIME_TIME = 15;
-    
+
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
         Map<String, Object> event = (Map<String, Object>) tuple.getValue(0);
@@ -67,10 +66,19 @@ public class SeparateLongTimeFlowFunction extends BaseFunction {
                 packet_start = limit;
             }
 
+
             DateTime this_start;
             DateTime this_end = packet_start;
-            int bytes = Integer.parseInt(event.get("bytes").toString());
-            int pkts = Integer.parseInt(event.get("pkts").toString());
+
+            int bytes = 0;
+
+            if (event.containsKey("bytes"))
+                bytes = Integer.parseInt(event.get("bytes").toString());
+
+            int pkts = 0;
+            if (event.containsKey("pkts"))
+                pkts = Integer.parseInt(event.get("pkts").toString());
+
             int totalDiff = Seconds.secondsBetween(packet_start, packet_end).getSeconds();
             int diff, this_bytes, this_pkts;
             int bytes_count = 0;
