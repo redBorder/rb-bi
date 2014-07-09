@@ -47,8 +47,6 @@ public class SeparateLongTimeFlowFunction extends BaseFunction {
             int now_hour = now.getHourOfDay();
             int packet_end_hour = packet_end.getHourOfDay();
 
-            if (_debug) System.out.println("Separation packet " + event);
-
             if (packet_end.isAfter(now)) {
                 Logger.getLogger(SeparateLongTimeFlowFunction.class.getName()).log(Level.WARNING,
                         "Dropped packet {0} because it ended in the future.", event);
@@ -121,12 +119,9 @@ public class SeparateLongTimeFlowFunction extends BaseFunction {
                 generatedPackets.set(last_index, last);
             }
 
-            if (_debug) System.out.println("-------------------------------");
             for (Map<String, Object> e : generatedPackets) {
                 collector.emit(new Values(e));
-                if (_debug) System.out.println(e);
             }
-            if (_debug) System.out.println("-------------------------------");
         } else if (event.containsKey("first_switched")) {
             event.put("timestamp", event.get("first_switched"));
             collector.emit(new Values(event));
