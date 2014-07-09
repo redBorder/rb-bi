@@ -66,6 +66,9 @@ public class AnalizeHttpUrlFunction extends BaseFunction {
 
             collector.emit(new Values(result));
         }catch (Exception ex){
+            result = new HashMap<>();
+            collector.emit(new Values(result));
+
             System.out.println(ex + "Flow: " + event.toString());
         }
     }
