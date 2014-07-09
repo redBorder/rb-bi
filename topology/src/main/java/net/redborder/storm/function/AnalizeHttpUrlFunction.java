@@ -34,37 +34,40 @@ public class AnalizeHttpUrlFunction extends BaseFunction {
     public void execute(TridentTuple tuple, TridentCollector collector) {
         Map<String, Object> event = (Map<String, Object>) tuple.getValue(0);
         result = new HashMap<>();
+        try {
+            this.event = event;
+            if (event.containsKey("http_host")) {
+                String httpHost = event.get("http_host").toString();
 
-        this.event = event;
-        if (event.containsKey("http_host")) {
-            String httpHost = event.get("http_host").toString();
+                if (_debug)
+                    System.out.println("HTTP_HOST: " + httpHost);
 
-            if (_debug)
-                System.out.println("HTTP_HOST: " + httpHost);
-
-            if (httpHost.contains("dropbox.com")) {
-                dropboxUser();
-            } else if (httpHost.contains("www.facebook.com")) {
-                facebookLikeShare();
-            } else if (httpHost.contains("akamaihd.net")
-                    || httpHost.contains("ak.fbcdn.net")) {
-                facebookUser();
-            } else if (httpHost.contains("maps.google.com")) {
-                locationGoogleMaps();
-            } else if (httpHost.contains("www.linkedin.com")) {
-                linkedinShare();
-            } else if (httpHost.contains("api.twitter.com")) {
-                twitterUser1();
-            } else if (httpHost.contains("twitter.com")) {
-                twitterUser2();
-            } else if (httpHost.contains("gdata.youtube.com")) {
-                youtubeUser();
-            } else {
-                mediaData();
+                if (httpHost.contains("dropbox.com")) {
+                    dropboxUser();
+                } else if (httpHost.contains("www.facebook.com")) {
+                    facebookLikeShare();
+                } else if (httpHost.contains("akamaihd.net")
+                        || httpHost.contains("ak.fbcdn.net")) {
+                    facebookUser();
+                } else if (httpHost.contains("maps.google.com")) {
+                    locationGoogleMaps();
+                } else if (httpHost.contains("www.linkedin.com")) {
+                    linkedinShare();
+                } else if (httpHost.contains("api.twitter.com")) {
+                    twitterUser1();
+                } else if (httpHost.contains("twitter.com")) {
+                    twitterUser2();
+                } else if (httpHost.contains("gdata.youtube.com")) {
+                    youtubeUser();
+                } else {
+                    mediaData();
+                }
             }
-        }
 
-        collector.emit(new Values(result));
+            collector.emit(new Values(result));
+        }catch (Exception ex){
+            System.out.println(ex + "Flow: " + event.toString());
+        }
     }
 
     private void dropboxUser() {

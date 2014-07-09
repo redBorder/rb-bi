@@ -14,6 +14,7 @@ import com.metamx.tranquility.storm.TridentBeamStateUpdater;
 import net.redborder.state.gridgain.GridGainFactory;
 import net.redborder.storm.function.*;
 import net.redborder.storm.spout.TridentKafkaSpout;
+import net.redborder.storm.state.DarkListQuery;
 import net.redborder.storm.state.LocationQuery;
 import net.redborder.storm.state.StateQuery;
 import net.redborder.storm.state.StateUpdater;
@@ -252,7 +253,7 @@ public class RedBorderTopology {
             // Enrich flow stream with darklist fields
             if(_config.contains("traffics")) {
                 flowStream = flowStream
-                        .stateQuery(darklistState, new Fields("flows"), new StateQuery("src"),
+                        .stateQuery(darklistState, new Fields("flows"), new DarkListQuery(),
                                 new Fields("darklistMap"));
 
                 fieldsFlow.add("darklistMap");
@@ -262,7 +263,7 @@ public class RedBorderTopology {
             // Enrich event stream with darklist fields
             if(_config.contains("events")){
                 eventsStream = eventsStream
-                        .stateQuery(darklistState, new Fields("event"), new StateQuery("src"),
+                        .stateQuery(darklistState, new Fields("event"), new DarkListQuery(),
                                 new Fields("darklistMap"));
 
                 fieldsEvent.add("darklistMap");
