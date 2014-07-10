@@ -131,19 +131,19 @@ public class DarkListQuery extends BaseQueryFunction<MapState<Map<String, Map<St
                         mapToSave.put("darklist_score", dstScore);
                         mapToSave.put("darklist_score_name", dstData.get("darklist_score_name"));
                     }
-                    mapToSave.put("darklist_direction", "Both");
+                    mapToSave.put("darklist_direction", "both");
                 } else if (srcData != null) {
                     mapToSave.put("darklist_score_src", srcScore);
                     mapToSave.put("darklist_score_dst", dstScore);
                     mapToSave.put("darklist_score", srcScore);
                     mapToSave.put("darklist_category_src", srcData.get("darklist_category"));
                     mapToSave.put("darklist_protocol_src", srcData.get("darklist_protocol"));
-                    mapToSave.put("darklist_category_dst", "Clean");
-                    mapToSave.put("darklist_protocol_dst", "Clean");
+                    mapToSave.put("darklist_category_dst", "clean");
+                    mapToSave.put("darklist_protocol_dst", "clean");
                     mapToSave.put("darklist_score_name", srcData.get("darklist_score_name"));
                     mapToSave.put("darklist_protocol", srcData.get("darklist_protocol"));
                     mapToSave.put("darklist_category", srcData.get("darklist_category"));
-                    mapToSave.put("darklist_direction", "Source");
+                    mapToSave.put("darklist_direction", "source");
                 } else if (dstData != null) {
                     mapToSave.put("darklist_score_src", srcScore);
                     mapToSave.put("darklist_score_dst", dstScore);
@@ -151,22 +151,23 @@ public class DarkListQuery extends BaseQueryFunction<MapState<Map<String, Map<St
                     mapToSave.put("darklist_score_name", dstData.get("darklist_score_name"));
                     mapToSave.put("darklist_category_dst", dstData.get("darklist_category"));
                     mapToSave.put("darklist_protocol_dst", dstData.get("darklist_protocol"));
-                    mapToSave.put("darklist_category_src", "Clean");
-                    mapToSave.put("darklist_protocol_src", "Clean");
+                    mapToSave.put("darklist_category_src", "clean");
+                    mapToSave.put("darklist_protocol_src", "clean");
                     mapToSave.put("darklist_protocol", dstData.get("darklist_protocol"));
                     mapToSave.put("darklist_category", dstData.get("darklist_category"));
-                    mapToSave.put("darklist_direction", "Destination");
+                    mapToSave.put("darklist_direction", "destination");
                 } else {
                     mapToSave.put("darklist_score_src", srcScore);
                     mapToSave.put("darklist_score_dst", dstScore);
                     mapToSave.put("darklist_score", 0);
-                    mapToSave.put("darklist_score_name", "Clean");
-                    mapToSave.put("darklist_category_dst", "Clean");
-                    mapToSave.put("darklist_protocol_dst", "Clean");
-                    mapToSave.put("darklist_category_src", "Clean");
-                    mapToSave.put("darklist_protocol_src", "Clean");
-                    mapToSave.put("darklist_protocol", "Clean");
-                    mapToSave.put("darklist_category", "Clean");
+                    mapToSave.put("darklist_score_name", "clean");
+                    mapToSave.put("darklist_category_dst", "clean");
+                    mapToSave.put("darklist_protocol_dst", "clean");
+                    mapToSave.put("darklist_category_src", "clean");
+                    mapToSave.put("darklist_protocol_src", "clean");
+                    mapToSave.put("darklist_protocol", "clean");
+                    mapToSave.put("darklist_category", "clean");
+                    mapToSave.put("darklist_direction", "clean");
                 }
 
                 result.add(mapToSave);
@@ -181,6 +182,8 @@ public class DarkListQuery extends BaseQueryFunction<MapState<Map<String, Map<St
                 mapToSave.put("darklist_protocol_src", "clean");
                 mapToSave.put("darklist_protocol", "clean");
                 mapToSave.put("darklist_category", "clean");
+                mapToSave.put("darklist_direction", "clean");
+
 
                 result.add(mapToSave);
             }
