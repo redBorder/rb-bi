@@ -68,7 +68,7 @@ public class RedBorderTopology {
                         StormSubmitter.submitTopology(topologyName, conf, topology.build());
                         System.out.println("\nTopology: " + topologyName + " uploaded successfully.");
                 } else {
-                    System.out.print("Are you agree with this configuration??[Y/n]: ");
+                    System.out.print("Are you agree with this configuration? [Y/n]: ");
                     Scanner sc = new Scanner(System.in);
                     String option = sc.nextLine();
                     if (option.equals("y")) {
@@ -353,7 +353,7 @@ public class RedBorderTopology {
             } else {
                 String output = _config.getOutputTopic("traffics");
                 //print(pw, "   * " + output + ": " + _config.getKafkaPartitions(output));
-                print(pw, "     - Flows send to (kafka topic): " + output);
+                print(pw, "   * output topic: " + output);
             }
         }
 
@@ -369,7 +369,7 @@ public class RedBorderTopology {
             } else {
                 String output = _config.getOutputTopic("events");
                 //print(pw, "   * " + output + ": " + _config.getKafkaPartitions(output));
-                print(pw, "     - Events send to (kafka topic): " + output);
+                print(pw, "   * output topic: " + output);
             }
         }
 
@@ -384,7 +384,7 @@ public class RedBorderTopology {
             } else {
                 String output = _config.getOutputTopic("monitor");
                 //print(pw, "   * " + output + ": " + _config.getKafkaPartitions(output));
-                print(pw, "     - Monitor send to (kafka topic): " + output);
+                print(pw, "   * output topic: " + output);
             }
         }
 
