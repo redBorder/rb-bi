@@ -6,17 +6,6 @@
 package net.redborder.storm.function;
 
 import backtype.storm.tuple.Values;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -24,6 +13,16 @@ import org.xml.sax.SAXException;
 import storm.trident.operation.BaseFunction;
 import storm.trident.operation.TridentCollector;
 import storm.trident.tuple.TridentTuple;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Make a java.util.Map from the json string.
@@ -50,7 +49,7 @@ public class MobileBuilderFunction extends BaseFunction {
                 event.put("hnbgeolocation", hnbGeoLocation.getTextContent());
 
         } catch (NullPointerException ex) {
-            Logger.getLogger(GetMSEdata.class.getName()).log(Level.SEVERE, "Failed reading a UE IP Assign message", ex);
+            Logger.getLogger(MobileBuilderFunction.class.getName()).log(Level.SEVERE, "Failed reading a UE IP Assign message", ex);
         }
 
         return event;
@@ -66,7 +65,7 @@ public class MobileBuilderFunction extends BaseFunction {
                 event.put("client_id", imsi.getTextContent());
 
         } catch (NullPointerException ex) {
-            Logger.getLogger(GetMSEdata.class.getName()).log(Level.SEVERE, "Failed reading a UE Register message", ex);
+            Logger.getLogger(MobileBuilderFunction.class.getName()).log(Level.SEVERE, "Failed reading a UE Register message", ex);
         }
 
         return event;
@@ -94,7 +93,7 @@ public class MobileBuilderFunction extends BaseFunction {
                 event.put("rat", rat.getTextContent());
 
         } catch (NullPointerException ex) {
-            Logger.getLogger(GetMSEdata.class.getName()).log(Level.SEVERE, "Failed reading a UE IP Assign message", ex);
+            Logger.getLogger(MobileBuilderFunction.class.getName()).log(Level.SEVERE, "Failed reading a UE IP Assign message", ex);
         }
 
         return event;
@@ -104,13 +103,13 @@ public class MobileBuilderFunction extends BaseFunction {
     public void execute(TridentTuple tuple, TridentCollector collector) {
 
         String type, tag, path;
-        String key = null;
         DocumentBuilderFactory factory;
         DocumentBuilder builder;
         Document document;
 
         String xml = (String) tuple.getValue(0);
         Map<String, Object> event = null;
+        String key = null;
 
         try {
             factory = DocumentBuilderFactory.newInstance();
@@ -129,15 +128,15 @@ public class MobileBuilderFunction extends BaseFunction {
                     key = path;
                 } else {
                     event = ue_ip_assign(document);
-                    key = (String) event.get("ip");
+                    key = (String) event.remove("ip");
                 }
             } else if (tag.equals("notify") && type.equals("add")) {
                 event = ue_register(document);
                 event.put("path", path);
-                key = (String) event.get("client_id");
+                key = (String) event.remove("client_id");
             }
         } catch (ParserConfigurationException | SAXException | IOException | NullPointerException ex) {
-            Logger.getLogger(GetMSEdata.class.getName()).log(Level.SEVERE, "Failed reading a Mobile XML tuple", ex);
+            Logger.getLogger(MobileBuilderFunction.class.getName()).log(Level.SEVERE, "Failed reading a Mobile XML tuple", ex);
         }
 
         if (event != null && key != null) {
