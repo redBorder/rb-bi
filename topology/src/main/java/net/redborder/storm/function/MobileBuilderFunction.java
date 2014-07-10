@@ -32,6 +32,8 @@ import storm.trident.tuple.TridentTuple;
  */
 public class MobileBuilderFunction extends BaseFunction {
 
+    String _key = null;
+
     private Map<String, Object> hnb_register(Document document) {
         Map<String, Object> event = new HashMap<>();
 
@@ -88,7 +90,7 @@ public class MobileBuilderFunction extends BaseFunction {
                 event.put("wireless_id", apn.getTextContent());
 
             if (ipAddress != null)
-                event.put("ip", ipAddress.getTextContent());
+                _key=ipAddress.getTextContent();
 
             if (rat != null)
                 event.put("rat", rat.getTextContent());
@@ -104,7 +106,6 @@ public class MobileBuilderFunction extends BaseFunction {
     public void execute(TridentTuple tuple, TridentCollector collector) {
 
         String type, tag, path;
-        String key = null;
         DocumentBuilderFactory factory;
         DocumentBuilder builder;
         Document document;
@@ -126,22 +127,22 @@ public class MobileBuilderFunction extends BaseFunction {
             if (tag.equals("feed") && type.equals("add")) {
                 if (document.getElementsByTagName("hnbid").getLength() > 0) {
                     event = hnb_register(document);
-                    key = path;
+                    _key = path;
                 } else {
                     event = ue_ip_assign(document);
-                    key = (String) event.get("ip");
                 }
             } else if (tag.equals("notify") && type.equals("add")) {
                 event = ue_register(document);
                 event.put("path", path);
-                key = (String) event.get("client_id");
+                _key = (String) event.get("client_id");
+
             }
         } catch (ParserConfigurationException | SAXException | IOException | NullPointerException ex) {
             Logger.getLogger(GetMSEdata.class.getName()).log(Level.SEVERE, "Failed reading a Mobile XML tuple", ex);
         }
 
-        if (event != null && key != null) {
-            collector.emit(new Values(key, event));
+        if (event != null && _key != null) {
+            collector.emit(new Values(_key, event));
         }
     }
 

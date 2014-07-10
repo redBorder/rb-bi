@@ -98,15 +98,19 @@ public class DarkListQuery extends BaseQueryFunction<MapState<Map<String, Map<St
                 Map<String, Object> dstData = queryData.get(dst);
 
 
-                Double srcScore = 0.00;
-                Double dstScore = 0.00;
+                Double srcScoreDouble = 0.00;
+                Double dstScoreDouble = 0.00;
+
 
                 if (srcData != null)
-                    srcScore = Double.parseDouble(srcData.get("darklist_score").toString());
+                    srcScoreDouble = Double.parseDouble(srcData.get("darklist_score").toString());
 
                 if (dstData != null)
-                    dstScore = Double.parseDouble(dstData.get("darklist_score").toString());
+                    dstScoreDouble = Double.parseDouble(dstData.get("darklist_score").toString());
 
+
+                Integer srcScore = srcScoreDouble.intValue();
+                Integer dstScore = dstScoreDouble.intValue();
 
                 if (srcData != null && dstData != null) {
                     mapToSave.put("darklist_category_src", srcData.get("darklist_category"));

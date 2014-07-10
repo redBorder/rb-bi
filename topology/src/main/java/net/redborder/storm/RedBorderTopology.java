@@ -318,7 +318,6 @@ public class RedBorderTopology {
         if (radiusPartition > 0) print(pw, "   * rb_radius: " + radiusPartition);
 
         print(pw, "- Zookeeper Servers: " + _config.getZkHost());
-        print(pw, "- Riak Servers: " + _config.getRiakServers().toString());
 
         if (_config.tranquilityEnabled("traffics")) {
             print(pw, "- Tranquility info: ");
@@ -388,7 +387,7 @@ public class RedBorderTopology {
     }
 
     private static String getEnrichment(boolean bool) {
-        return bool ? "✓" : "x";
+        return bool ? "yes" : "no";
     }
 
     private static void print(PrintWriter pw, String msg) {

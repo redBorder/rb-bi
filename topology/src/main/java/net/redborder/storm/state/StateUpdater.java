@@ -57,10 +57,10 @@ public class StateUpdater extends BaseStateUpdater<MapState<Map<String, Map<Stri
             List<Object> l = new ArrayList<>();
             l.add(_generalKey + t.getValueByField(_key));
             keys.add(l);
-            keyValue.put(l.toString(), (Map<String, Object>) t.getValueByField(_value));
+            keyValue.put(_generalKey + t.getValueByField(_key), (Map<String, Object>) t.getValueByField(_value));
 
             if (_debug) {
-                System.out.println("SAVED TO RIAK KEY: " + _generalKey + t.getValueByField(_key)
+                System.out.println("SAVED TO GRIDGAIN, KEY: " + _generalKey + t.getValueByField(_key)
                         + " VALUE: " + t.getValueByField(_value));
             }
         }

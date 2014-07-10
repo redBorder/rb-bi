@@ -51,7 +51,7 @@ public class StateQuery extends BaseQueryFunction<MapState<Map<String, Map<Strin
 
     @Override
     public List<Map<String, Object>> batchRetrieve(MapState<Map<String, Map<String, Object>>> state, List<TridentTuple> tuples) {
-        List<Map<String, Map<String, Object>>> memcachedData = null;
+        List<Map<String, Map<String, Object>>> gridGainData = null;
         Map<String, Map<String, Object>> queryData = null;
         List<Map<String, Object>> result = new ArrayList<>();
         List<Object> keysToRequest = new ArrayList<>();
@@ -74,25 +74,25 @@ public class StateQuery extends BaseQueryFunction<MapState<Map<String, Map<Strin
 
         if (_debug) {
             System.out.println("BatchSize " + tuples.size()
-                    + " RequestedToRiak: " + keysToRequest.size());
+                    + " RequestedToGridGain: " + keysToRequest.size());
         }
 
         if (!keysToRequest.isEmpty()) {
-            List<List<Object>> keysToMemcached = new ArrayList<>();
+            List<List<Object>> keysToGridGain = new ArrayList<>();
 
             for (Object key : keysToRequest) {
                 List<Object> l = new ArrayList<>();
                 l.add(key);
-                keysToMemcached.add(l);
+                keysToGridGain.add(l);
             }
 
             try {
-                memcachedData = state.multiGet(keysToMemcached);
-                if (memcachedData != null) {
-                    queryData = memcachedData.get(0);
+                gridGainData = state.multiGet(keysToGridGain);
+                if (gridGainData != null) {
+                    queryData = gridGainData.get(0);
 
                     if (_debug) {
-                        System.out.println("RiakResponse: " + memcachedData.toString());
+                        System.out.println("GridGainResponse: " + gridGainData.toString());
                     }
                 }
             } catch (ReportedFailedException e) {
@@ -101,8 +101,8 @@ public class StateQuery extends BaseQueryFunction<MapState<Map<String, Map<Strin
         }
 
         for (String key : keysToAppend) {
-            if (key != null && memcachedData != null
-                    && !memcachedData.isEmpty() && keysToRequest.contains(key) && queryData.containsKey(key)) {
+            if (key != null && gridGainData != null
+                    && !gridGainData.isEmpty() && keysToRequest.contains(key) && queryData.containsKey(key)) {
                 result.add(queryData.get(key));
             } else {
                 result.add(null);
