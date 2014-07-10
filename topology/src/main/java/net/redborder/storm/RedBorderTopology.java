@@ -32,6 +32,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Scanner;
 
 public class RedBorderTopology {
 
@@ -39,18 +40,19 @@ public class RedBorderTopology {
 
     public static void main(String[] args) throws AlreadyAliveException, InvalidTopologyException {
         String topologyName = "redBorder-Topology";
+        List<String> argsList = new ArrayList<>();
+
+        for (String arg : args) {
+            argsList.add(arg);
+        }
 
         if (args.length < 1) {
-            System.out.println("./storm jar {name_jar} {main_class} {local|cluster} [debug]");
+            System.out.println("./storm jar {name_jar} {main_class} {local|cluster} [debug] [force]");
         } else {
             _config = new ConfigData();
 
-            if (args.length == 2) {
-                if (args[1].equals("debug")) {
-                    _config.debug = true;
-                } else {
-                    System.out.println("./storm jar {name_jar} {main_class} {local|cluster} [debug]");
-                }
+            if (argsList.contains("debug")) {
+                _config.debug = true;
             }
 
             TridentTopology topology = topology();
@@ -61,8 +63,21 @@ public class RedBorderTopology {
                 cluster.submitTopology(topologyName, conf, topology.build());
             } else if (args[0].equalsIgnoreCase("cluster")) {
                 Config conf = _config.setConfig(args[0]);
-                StormSubmitter.submitTopology(topologyName, conf, topology.build());
-                System.out.println("\nTopology: " + topologyName + " uploaded successfully.");
+
+                if (argsList.contains("force")) {
+                        StormSubmitter.submitTopology(topologyName, conf, topology.build());
+                        System.out.println("\nTopology: " + topologyName + " uploaded successfully.");
+                } else {
+                    System.out.print("Are you agree with this configuration??[Y/n]: ");
+                    Scanner sc = new Scanner(System.in);
+                    String option = sc.nextLine();
+                    if (option.equals("y")) {
+                        StormSubmitter.submitTopology(topologyName, conf, topology.build());
+                        System.out.println("\nTopology: " + topologyName + " uploaded successfully.");
+                    } else {
+                        System.exit(0);
+                    }
+                }
             }
         }
     }
@@ -86,7 +101,7 @@ public class RedBorderTopology {
 
         /* Flow */
         if (_config.contains("traffics")) {
-             flowStream = topology.newStream("rb_flow", new TridentKafkaSpout(_config, "traffics").builder())
+            flowStream = topology.newStream("rb_flow", new TridentKafkaSpout(_config, "traffics").builder())
                     .parallelismHint(flowPartition).shuffle().name("Flows")
                     .each(new Fields("str"), new MapperFunction("rb_flow"), new Fields("flows"))
                     .each(new Fields("flows"), new MacVendorFunction(), new Fields("macVendorMap"))
@@ -139,7 +154,7 @@ public class RedBorderTopology {
             locationStream.partitionPersist(locationStateFactory, new Fields("src_mac", "mse_data"),
                     new StateUpdater("src_mac", "mse_data"));
 
-            if(_config.contains("traffics")) {
+            if (_config.contains("traffics")) {
                 // Generate a flow msg
                 persist("traffics",
                         locationStream.each(new Fields("mse_data_druid", "mseMacVendorMap", "mseGeoIPMap"),
@@ -250,7 +265,7 @@ public class RedBorderTopology {
             darklistState = topology.newStaticState(new GridGainFactory("darklist", _config.getEnrichs()));
 
             // Enrich flow stream with darklist fields
-            if(_config.contains("traffics")) {
+            if (_config.contains("traffics")) {
                 flowStream = flowStream
                         .stateQuery(darklistState, new Fields("flows"), new DarkListQuery(),
                                 new Fields("darklistMap"));
@@ -260,7 +275,7 @@ public class RedBorderTopology {
 
 
             // Enrich event stream with darklist fields
-            if(_config.contains("events")){
+            if (_config.contains("events")) {
                 eventsStream = eventsStream
                         .stateQuery(darklistState, new Fields("event"), new DarkListQuery(),
                                 new Fields("darklistMap"));
@@ -316,26 +331,62 @@ public class RedBorderTopology {
         if (flowPartition > 0) print(pw, "   * rb_flow: " + flowPartition);
         if (radiusPartition > 0) print(pw, "   * rb_radius: " + radiusPartition);
 
+
         print(pw, "- Zookeeper Servers: " + _config.getZkHost());
 
-        if (_config.tranquilityEnabled("traffics")) {
-            print(pw, "- Tranquility info: ");
-            print(pw, "   * partitions: " + _config.tranquilityPartitions("traffics"));
-            print(pw, "   * replicas: " + _config.tranquilityReplication());
-            print(pw, " Flows send to indexing service.");
-        } else {
-            String output = _config.getOutputTopic("traffics");
-            print(pw, "   * " + output + ": " + _config.getKafkaPartitions(output));
-            print(pw, "Flows send to (kafka topic): " + output);
-        }
 
         print(pw, "\n----------------------- Topology Enrichment -----------------------");
-        print(pw, " - flow: ");
-        print(pw, "   * location: " + getEnrichment(_config.contains("location")));
-        print(pw, "   * mobile: " + getEnrichment(_config.contains("mobile")));
-        print(pw, "   * trap: " + getEnrichment(_config.contains("trap")));
-        print(pw, "   * radius (overwrite_cache: " + _config.getOverwriteCache("radius") + ") : " + getEnrichment(_config.contains("radius")));
-        print(pw, "   * darklist: " + getEnrichment(_config.darklistIsEnabled()));
+
+        if (_config.contains("traffics")) {
+            print(pw, " - flow: ");
+            print(pw, "   * location: " + getEnrichment(_config.contains("location")));
+            print(pw, "   * mobile: " + getEnrichment(_config.contains("mobile")));
+            print(pw, "   * trap: " + getEnrichment(_config.contains("trap")));
+            print(pw, "   * radius (overwrite_cache: " + _config.getOverwriteCache("radius") + ") : " + getEnrichment(_config.contains("radius")));
+            print(pw, "   * darklist: " + getEnrichment(_config.darklistIsEnabled()));
+
+            if (_config.tranquilityEnabled("traffics")) {
+                print(pw, "     - Tranquility info: ");
+                print(pw, "        * partitions: " + _config.tranquilityPartitions("traffics"));
+                print(pw, "        * replicas: " + _config.tranquilityReplication());
+                print(pw, "      Flows send to indexing service.");
+            } else {
+                String output = _config.getOutputTopic("traffics");
+                //print(pw, "   * " + output + ": " + _config.getKafkaPartitions(output));
+                print(pw, "     - Flows send to (kafka topic): " + output);
+            }
+        }
+
+        if (_config.contains("events")) {
+            print(pw, " - event: ");
+            print(pw, "   * darklist: " + getEnrichment(_config.darklistIsEnabled()));
+
+            if (_config.tranquilityEnabled("events")) {
+                print(pw, "     - Tranquility info: ");
+                print(pw, "        * partitions: " + _config.tranquilityPartitions("events"));
+                print(pw, "        * replicas: " + _config.tranquilityReplication());
+                print(pw, "      Events send to indexing service.");
+            } else {
+                String output = _config.getOutputTopic("events");
+                //print(pw, "   * " + output + ": " + _config.getKafkaPartitions(output));
+                print(pw, "     - Events send to (kafka topic): " + output);
+            }
+        }
+
+        if (_config.contains("monitor")) {
+            print(pw, " - monitor ");
+
+            if (_config.tranquilityEnabled("monitor")) {
+                print(pw, "     - Tranquility info: ");
+                print(pw, "        * partitions: " + _config.tranquilityPartitions("monitor"));
+                print(pw, "        * replicas: " + _config.tranquilityReplication());
+                print(pw, "      Monitor send to indexing service.");
+            } else {
+                String output = _config.getOutputTopic("monitor");
+                //print(pw, "   * " + output + ": " + _config.getKafkaPartitions(output));
+                print(pw, "     - Monitor send to (kafka topic): " + output);
+            }
+        }
 
 
         print(pw, "\n----------------------- Topology Metrics -----------------------");
