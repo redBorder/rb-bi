@@ -68,8 +68,7 @@ public class AnalizeHttpUrlFunction extends BaseFunction {
         }catch (Exception ex){
             result = new HashMap<>();
             collector.emit(new Values(result));
-
-            System.out.println(ex + "Flow: " + event.toString());
+            System.out.println("Could not enrich with Http Analyzer function: " + event.toString() + "\n" + ex);
         }
     }
 
