@@ -32,7 +32,6 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 public class RedBorderTopology {
 
@@ -169,7 +168,7 @@ public class RedBorderTopology {
             // Enrich flow stream
             flowStream = flowStream
                     .stateQuery(mobileState, new Fields("flows"), new StateQuery("src"), new Fields("ipAssignMap"))
-                    .stateQuery(mobileState, new Fields("ipAssignMap"), new StateQuery("imsi"), new Fields("ueRegisterMap"))
+                    .stateQuery(mobileState, new Fields("ipAssignMap"), new StateQuery("client_id"), new Fields("ueRegisterMap"))
                     .stateQuery(mobileState, new Fields("ueRegisterMap"), new StateQuery("path"), new Fields("hnbRegisterMap"));
 
             fieldsFlow.add("ipAssignMap");
