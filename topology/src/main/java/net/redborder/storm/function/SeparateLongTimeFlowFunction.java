@@ -69,7 +69,6 @@ public class SeparateLongTimeFlowFunction extends BaseFunction {
             DateTime this_end = packet_start;
 
             int bytes = 0;
-
             if (event.containsKey("bytes"))
                 bytes = Integer.parseInt(event.get("bytes").toString());
 
@@ -114,16 +113,19 @@ public class SeparateLongTimeFlowFunction extends BaseFunction {
                 int new_bytes = ((int) last.get("bytes")) + (bytes - bytes_count);
 
                 if (new_pkts > 0) last.put("pkts", new_pkts);
-                if (new_bytes > 0) last.put("bytes", new_pkts);
+                if (new_bytes > 0) last.put("bytes", new_bytes);
 
                 generatedPackets.set(last_index, last);
             }
 
             for (Map<String, Object> e : generatedPackets) {
+                e.remove("first_switched");
+                e.remove("last_switched");
                 collector.emit(new Values(e));
             }
         } else if (event.containsKey("first_switched")) {
             event.put("timestamp", event.get("first_switched"));
+            event.remove("first_switched");
             collector.emit(new Values(event));
         } else {
             collector.emit(new Values(event));
