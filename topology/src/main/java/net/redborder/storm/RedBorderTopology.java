@@ -68,10 +68,10 @@ public class RedBorderTopology {
                         StormSubmitter.submitTopology(topologyName, conf, topology.build());
                         System.out.println("\nTopology: " + topologyName + " uploaded successfully.");
                 } else {
-                    System.out.print("Are you agree with this configuration? [Y/n]: ");
+                    System.out.print("Would you like to continue ? (Y/n): ");
                     Scanner sc = new Scanner(System.in);
                     String option = sc.nextLine();
-                    if (option.equals("y")) {
+                    if (option.equals("y") || option.equals("") || option.equals("\n")) {
                         StormSubmitter.submitTopology(topologyName, conf, topology.build());
                         System.out.println("\nTopology: " + topologyName + " uploaded successfully.");
                     } else {
@@ -352,8 +352,7 @@ public class RedBorderTopology {
                 print(pw, "      Flows send to indexing service.");
             } else {
                 String output = _config.getOutputTopic("traffics");
-                //print(pw, "   * " + output + ": " + _config.getKafkaPartitions(output));
-                print(pw, "   * output topic: " + output);
+                print(pw, "   * output topic: " + output + " (partitions: "+ _config.getKafkaPartitions(output)+")");
             }
         }
 
@@ -368,8 +367,7 @@ public class RedBorderTopology {
                 print(pw, "      Events send to indexing service.");
             } else {
                 String output = _config.getOutputTopic("events");
-                //print(pw, "   * " + output + ": " + _config.getKafkaPartitions(output));
-                print(pw, "   * output topic: " + output);
+                print(pw, "   * output topic: " + output + " (partitions: "+ _config.getKafkaPartitions(output)+")");
             }
         }
 
@@ -383,8 +381,7 @@ public class RedBorderTopology {
                 print(pw, "      Monitor send to indexing service.");
             } else {
                 String output = _config.getOutputTopic("monitor");
-                //print(pw, "   * " + output + ": " + _config.getKafkaPartitions(output));
-                print(pw, "   * output topic: " + output);
+                print(pw, "   * output topic: " + output + " (partitions:"+ _config.getKafkaPartitions(output)+")");
             }
         }
 
