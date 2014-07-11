@@ -10,10 +10,13 @@ import org.gridgain.grid.cache.GridCache;
 import org.gridgain.grid.cache.GridCacheConfiguration;
 import org.gridgain.grid.cache.GridCacheDistributionMode;
 import org.gridgain.grid.cache.GridCacheMode;
+import org.ho.yaml.Yaml;
 import storm.trident.state.State;
 import storm.trident.state.StateFactory;
 import storm.trident.state.map.NonTransactionalMap;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +28,9 @@ public class GridGainFactory implements StateFactory {
 
     String _cacheName;
     List<String> _topics;
+
+    private final static String CONFIG_FILE_PATH = "/opt/rb/etc/darklist_config.yml";
+
 
     public GridGainFactory(String cacheName, List<String> topics) {
         _cacheName = cacheName;
@@ -51,11 +57,30 @@ public class GridGainFactory implements StateFactory {
         GridConfiguration conf = new GridConfiguration();
         List<GridCacheConfiguration> caches = new ArrayList<GridCacheConfiguration>();
 
+
+
         if (_topics.contains("darklist")) {
+
+            Map<String, Object> general = null;
+            Integer backups = 0;
+
+            try {
+                Map<String, Object>  configMap = (Map<String, Object>) Yaml.load(new File(CONFIG_FILE_PATH));
+                general = (Map<String, Object>) configMap.get("general");
+                backups = (Integer) general.get("backups");
+                if(backups==null){
+                    backups=0;
+                }
+            } catch (FileNotFoundException e) {
+                backups=0;
+                e.printStackTrace();
+            }
+
+
             GridCacheConfiguration cacheDarkList = new GridCacheConfiguration();
             cacheDarkList.setName("darklist");
             cacheDarkList.setCacheMode(GridCacheMode.PARTITIONED);
-            cacheDarkList.setBackups(1);
+            cacheDarkList.setBackups(backups);
             cacheDarkList.setDistributionMode(GridCacheDistributionMode.CLIENT_ONLY);
             cacheDarkList.setStartSize(2 * 1024 * 1024);
             cacheDarkList.setOffHeapMaxMemory(0);
