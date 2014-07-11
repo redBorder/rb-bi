@@ -61,15 +61,20 @@ public class BeamFlow implements BeamFactory<Map<String, Object>> {
             curator.start();
 
             final String dataSource = "rb_flow";
-            final List<String> exclusions = ImmutableList.of(
-                    "http_url", "http_user_agent", "first_switched", "transaction_id",
-                    "flow_end_reason", "flow_sampler_id", "src_name", "dst_name",
-                    "vlan_name", "src_port_name", "dst_port_name", "l4_proto_name",
-                    "tcp_flags", "srv_port_name", "type", "src_country", "dst_country",
-                    "sta_mac_address_unit", "application_id", "engine_id", "src_as",
-                    "dst_as", "second", "bytes", "pkts", "sta_mac_address_lat",
-                    "sta_mac_address_long", "src_net", "dst_net",
-                    "first_switched", "last_switched");
+            final List<String> dimesions = ImmutableList.of(
+                    "application_id_name", "biflow_direction", "conversation", "direction",
+                    "engine_id_name", "http_user_agent_os", "http_host", "http_social_media",
+                    "http_social_user", "http_referer_l1", "l4_proto", "ip_protocol_version",
+                    "sensor_name", "scatterplot", "src", "src_country_code", "src_net_name",
+                    "src_port", "src_as_name", "client_mac", "client_id", "client_mac_vendor",
+                    "dot11_status", "src_vlan", "src_map", "srv_port", "dst",
+                    "dst_country_code", "dst_net_name", "dst_port", "dst_as_name",
+                    "dst_vlan", "dst_map", "input_snmp", "output_snmp", "tos",
+                    "client_latlong", "coordinates_map", "client_campus",
+                    "client_building", "client_floor", "wireless_id", "client_rssi",
+                    "wireless_station", "hnblocation", "hnbgeolocation", "rat",
+                    "darklist_score_name", "darklist_category", "darklist_protocol",
+                    "darklist_direction", "darklist_score");
             final List<AggregatorFactory> aggregators = ImmutableList.<AggregatorFactory>of(
                     new CountAggregatorFactory("events"),
                     new LongSumAggregatorFactory("sum_bytes", "bytes"),
@@ -97,7 +102,7 @@ public class BeamFlow implements BeamFactory<Map<String, Object>> {
                                     ), dataSource
                             )
                     )
-                    .rollup(DruidRollup.create(DruidDimensions.schemalessWithExclusions(exclusions), aggregators, QueryGranularity.MINUTE))
+                    .rollup(DruidRollup.create(DruidDimensions.specific(dimesions), aggregators, QueryGranularity.MINUTE))
                     .tuning(ClusteredBeamTuning.create(Granularity.HOUR, new Period("PT0M"), new Period("PT15M"), partitions, replicas))
                     .timestampSpec(new TimestampSpec("timestamp", "posix"));
             

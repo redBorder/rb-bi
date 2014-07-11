@@ -60,13 +60,17 @@ public class BeamEvent implements BeamFactory<Map<String, Object>> {
             curator.start();
 
             final String dataSource = "rb_event";
-            final List<String> exclusions = ImmutableList.of("payload", "id",
-                    "tcpseq", "tcpack", "tcplen", "tcpwindow", "icmpid",
-                    "icmpseq", "dgmlen", "vlan_priority", "vlan_drop",
-                    "tcpflags", "ethlength", "iplength", "src_name",
-                    "dst_name", "vlan_name", "src_port_name", "dst_port_name",
-                    "l4_proto_name", "src_country", "dst_country", "src_net",
-                    "dst_net");
+            final List<String> dimensions = ImmutableList.of("action", "classification", "conversation", "domain_name",
+                    "ethlength_range", "group_name", "sig_generator", "icmptype",
+                    "iplen_range", "l4_proto", "rev", "sensor_name",
+                    "priority", "msg", "sig_id", "scatterplot", "ethsrc",
+                    "ethsrc_vendor", "src", "src_country_code",
+                    "src_net_name", "src_port", "src_as_name",
+                    "src_map", "ethdst", "ethdst_vendor", "dst",
+                    "dst_country_code", "dst_net_name",
+                    "dst_port", "dst_as_name", "dst_map", "tos",
+                    "ttl", "vlan", "darklist_score_name", "darklist_category",
+                    "darklist_protocol", "darklist_direction", "darklist_score");
             final List<AggregatorFactory> aggregators = ImmutableList.<AggregatorFactory>of(
                     new CountAggregatorFactory("events"));
 
@@ -91,7 +95,7 @@ public class BeamEvent implements BeamFactory<Map<String, Object>> {
                                     ), dataSource
                             )
                     )
-                    .rollup(DruidRollup.create(DruidDimensions.schemalessWithExclusions(exclusions), aggregators, QueryGranularity.MINUTE))
+                    .rollup(DruidRollup.create(DruidDimensions.specific(dimensions), aggregators, QueryGranularity.MINUTE))
                     .tuning(ClusteredBeamTuning.create(Granularity.HOUR, new Period("PT0M"), new Period("PT30M"), partitions, replicas))
                     .timestampSpec(new TimestampSpec("timestamp", "posix"));
 
