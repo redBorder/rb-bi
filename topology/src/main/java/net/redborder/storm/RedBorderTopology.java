@@ -133,7 +133,8 @@ public class RedBorderTopology {
 
             monitorStream = topology.newStream("rb_monitor", new TridentKafkaSpout(_config, "monitor").builder())
                     .parallelismHint(monitorPartition).shuffle().name("Monitor")
-                    .each(new Fields("str"), new MapperFunction("rb_monitor"), new Fields("finalMap"));
+                    .each(new Fields("str"), new MapperFunction("rb_monitor"), new Fields("monitorMap"))
+                    .each(new Fields("monitorMap"), new CheckTimestampFunction(), new Fields("finalMap"));
         }
 
         /* Location */
@@ -289,7 +290,8 @@ public class RedBorderTopology {
         if (_config.contains("traffics")) {
             persist("traffics",
                     flowStream.each(new Fields(fieldsFlow), new MergeMapsFunction(), new Fields("mergedMap"))
-                            .each(new Fields("mergedMap"), new SeparateLongTimeFlowFunction(), new Fields("finalMap"))
+                            .each(new Fields("mergedMap"), new SeparateLongTimeFlowFunction(), new Fields("separateTime"))
+                            .each(new Fields("separateTime"), new CheckTimestampFunction(), new Fields("finalMap"))
                             .project(new Fields("finalMap"))
                             .parallelismHint(_config.getWorkers())
                             .shuffle().name("Flow Producer"));
@@ -297,7 +299,8 @@ public class RedBorderTopology {
 
         if (_config.contains("events")) {
             persist("events",
-                    eventsStream.each(new Fields(fieldsEvent), new MergeMapsFunction(), new Fields("finalMap"))
+                    eventsStream.each(new Fields(fieldsEvent), new MergeMapsFunction(), new Fields("mergedMap"))
+                            .each(new Fields("mergedMap"), new CheckTimestampFunction(), new Fields("finalMap"))
                             .project(new Fields("finalMap"))
                             .parallelismHint(_config.getWorkers())
                             .shuffle().name("Event Producer"));

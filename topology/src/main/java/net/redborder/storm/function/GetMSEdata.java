@@ -100,6 +100,9 @@ public class GetMSEdata extends BaseFunction {
             if (dateString != null && macAddress != null) {
                 mseDataDruid.put("timestamp", new DateTime(dateString).withZone(DateTimeZone.UTC).getMillis() / 1000);
                 collector.emit(new Values(macAddress, mseData, mseDataDruid));
+            }else{
+                mseDataDruid.put("timestamp", System.currentTimeMillis() / 1000);
+                collector.emit(new Values(macAddress, mseData, mseDataDruid));
             }
 
         } catch (NullPointerException e) {
