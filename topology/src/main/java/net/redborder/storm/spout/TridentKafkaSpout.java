@@ -6,7 +6,6 @@
 package net.redborder.storm.spout;
 
 import backtype.storm.spout.SchemeAsMultiScheme;
-
 import net.redborder.storm.util.ConfigData;
 import storm.kafka.StringScheme;
 import storm.kafka.ZkHosts;

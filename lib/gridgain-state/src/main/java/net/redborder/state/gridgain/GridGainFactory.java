@@ -1,7 +1,6 @@
 package net.redborder.state.gridgain;
 
 import backtype.storm.task.IMetricsContext;
-import backtype.storm.utils.Utils;
 import org.gridgain.grid.Grid;
 import org.gridgain.grid.GridConfiguration;
 import org.gridgain.grid.GridException;

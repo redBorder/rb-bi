@@ -11,28 +11,20 @@ import com.google.common.collect.ImmutableList;
 import com.metamx.common.Granularity;
 import com.metamx.tranquility.beam.Beam;
 import com.metamx.tranquility.beam.ClusteredBeamTuning;
-import com.metamx.tranquility.druid.DruidBeams;
-import com.metamx.tranquility.druid.DruidDimensions;
-import com.metamx.tranquility.druid.DruidEnvironment;
-import com.metamx.tranquility.druid.DruidLocation;
-import com.metamx.tranquility.druid.DruidRollup;
+import com.metamx.tranquility.druid.*;
 import com.metamx.tranquility.storm.BeamFactory;
 import com.metamx.tranquility.typeclass.Timestamper;
 import io.druid.data.input.impl.TimestampSpec;
 import io.druid.granularity.QueryGranularity;
-import io.druid.query.aggregation.AggregatorFactory;
-import io.druid.query.aggregation.CountAggregatorFactory;
-import io.druid.query.aggregation.DoubleSumAggregatorFactory;
-import io.druid.query.aggregation.MaxAggregatorFactory;
-import io.druid.query.aggregation.MinAggregatorFactory;
+import io.druid.query.aggregation.*;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.retry.RetryOneTime;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
 
 import java.util.List;
 import java.util.Map;
-import org.apache.curator.retry.RetryOneTime;
 
 /**
  * BeamFactory is used to make the BeamStateMonitor to Tranquility.

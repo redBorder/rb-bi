@@ -5,13 +5,11 @@
  */
 package net.redborder.storm.function;
 
-import java.io.UnsupportedEncodingException;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import storm.trident.operation.BaseFunction;
 import storm.trident.operation.TridentCollector;
 import storm.trident.tuple.TridentTuple;
+
+import java.util.List;
 
 /**
  *

@@ -1,10 +1,11 @@
 package com.github.quintona;
 
-import java.util.List;
 import kafka.producer.KeyedMessage;
 import storm.trident.operation.TridentCollector;
 import storm.trident.state.BaseStateUpdater;
 import storm.trident.tuple.TridentTuple;
+
+import java.util.List;
 
 public class KafkaStateUpdater extends BaseStateUpdater<KafkaState> {
     private final String _messageFieldName;

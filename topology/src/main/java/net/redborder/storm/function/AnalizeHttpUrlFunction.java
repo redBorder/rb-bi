@@ -6,14 +6,13 @@
 package net.redborder.storm.function;
 
 import backtype.storm.tuple.Values;
-
-import java.util.HashMap;
-import java.util.Map;
-
 import storm.trident.operation.BaseFunction;
 import storm.trident.operation.TridentCollector;
 import storm.trident.operation.TridentOperationContext;
 import storm.trident.tuple.TridentTuple;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author andresgomez

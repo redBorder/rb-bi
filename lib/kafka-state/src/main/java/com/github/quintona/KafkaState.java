@@ -1,9 +1,16 @@
 package com.github.quintona;
 
 import backtype.storm.task.IMetricsContext;
-import org.codehaus.jackson.JsonParseException;
-import org.codehaus.jackson.map.JsonMappingException;
+import kafka.javaapi.producer.Producer;
+import kafka.producer.KeyedMessage;
+import kafka.producer.ProducerConfig;
+import org.apache.curator.RetryPolicy;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.codehaus.jackson.map.ObjectMapper;
+import storm.trident.state.State;
+import storm.trident.state.StateFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -12,15 +19,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import kafka.javaapi.producer.Producer;
-import kafka.producer.KeyedMessage;
-import kafka.producer.ProducerConfig;
-import org.apache.curator.RetryPolicy;
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.CuratorFrameworkFactory;
-import org.apache.curator.retry.ExponentialBackoffRetry;
-import storm.trident.state.State;
-import storm.trident.state.StateFactory;
 
 public class KafkaState<T> implements State {
     List<KeyedMessage<String, String>> messages = new ArrayList<>();

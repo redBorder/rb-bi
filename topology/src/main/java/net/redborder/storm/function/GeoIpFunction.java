@@ -8,6 +8,10 @@ package net.redborder.storm.function;
 import backtype.storm.tuple.Values;
 import com.maxmind.geoip.Location;
 import com.maxmind.geoip.LookupService;
+import storm.trident.operation.BaseFunction;
+import storm.trident.operation.TridentCollector;
+import storm.trident.operation.TridentOperationContext;
+import storm.trident.tuple.TridentTuple;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -17,11 +21,6 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-
-import storm.trident.operation.BaseFunction;
-import storm.trident.operation.TridentCollector;
-import storm.trident.operation.TridentOperationContext;
-import storm.trident.tuple.TridentTuple;
 
 /**
  * Get the geoLocation from a IPv4 or IPv6 (source and destination).

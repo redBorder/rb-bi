@@ -6,22 +6,13 @@
 package net.redborder.storm.function;
 
 import backtype.storm.tuple.Values;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
-
-import com.maxmind.geoip.LookupService;
-import net.redborder.storm.util.ConfigData;
 import storm.trident.operation.BaseFunction;
-import storm.trident.operation.Function;
 import storm.trident.operation.TridentCollector;
 import storm.trident.operation.TridentOperationContext;
 import storm.trident.tuple.TridentTuple;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  *

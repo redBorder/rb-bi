@@ -7,6 +7,11 @@ package net.redborder.storm.state;
 
 import backtype.storm.topology.ReportedFailedException;
 import backtype.storm.tuple.Values;
+import storm.trident.operation.TridentCollector;
+import storm.trident.operation.TridentOperationContext;
+import storm.trident.state.BaseQueryFunction;
+import storm.trident.state.map.MapState;
+import storm.trident.tuple.TridentTuple;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,13 +19,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import net.redborder.storm.util.ConfigData;
-import storm.trident.operation.TridentCollector;
-import storm.trident.operation.TridentOperationContext;
-import storm.trident.state.BaseQueryFunction;
-import storm.trident.state.map.MapState;
-import storm.trident.tuple.TridentTuple;
 
 /**
  * @author andresgomez

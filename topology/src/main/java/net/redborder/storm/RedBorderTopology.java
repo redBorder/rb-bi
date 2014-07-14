@@ -71,7 +71,7 @@ public class RedBorderTopology {
                     System.out.print("Would you like to continue ? (Y/n): ");
                     Scanner sc = new Scanner(System.in);
                     String option = sc.nextLine();
-                    if (option.equals("y") || option.equals("") || option.equals("\n")) {
+                    if (option.toLowerCase().equals("y") || option.equals("") || option.equals("\n")) {
                         StormSubmitter.submitTopology(topologyName, conf, topology.build());
                         System.out.println("\nTopology: " + topologyName + " uploaded successfully.");
                     } else {

@@ -5,6 +5,8 @@
  */
 package net.redborder.storm.util;
 
+import org.ho.yaml.Yaml;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -12,9 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import org.ho.yaml.Yaml;
-import storm.trident.operation.TridentOperationContext;
 
 /**
  * @author andresgomez
