@@ -28,7 +28,7 @@ import storm.trident.tuple.TridentTuple;
  */
 public class MacVendorFunction extends BaseFunction {
 
-    private final String _ouiFilePath = "/opt/rb/etc/objects/oui-vendors";
+    public static String _ouiFilePath = "/opt/rb/etc/objects/oui-vendors";
     Map<String, String> _ouiMap;
 
     @Override

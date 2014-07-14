@@ -89,11 +89,9 @@ public class SeparateLongTimeFlowFunction extends BaseFunction {
 
                 if (totalDiff == 0) this_bytes = bytes;
                 else this_bytes = (int) Math.ceil(bytes * diff / totalDiff);
-                if (this_bytes < 1) this_bytes = 1;
 
                 if (totalDiff == 0) this_pkts = pkts;
                 else this_pkts = (int) Math.ceil(pkts * diff / totalDiff);
-                if (this_pkts < 1) this_pkts = 1;
 
                 bytes_count += this_bytes;
                 pkts_count += this_pkts;
