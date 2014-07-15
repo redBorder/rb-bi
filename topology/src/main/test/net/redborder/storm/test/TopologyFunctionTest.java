@@ -11,6 +11,7 @@ import storm.trident.TridentTopology;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -25,16 +26,16 @@ public class TopologyFunctionTest {
     @Test
     public void geoIpTest() throws FileNotFoundException {
 
-        File fileFlow = new File("topology/src/main/resources/inputData/flows.json");
-        File checkFlow = new File("topology/src/main/resources/dataCheck/geoIpFlows.json");
+        File fileFlow = new File(Thread.currentThread().getContextClassLoader().getResource("inputData/flows.json").getPath());
+        File checkFlow = new File(Thread.currentThread().getContextClassLoader().getResource("dataCheck/geoIpFlows.json").getPath());
 
         Scanner flows = new Scanner(fileFlow);
         Scanner checkFlows = new Scanner(checkFlow);
 
-        GeoIpFunction.CITY_DB_PATH = "topology/src/main/resources/db/city.dat";
-        GeoIpFunction.CITY_V6_DB_PATH = "topology/src/main/resources/db/cityv6.dat";
-        GeoIpFunction.ASN_DB_PATH = "topology/src/main/resources/db/asn.dat";
-        GeoIpFunction.ASN_V6_DB_PATH = "topology/src/main/resources/db/asnv6.dat";
+        GeoIpFunction.CITY_DB_PATH = Thread.currentThread().getContextClassLoader().getResource("db/city.dat").getPath();
+        GeoIpFunction.CITY_V6_DB_PATH = Thread.currentThread().getContextClassLoader().getResource("db/cityv6.dat").getPath();
+        GeoIpFunction.ASN_DB_PATH = Thread.currentThread().getContextClassLoader().getResource("db/asn.dat").getPath();
+        GeoIpFunction.ASN_V6_DB_PATH = Thread.currentThread().getContextClassLoader().getResource("db/asnv6.dat").getPath();
 
         List<String> fieldsFlow = new ArrayList<String>();
 
@@ -68,13 +69,13 @@ public class TopologyFunctionTest {
     @Test
     public void macVendorTest() throws FileNotFoundException {
 
-        File fileFlow = new File("topology/src/main/resources/inputData/flows.json");
-        File checkFlow = new File("topology/src/main/resources/dataCheck/macVendorFlows.json");
+        File fileFlow = new File(Thread.currentThread().getContextClassLoader().getResource("inputData/flows.json").getPath());
+        File checkFlow = new File(Thread.currentThread().getContextClassLoader().getResource("dataCheck/macVendorFlows.json").getPath());
 
         Scanner flows = new Scanner(fileFlow);
         Scanner checkFlows = new Scanner(checkFlow);
 
-        MacVendorFunction._ouiFilePath = "topology/src/main/resources/db/oui-vendors";
+        MacVendorFunction._ouiFilePath = Thread.currentThread().getContextClassLoader().getResource("db/oui-vendors").getPath();
 
         List<String> fieldsFlow = new ArrayList<String>();
 
@@ -108,7 +109,7 @@ public class TopologyFunctionTest {
     @Test
     public void nonTimestampTest() throws FileNotFoundException {
 
-        File fileFlow = new File("topology/src/main/resources/inputData/nonTimestampFlows.json");
+        File fileFlow = new File(Thread.currentThread().getContextClassLoader().getResource("inputData/nonTimestampFlows.json").getPath());
 
         Scanner flows = new Scanner(fileFlow);
 
@@ -116,7 +117,6 @@ public class TopologyFunctionTest {
         List<String> fieldsFlow = new ArrayList<String>();
 
         fieldsFlow.add("flows");
-        fieldsFlow.add("httpMap");
 
         LocalDRPC drpc = new LocalDRPC();
 
@@ -139,6 +139,45 @@ public class TopologyFunctionTest {
             Assert.assertEquals(true, stormFlow.contains("timestamp"));
         }
     }
+
+
+    @Test
+    public void analizeHttpUrlTest() throws FileNotFoundException {
+
+        File fileFlow = new File(Thread.currentThread().getContextClassLoader().getResource("inputData/httpFlows.json").getPath());
+        File checkFlow = new File(Thread.currentThread().getContextClassLoader().getResource("dataCheck/httpFlows.json").getPath());
+
+        Scanner flows = new Scanner(fileFlow);
+        Scanner checkFlows = new Scanner(checkFlow);
+
+        List<String> fieldsFlow = new ArrayList<String>();
+
+        fieldsFlow.add("flows");
+        fieldsFlow.add("httpUrlMap");
+
+        LocalDRPC drpc = new LocalDRPC();
+
+        TridentTopology topology = new TridentTopology();
+        topology.newDRPCStream("test", drpc)
+                .each(new Fields("args"), new MapperFunction("rb_test"), new Fields("flows"))
+                .each(new Fields("flows"), new AnalizeHttpUrlFunction(), new Fields("httpUrlMap"))
+                .each(new Fields(fieldsFlow), new MergeMapsFunction(), new Fields("finalMap"))
+                .project(new Fields("finalMap"))
+                .each(new Fields("finalMap"), new MapToJSONFunction(), new Fields("jsonString"));
+
+        Config conf = new Config();
+        conf.put("rbDebug", true);
+        conf.setMaxTaskParallelism(1);
+        LocalCluster cluster = new LocalCluster();
+        cluster.submitTopology("testing-topology", conf, topology.build());
+
+        while (flows.hasNextLine()) {
+            String stormFlow = drpc.execute("test", flows.nextLine());
+            stormFlow = stormFlow.substring(stormFlow.indexOf("{"), stormFlow.indexOf("}") + 1);
+            Assert.assertEquals(checkFlows.nextLine(), stormFlow);
+        }
+    }
+
 
 
 

@@ -82,5 +82,6 @@ public class GridGainStateTest {
         Assert.assertEquals(values.get("C").get("C1"), restore.get("C").get("C1"));
         Assert.assertNotEquals(values.get("C").get("C1"), restore.get("B").get("B1"));
 
+        grid.close();
     }
 }
