@@ -4,6 +4,7 @@ import backtype.storm.Config;
 import backtype.storm.LocalCluster;
 import backtype.storm.LocalDRPC;
 import backtype.storm.tuple.Fields;
+import junit.framework.TestCase;
 import net.redborder.state.gridgain.GridGainFactory;
 import net.redborder.storm.function.*;
 import net.redborder.storm.spout.TridentKafkaSpout;
