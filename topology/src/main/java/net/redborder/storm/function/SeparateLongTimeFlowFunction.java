@@ -47,34 +47,52 @@ public class SeparateLongTimeFlowFunction extends BaseFunction {
             int now_hour = now.getHourOfDay();
             int packet_end_hour = packet_end.getHourOfDay();
 
-            if (packet_end.isAfter(now)) {
+            if (packet_end.isAfter(now) && (packet_end.getHourOfDay() != packet_start.getHourOfDay()) &&
+                    (packet_end.getMillis() - now.getMillis() < 1000 * 60 * 60)) {
                 Logger.getLogger(SeparateLongTimeFlowFunction.class.getName()).log(Level.WARNING,
-                        "Dropped packet {0} because it ended in the future.", event);
-                return;
-            } else if (now_hour != packet_end_hour) {
-                int now_minutes = now.getMinuteOfHour();
-                if (now_minutes > DELAYED_REALTIME_TIME) {
-                    Logger.getLogger(SeparateLongTimeFlowFunction.class.getName()).log(Level.WARNING,
-                            "Dropped packet {0} because its realtime processor is already shutdown.", event);
-                    return;
+                        "Packet {0} ended in a future segment and I modified its last and/or first switched values.", event);
+
+                event.put("last_switched", now.getMillis() / 1000);
+                packet_end = new DateTime(Long.parseLong(event.get("last_switched").toString()) * 1000);
+
+                if (!packet_end.isAfter(packet_start)) {
+                    event.put("first_switched", now.getMillis() / 1000);
+                    packet_start = new DateTime(Long.parseLong(event.get("first_switched").toString()) * 1000);
                 }
+            } else if ((packet_end_hour == now_hour - 1 && now.getMinuteOfHour() > DELAYED_REALTIME_TIME) ||
+                    (now.getMillis() - packet_end.getMillis() > 1000 * 60 * 60)) {
+                Logger.getLogger(SeparateLongTimeFlowFunction.class.getName()).log(Level.WARNING,
+                        "Dropped packet {0} because its realtime processor is already shutdown.", event);
+                return;
             }
 
             if (packet_start.isBefore(limit)) {
                 packet_start = limit;
             }
 
-
             DateTime this_start;
             DateTime this_end = packet_start;
 
             int bytes = 0;
-            if (event.containsKey("bytes"))
-                bytes = Integer.parseInt(event.get("bytes").toString());
-
             int pkts = 0;
-            if (event.containsKey("pkts"))
-                pkts = Integer.parseInt(event.get("pkts").toString());
+
+            try {
+                if (event.containsKey("bytes"))
+                    bytes = Integer.parseInt(event.get("bytes").toString());
+            } catch (NumberFormatException e) {
+                Logger.getLogger(SeparateLongTimeFlowFunction.class.getName()).log(Level.WARNING,
+                        "Invalid number of bytes in packet {0}.", event);
+                return;
+            }
+
+            try {
+                if (event.containsKey("pkts"))
+                    pkts = Integer.parseInt(event.get("pkts").toString());
+            } catch (NumberFormatException e) {
+                Logger.getLogger(SeparateLongTimeFlowFunction.class.getName()).log(Level.WARNING,
+                        "Invalid number of packets in packet {0}.", event);
+                return;
+            }
 
             int totalDiff = Seconds.secondsBetween(packet_start, packet_end).getSeconds();
             int diff, this_bytes, this_pkts;
