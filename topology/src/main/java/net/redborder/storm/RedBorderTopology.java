@@ -349,10 +349,9 @@ public class RedBorderTopology {
             print(pw, "   * darklist: " + getEnrichment(_config.darklistIsEnabled()));
 
             if (_config.tranquilityEnabled("traffics")) {
-                print(pw, "     - Tranquility info: ");
-                print(pw, "        * partitions: " + _config.tranquilityPartitions("traffics"));
-                print(pw, "        * replicas: " + _config.tranquilityReplication());
-                print(pw, "      Flows send to indexing service.");
+                print(pw, "   * output to tranquility: ");
+                print(pw, "     * partitions: " + _config.tranquilityPartitions("traffics"));
+                print(pw, "     * replicas: " + _config.tranquilityReplication());
             } else {
                 String output = _config.getOutputTopic("traffics");
                 print(pw, "   * output topic: " + output + " (partitions: "+ _config.getKafkaPartitions(output)+")");
@@ -364,10 +363,9 @@ public class RedBorderTopology {
             print(pw, "   * darklist: " + getEnrichment(_config.darklistIsEnabled()));
 
             if (_config.tranquilityEnabled("events")) {
-                print(pw, "     - Tranquility info: ");
-                print(pw, "        * partitions: " + _config.tranquilityPartitions("events"));
-                print(pw, "        * replicas: " + _config.tranquilityReplication());
-                print(pw, "      Events send to indexing service.");
+                print(pw, "   * output to tranquility: ");
+                print(pw, "     * partitions: " + _config.tranquilityPartitions("events"));
+                print(pw, "     * replicas: " + _config.tranquilityReplication());
             } else {
                 String output = _config.getOutputTopic("events");
                 print(pw, "   * output topic: " + output + " (partitions: "+ _config.getKafkaPartitions(output)+")");
@@ -378,10 +376,9 @@ public class RedBorderTopology {
             print(pw, " - monitor ");
 
             if (_config.tranquilityEnabled("monitor")) {
-                print(pw, "     - Tranquility info: ");
-                print(pw, "        * partitions: " + _config.tranquilityPartitions("monitor"));
-                print(pw, "        * replicas: " + _config.tranquilityReplication());
-                print(pw, "      Monitor send to indexing service.");
+                print(pw, "   * output to tranquility: ");
+                print(pw, "     * partitions: " + _config.tranquilityPartitions("monitor"));
+                print(pw, "     * replicas: " + _config.tranquilityReplication());
             } else {
                 String output = _config.getOutputTopic("monitor");
                 print(pw, "   * output topic: " + output + " (partitions:"+ _config.getKafkaPartitions(output)+")");

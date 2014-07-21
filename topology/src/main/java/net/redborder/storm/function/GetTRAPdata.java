@@ -16,7 +16,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
  * @author andresgomez
  */
 public class GetTRAPdata extends BaseFunction {
@@ -28,21 +27,35 @@ public class GetTRAPdata extends BaseFunction {
         Object macAuxObject = rssi.get(".1.3.6.1.4.1.9.9.599.1.2.32.0");
         Object clientRssiObject = rssi.get(".1.3.6.1.4.1.9.9.599.1.2.1.0");
 
+
         try {
 
-            if (macAuxObject!=null && clientRssiObject!=null) {
+            if (macAuxObject != null && clientRssiObject != null) {
+
+                Integer rssiInt = (Integer) clientRssiObject;
 
                 String macAux = macAuxObject.toString();
                 String macAddress = macAux.split("/")[1];
 
                 Map<String, Object> rssiData = new HashMap<>();
 
-                rssiData.put("client_rssi", clientRssiObject);
+                if (rssiInt <= -90)
+                    rssiData.put("client_rssi", "bad");
+                else if (rssiInt <= -80)
+                    rssiData.put("client_rssi", "low");
+                else if (rssiInt <= -70)
+                    rssiData.put("client_rssi", "medium");
+                else if (rssiInt <= -60)
+                    rssiData.put("client_rssi", "good");
+                else if (rssiInt <= -50)
+                    rssiData.put("client_rssi", "excelent");
+                else if (rssiInt == 0)
+                    rssiData.put("client_rssi", "unknown");
 
                 collector.emit(new Values(macAddress, rssiData));
             }
         } catch (NullPointerException e) {
-            Logger.getLogger(GetTRAPdata.class.getName()).log(Level.SEVERE, "Failed reading a TRAP JSON tuple: \n" +rssi.toString(), e);
+            Logger.getLogger(GetTRAPdata.class.getName()).log(Level.SEVERE, "Failed reading a TRAP JSON tuple: \n" + rssi.toString(), e);
         }
     }
 
