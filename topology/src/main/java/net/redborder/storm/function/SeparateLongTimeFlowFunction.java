@@ -39,9 +39,10 @@ public class SeparateLongTimeFlowFunction extends BaseFunction {
         Map<String, Object> event = (Map<String, Object>) tuple.getValue(0);
         List<Map<String, Object>> generatedPackets = new ArrayList<>();
 
-        if (event.containsKey("first_switched") && event.containsKey("last_switched")) {
+        // last_switched is timestamp now
+        if (event.containsKey("first_switched") && event.containsKey("timestamp")) {
             DateTime packet_start = new DateTime(Long.parseLong(event.get("first_switched").toString()) * 1000);
-            DateTime packet_end = new DateTime(Long.parseLong(event.get("last_switched").toString()) * 1000);
+            DateTime packet_end = new DateTime(Long.parseLong(event.get("timestamp").toString()) * 1000);
             DateTime limit = new DateTime().withMinuteOfHour(0);
             DateTime now = new DateTime();
             int now_hour = now.getHourOfDay();
@@ -52,8 +53,8 @@ public class SeparateLongTimeFlowFunction extends BaseFunction {
                 Logger.getLogger(SeparateLongTimeFlowFunction.class.getName()).log(Level.WARNING,
                         "Packet {0} ended in a future segment and I modified its last and/or first switched values.", event);
 
-                event.put("last_switched", now.getMillis() / 1000);
-                packet_end = new DateTime(Long.parseLong(event.get("last_switched").toString()) * 1000);
+                event.put("timestamp", now.getMillis() / 1000);
+                packet_end = new DateTime(Long.parseLong(event.get("timestamp").toString()) * 1000);
 
                 if (!packet_end.isAfter(packet_start)) {
                     event.put("first_switched", now.getMillis() / 1000);
@@ -136,15 +137,13 @@ public class SeparateLongTimeFlowFunction extends BaseFunction {
 
             for (Map<String, Object> e : generatedPackets) {
                 e.remove("first_switched");
-                e.remove("last_switched");
                 collector.emit(new Values(e));
             }
-        } else if (event.containsKey("first_switched")) {
-            event.put("timestamp", event.get("first_switched"));
-            event.remove("first_switched");
+        } else if (event.containsKey("timestamp")) {
             collector.emit(new Values(event));
         } else {
-            collector.emit(new Values(event));
+            Logger.getLogger(SeparateLongTimeFlowFunction.class.getName()).log(Level.WARNING,
+                    "Packet without timestamp -> {0}.", event);
         }
     }
 }
