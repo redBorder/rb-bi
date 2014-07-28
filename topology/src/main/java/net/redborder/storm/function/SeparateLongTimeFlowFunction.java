@@ -48,8 +48,8 @@ public class SeparateLongTimeFlowFunction extends BaseFunction {
             int now_hour = now.getHourOfDay();
             int packet_end_hour = packet_end.getHourOfDay();
 
-            if (packet_end.isAfter(now) && (packet_end.getHourOfDay() != packet_start.getHourOfDay()) &&
-                    (packet_end.getMillis() - now.getMillis() < 1000 * 60 * 60)) {
+            if (packet_end.isAfter(now) && ((packet_end.getHourOfDay() != packet_start.getHourOfDay()) ||
+                    (packet_end.getMillis() - now.getMillis() > 1000 * 60 * 60))) {
                 Logger.getLogger(SeparateLongTimeFlowFunction.class.getName()).log(Level.WARNING,
                         "Packet {0} ended in a future segment and I modified its last and/or first switched values.", event);
 
