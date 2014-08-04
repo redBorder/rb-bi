@@ -39,35 +39,49 @@ public class SeparateLongTimeFlowFunction extends BaseFunction {
         Map<String, Object> event = (Map<String, Object>) tuple.getValue(0);
         List<Map<String, Object>> generatedPackets = new ArrayList<>();
 
-        if (event.containsKey("first_switched") && event.containsKey("last_switched")) {
+        // last_switched is timestamp now
+        if (event.containsKey("first_switched") && event.containsKey("timestamp")) {
             DateTime packet_start = new DateTime(Long.parseLong(event.get("first_switched").toString()) * 1000);
-            DateTime packet_end = new DateTime(Long.parseLong(event.get("last_switched").toString()) * 1000);
-            DateTime limit = new DateTime().withMinuteOfHour(0);
+            DateTime packet_end = new DateTime(Long.parseLong(event.get("timestamp").toString()) * 1000);
             DateTime now = new DateTime();
             int now_hour = now.getHourOfDay();
             int packet_end_hour = packet_end.getHourOfDay();
 
-            if (packet_end.isAfter(now) && (packet_end.getHourOfDay() != packet_start.getHourOfDay()) &&
-                    (packet_end.getMillis() - now.getMillis() < 1000 * 60 * 60)) {
-                Logger.getLogger(SeparateLongTimeFlowFunction.class.getName()).log(Level.WARNING,
-                        "Packet {0} ended in a future segment and I modified its last and/or first switched values.", event);
+            // Get the lower limit date time that a packet can have
+            DateTime limit;
+            if (now.getMinuteOfHour() < DELAYED_REALTIME_TIME) {
+                limit = new DateTime().minusHours(1).withMinuteOfHour(0);
+            } else {
+                limit = new DateTime().withMinuteOfHour(0);
+            }
 
-                event.put("last_switched", now.getMillis() / 1000);
-                packet_end = new DateTime(Long.parseLong(event.get("last_switched").toString()) * 1000);
+            // Discard too old events
+            if ((packet_end_hour == now_hour - 1 && now.getMinuteOfHour() > DELAYED_REALTIME_TIME) ||
+                    (now.getMillis() - packet_end.getMillis() > 1000 * 60 * 60)) {
+                Logger.getLogger(SeparateLongTimeFlowFunction.class.getName()).log(Level.WARNING,
+                    "Dropped packet {0} because its realtime processor is already shutdown.", event);
+                return;
+            } else if (packet_start.isBefore(limit)) {
+                // If the lower limit date time is overpassed, correct it
+                Logger.getLogger(SeparateLongTimeFlowFunction.class.getName()).log(Level.WARNING,
+                    "Packet {0} first switched was corrected because it overpassed the lower limit (event too old).", event);
+                packet_start = limit;
+                event.put("first_switched", limit.getMillis() / 1000);
+            }
+
+            // Correct events in the future
+            if (packet_end.isAfter(now) && ((packet_end.getHourOfDay() != packet_start.getHourOfDay()) ||
+                    (packet_end.getMillis() - now.getMillis() > 1000 * 60 * 60))) {
+                Logger.getLogger(SeparateLongTimeFlowFunction.class.getName()).log(Level.WARNING,
+                    "Packet {0} ended in a future segment and I modified its last and/or first switched values.", event);
+
+                event.put("timestamp", now.getMillis() / 1000);
+                packet_end = now;
 
                 if (!packet_end.isAfter(packet_start)) {
                     event.put("first_switched", now.getMillis() / 1000);
-                    packet_start = new DateTime(Long.parseLong(event.get("first_switched").toString()) * 1000);
+                    packet_start = now;
                 }
-            } else if ((packet_end_hour == now_hour - 1 && now.getMinuteOfHour() > DELAYED_REALTIME_TIME) ||
-                    (now.getMillis() - packet_end.getMillis() > 1000 * 60 * 60)) {
-                Logger.getLogger(SeparateLongTimeFlowFunction.class.getName()).log(Level.WARNING,
-                        "Dropped packet {0} because its realtime processor is already shutdown.", event);
-                return;
-            }
-
-            if (packet_start.isBefore(limit)) {
-                packet_start = limit;
             }
 
             DateTime this_start;
@@ -136,15 +150,13 @@ public class SeparateLongTimeFlowFunction extends BaseFunction {
 
             for (Map<String, Object> e : generatedPackets) {
                 e.remove("first_switched");
-                e.remove("last_switched");
                 collector.emit(new Values(e));
             }
-        } else if (event.containsKey("first_switched")) {
-            event.put("timestamp", event.get("first_switched"));
-            event.remove("first_switched");
+        } else if (event.containsKey("timestamp")) {
             collector.emit(new Values(event));
         } else {
-            collector.emit(new Values(event));
+            Logger.getLogger(SeparateLongTimeFlowFunction.class.getName()).log(Level.WARNING,
+                    "Packet without timestamp -> {0}.", event);
         }
     }
 }
