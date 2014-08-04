@@ -65,13 +65,13 @@ public class RedBorderTopology {
                 Config conf = _config.setConfig(args[0]);
 
                 if (argsList.contains("force")) {
-                        StormSubmitter.submitTopology(topologyName, conf, topology.build());
-                        System.out.println("\nTopology: " + topologyName + " uploaded successfully.");
+                    StormSubmitter.submitTopology(topologyName, conf, topology.build());
+                    System.out.println("\nTopology: " + topologyName + " uploaded successfully.");
                 } else {
                     System.out.print("Would you like to continue ? (Y/n): ");
                     Scanner sc = new Scanner(System.in);
                     String option = sc.nextLine();
-                    if (option.equals("Y")||option.equals("y") || option.equals("") || option.equals("\n")) {
+                    if (option.equals("Y") || option.equals("y") || option.equals("") || option.equals("\n")) {
                         StormSubmitter.submitTopology(topologyName, conf, topology.build());
                         System.out.println("\nTopology: " + topologyName + " uploaded successfully.");
                     } else {
@@ -288,13 +288,18 @@ public class RedBorderTopology {
 
         /* Join fields and persist */
         if (_config.contains("traffics")) {
-            persist("traffics",
-                    flowStream.each(new Fields(fieldsFlow), new MergeMapsFunction(), new Fields("mergedMap"))
-                            .each(new Fields("mergedMap"), new SeparateLongTimeFlowFunction(), new Fields("separateTime"))
-                            .each(new Fields("separateTime"), new CheckTimestampFunction(), new Fields("finalMap"))
-                            .project(new Fields("finalMap"))
-                            .parallelismHint(_config.getWorkers())
-                            .shuffle().name("Flow Producer"));
+
+            flowStream = flowStream.each(new Fields(fieldsFlow), new MergeMapsFunction(), new Fields("mergedMap"))
+                    .each(new Fields("mergedMap"), new SeparateLongTimeFlowFunction(), new Fields("separateTime"))
+                    .each(new Fields("separateTime"), new CheckTimestampFunction(), new Fields("finalMap"));
+
+            flowStream
+                    .each(new Fields("finalMap"), new StratioStreamingFunction(), new Fields("a"));
+
+            persist("traffics", flowStream
+                    .project(new Fields("finalMap"))
+                    .parallelismHint(_config.getWorkers())
+                    .shuffle().name("Flow Producer"));
         }
 
         if (_config.contains("events")) {
@@ -328,11 +333,11 @@ public class RedBorderTopology {
         print(pw, "- Storm workers: " + _config.getWorkers());
         print(pw, "- Kafka partitions: ");
 
-        if (locationPartition > 0) print(pw, "   * rb_loc: " + locationPartition);
-        if (mobilePartition > 0) print(pw, "   * rb_mobile: " + mobilePartition);
-        if (trapPartition > 0) print(pw, "   * rb_trap: " + trapPartition);
-        if (flowPartition > 0) print(pw, "   * rb_flow: " + flowPartition);
-        if (radiusPartition > 0) print(pw, "   * rb_radius: " + radiusPartition);
+        if (_config.contains("location") && locationPartition > 0) print(pw, "   * rb_loc: " + locationPartition);
+        if (_config.contains("mobile") && mobilePartition > 0) print(pw, "   * rb_mobile: " + mobilePartition);
+        if (_config.contains("trap") && trapPartition > 0) print(pw, "   * rb_trap: " + trapPartition);
+        if (_config.contains("flow") && flowPartition > 0) print(pw, "   * rb_flow: " + flowPartition);
+        if (_config.contains("radius") && radiusPartition > 0) print(pw, "   * rb_radius: " + radiusPartition);
 
 
         print(pw, "- Zookeeper Servers: " + _config.getZkHost());
@@ -354,7 +359,7 @@ public class RedBorderTopology {
                 print(pw, "     * replicas: " + _config.tranquilityReplication());
             } else {
                 String output = _config.getOutputTopic("traffics");
-                print(pw, "   * output topic: " + output + " (partitions: "+ _config.getKafkaPartitions(output)+")");
+                print(pw, "   * output topic: " + output + " (partitions: " + _config.getKafkaPartitions(output) + ")");
             }
         }
 
@@ -368,7 +373,7 @@ public class RedBorderTopology {
                 print(pw, "     * replicas: " + _config.tranquilityReplication());
             } else {
                 String output = _config.getOutputTopic("events");
-                print(pw, "   * output topic: " + output + " (partitions: "+ _config.getKafkaPartitions(output)+")");
+                print(pw, "   * output topic: " + output + " (partitions: " + _config.getKafkaPartitions(output) + ")");
             }
         }
 
@@ -381,7 +386,7 @@ public class RedBorderTopology {
                 print(pw, "     * replicas: " + _config.tranquilityReplication());
             } else {
                 String output = _config.getOutputTopic("monitor");
-                print(pw, "   * output topic: " + output + " (partitions:"+ _config.getKafkaPartitions(output)+")");
+                print(pw, "   * output topic: " + output + " (partitions:" + _config.getKafkaPartitions(output) + ")");
             }
         }
 
