@@ -293,9 +293,6 @@ public class RedBorderTopology {
                     .each(new Fields("mergedMap"), new SeparateLongTimeFlowFunction(), new Fields("separateTime"))
                     .each(new Fields("separateTime"), new CheckTimestampFunction(), new Fields("finalMap"));
 
-            flowStream
-                    .each(new Fields("finalMap"), new StratioStreamingFunction(), new Fields("a"));
-
             persist("traffics", flowStream
                     .project(new Fields("finalMap"))
                     .parallelismHint(_config.getWorkers())
