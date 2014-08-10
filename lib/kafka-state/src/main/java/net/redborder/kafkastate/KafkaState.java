@@ -1,4 +1,4 @@
-package com.github.quintona;
+package net.redborder.kafkastate;
 
 import backtype.storm.task.IMetricsContext;
 import kafka.javaapi.producer.Producer;

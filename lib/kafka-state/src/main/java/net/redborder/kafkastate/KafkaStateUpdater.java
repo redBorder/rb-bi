@@ -1,4 +1,4 @@
-package com.github.quintona;
+package net.redborder.kafkastate;
 
 import kafka.producer.KeyedMessage;
 import storm.trident.operation.TridentCollector;
