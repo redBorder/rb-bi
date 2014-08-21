@@ -15,18 +15,28 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- *
- * @author andresgomez
+ * <p>This function get the radius client from radius event.</p>
+ * @author Andres Gomez
  */
 public class GetRadiusClient extends BaseFunction {
 
+    /**
+     * If it is true: debug is ON.
+     */
     private boolean _debug;
 
+    /**
+     * Check if debug is ON or OFF.
+     */
     @Override
     public void prepare(Map conf, TridentOperationContext context) {
         _debug = (boolean) conf.get("rbDebug");
     }
 
+    /**
+     * <p>This function get the radius client from radius event.</p>
+     * @author Andres Gomez
+     */
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
         Map<String, Object> radiusData = (Map<String, Object>) tuple.getValue(0);

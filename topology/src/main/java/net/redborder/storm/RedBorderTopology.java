@@ -34,10 +34,27 @@ import java.util.Date;
 import java.util.List;
 import java.util.Scanner;
 
+/**
+ * <p> This is the main class on the project. </p>
+ * @author Andres Gomez
+ */
 public class RedBorderTopology {
 
+    /**
+     * Config data has all topology configuration.
+     */
     static ConfigData _config;
 
+    /**
+     *
+     * @param args The value to args can be: {local|cluster} [debug] [force]
+     *
+     *             <p><b>{local|cluster}:</b> You can choose if you want execute the topology on local or on Storm cluster.</p>
+     *             <p><b>[debug]:</b> You can active/disable the mode debug.</p>
+     *             <p><b>[force]:</b> You force the upload topology to the cluster or local, without it asks you.</p>
+     * @throws AlreadyAliveException
+     * @throws InvalidTopologyException
+     */
     public static void main(String[] args) throws AlreadyAliveException, InvalidTopologyException {
         String topologyName = "redBorder-Topology";
         List<String> argsList = new ArrayList<>();
@@ -82,6 +99,10 @@ public class RedBorderTopology {
         }
     }
 
+    /**
+     * This method build the redBorder topology based on available sections.
+     * @return redBorder Trident Topology
+     */
     public static TridentTopology topology() {
         TridentTopology topology = new TridentTopology();
         List<String> fieldsFlow = new ArrayList<>();

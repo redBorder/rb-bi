@@ -18,13 +18,19 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
- * @author andresgomez
+ * <p>This function converts a JAVA Map to JSON events.</p>
+ * @author Andres Gomez
  */
 public class MapToJSONFunction extends BaseFunction {
 
+    /**
+     * This object is responsible for making the conversion.
+     */
     ObjectMapper _mapper;
 
+    /**
+     * <p>This function converts a JAVA Map to JSON events.</p>
+     */
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
         String eventJSON = "";
@@ -36,6 +42,9 @@ public class MapToJSONFunction extends BaseFunction {
         collector.emit(new Values(eventJSON));
     }
 
+    /**
+     * <p>Initialize ObjectMapper. Register throughput metrics.</p>
+     */
     @Override
     public void prepare(Map conf, TridentOperationContext context) {
         _mapper = new ObjectMapper();

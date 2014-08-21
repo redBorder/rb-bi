@@ -16,10 +16,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * @author andresgomez
+ * <p>This function analyzes the trap events and get interest fields.</p>
+ * @author Andres Gomez
  */
 public class GetTRAPdata extends BaseFunction {
 
+    /**
+     * <p>This function analyzes the trap events and get interest fields.</p>
+     */
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
         Map<String, Object> rssi = (Map<String, Object>) tuple.getValue(0);

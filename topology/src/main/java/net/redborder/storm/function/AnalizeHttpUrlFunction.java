@@ -15,20 +15,37 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * @author andresgomez
+ * <p> This enriching analyzes the http url, try looking for facebook users, dropboox users, twitter users, youtube users, google maps locations, linkedin shares, facebook likes and media data (jpg, png, avi, mp3 ...). </p>
+ * @author Andres Gomez
  */
 public class AnalizeHttpUrlFunction extends BaseFunction {
 
+    /**
+     * This variable save the input tuple.
+     */
     Map<String, Object> event;
+
+    /**
+     * This variable buil the output tuple.
+     */
     Map<String, Object> result;
 
+    /**
+     * If it is true: debug is ON.
+     */
     boolean _debug;
 
+    /**
+     * Check if debug is ON or OFF.
+     */
     @Override
     public void prepare(Map conf, TridentOperationContext context) {
         _debug = (boolean) conf.get("rbDebug");
     }
 
+    /**
+     * <p> This enriching analyzes the http url, try looking for facebook users, dropboox users, twitter users, youtube users, google maps locations, linkedin shares, facebook likes, facebook shares and media data (jpg, png, avi, mp3 ...). </p>
+     */
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
         Map<String, Object> event = (Map<String, Object>) tuple.getValue(0);
@@ -71,6 +88,9 @@ public class AnalizeHttpUrlFunction extends BaseFunction {
         }
     }
 
+    /**
+     * <p>Search dropbox users and put on "http_social_user".</p>
+     */
     private void dropboxUser() {
         String url = event.get("http_url").toString();
         if (url.contains("user_id")) {
@@ -88,6 +108,9 @@ public class AnalizeHttpUrlFunction extends BaseFunction {
         }
     }
 
+    /**
+     * <p>Search facebook likes and shares put on "facebook_like" or "facebook_share".</p>
+     */
     private void facebookLikeShare() {
         String url = event.get("http_url").toString();
         if (url.contains("plugins/like.php")) {
@@ -111,6 +134,9 @@ public class AnalizeHttpUrlFunction extends BaseFunction {
         }
     }
 
+    /**
+     * <p>Search facebook users and put on "http_social_user".</p>
+     */
     private void facebookUser() {
         String url = event.get("http_url").toString();
         int start = url.indexOf("_") + 1;
@@ -122,6 +148,9 @@ public class AnalizeHttpUrlFunction extends BaseFunction {
         result.put("http_social_user", "http://www.facebook.com/profile.php?id=" + url.substring(start, end));
     }
 
+    /**
+     * <p>Search google maps location and put on "google_maps_location".</p>
+     */
     private void locationGoogleMaps() {
         String url = event.get("http_url").toString();
 
@@ -134,6 +163,9 @@ public class AnalizeHttpUrlFunction extends BaseFunction {
         }
     }
 
+    /**
+     * <p>Search linkedin shares and put on "linkedin_share".</p>
+     */
     private void linkedinShare() {
         String url = event.get("http_url").toString();
         if (url.contains("share?url=")) {
@@ -153,6 +185,9 @@ public class AnalizeHttpUrlFunction extends BaseFunction {
 
     }
 
+    /**
+     * <p>Search twitter users and put on "http_social_user".</p>
+     */
     private void twitterUser1() {
         String url = event.get("http_url").toString();
         if (url.contains("screen_name")) {
@@ -165,6 +200,9 @@ public class AnalizeHttpUrlFunction extends BaseFunction {
         }
     }
 
+    /**
+     * <p>Search twitter users and put on "http_social_user".</p>
+     */
     private void twitterUser2() {
         String url = event.get("http_url").toString();
         if (url.contains("status")) {
@@ -177,6 +215,9 @@ public class AnalizeHttpUrlFunction extends BaseFunction {
         }
     }
 
+    /**
+     * <p>Search youtube users and put on "http_social_user".</p>
+     */
     private void youtubeUser() {
         String url = event.get("http_url").toString();
         if (url.contains("/feeds/api/users/")) {
@@ -195,6 +236,9 @@ public class AnalizeHttpUrlFunction extends BaseFunction {
         }
     }
 
+    /**
+     * <p>Search media data (mpg, jpg, avi, mp3 ...) and put on "http_social_media".</p>
+     */
     private void mediaData() {
         String host = event.get("http_host").toString();
         String url = event.get("http_url").toString();

@@ -18,10 +18,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Get MacVendor from mac address (source and destination).
+ * <p>This enriching gets MacVendor from mac address (source and destination).</p>
  *
- * @author andresgomez
+ * @author Andres Gomez
  */
+
 public class MacVendorFunction extends BaseFunction {
 
     public static String _ouiFilePath = "/opt/rb/etc/objects/oui-vendors";

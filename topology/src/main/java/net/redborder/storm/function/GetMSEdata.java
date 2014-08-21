@@ -19,10 +19,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * @author andresgomez
+ * <p>This function analyzes the MSE events and get interest fields.</p>
+ * @author Andres Gomez
  */
 public class GetMSEdata extends BaseFunction {
 
+    /**
+     * <p>This function analyzes the events of MSE and get interest fields.</p>
+     */
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
         Map<String, Object> mseEvent = (Map<String, Object>) tuple.get(0);

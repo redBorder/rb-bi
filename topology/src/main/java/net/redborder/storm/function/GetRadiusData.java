@@ -15,11 +15,16 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+
 /**
- * @author andresgomez
+ * <p>This function analyzes the radius events and get interest fields.</p>
+ * @author Andres Gomez
  */
 public class GetRadiusData extends BaseFunction {
 
+    /**
+     * <p>This function analyzes the radius events and get interest fields.</p>
+     */
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
         Map<String, Object> radiusData = (Map<String, Object>) tuple.getValue(0);

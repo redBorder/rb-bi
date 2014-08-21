@@ -23,28 +23,67 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 /**
- * Get the geoLocation from a IPv4 or IPv6 (source and destination).
+ * <p>This enriching gets the geoLocation from a IPv4 or IPv6 (source and destination).</p>
  *
  * @author andresgomez
  */
 public class GeoIpFunction extends BaseFunction {
 
+    /**
+     * Path to city data base.
+     */
     public static String CITY_DB_PATH = "/opt/rb/share/GeoIP/city.dat";
+    /**
+     * Path to city v6 data base.
+     */
     public static String CITY_V6_DB_PATH = "/opt/rb/share/GeoIP/cityv6.dat";
+    /**
+     * Path to asn data base.
+     */
     public static String ASN_DB_PATH = "/opt/rb/share/GeoIP/asn.dat";
+    /**
+     * Path to asn v6 data base.
+     */
     public static String ASN_V6_DB_PATH = "/opt/rb/share/GeoIP/asnv6.dat";
-
+    /**
+     * Pattern to to make the comparison with ips v4.
+     */
     public static Pattern VALID_IPV4_PATTERN = null;
+    /**
+     * Pattern to to make the comparison with ips v6.
+     */
     public static Pattern VALID_IPV6_PATTERN = null;
+    /**
+     * Regular expresion to make the comparison with ipv4 format.
+     */
     private static final String ipv4Pattern = "(([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.){3}([01]?\\d\\d?|2[0-4]\\d|25[0-5])";
+    /**
+     * Regular expresion to make the comparison with ipv6 format.
+     */
     private static final String ipv6Pattern = "([0-9a-f]{1,4}:){7}([0-9a-f]){1,4}";
 
 
+    /**
+     * Reference on memory cache to city data base.
+     */
     LookupService _city;
+    /**
+     * Reference on memory cache to city v6 data base.
+     */
     LookupService _city6;
+    /**
+     * Reference on memory cache to asn data base.
+     */
     LookupService _asn;
+    /**
+     * Reference on memory cache to asn v6 data base.
+     */
     LookupService _asn6;
 
+
+    /**
+     * Initializing the database reference and patterns.
+     */
     @Override
     public void prepare(Map conf, TridentOperationContext context) {
         try {
@@ -61,6 +100,11 @@ public class GeoIpFunction extends BaseFunction {
         }
     }
 
+    /**
+     * <p>Query if there is a country code for a given IP.</p>
+     * @param ip This is the address to query the data base.
+     * @return The country code, example: US, ES, FR.
+     */
     private String getCountryCode(String ip) {
         Matcher match = VALID_IPV4_PATTERN.matcher(ip);
         String countryCode = null;
@@ -79,6 +123,11 @@ public class GeoIpFunction extends BaseFunction {
         return countryCode;
     }
 
+    /**
+     * <p>Query if there is a asn for a given IP.</p>
+     * @param ip This is the address to query the data base.
+     * @return The asn name.
+     */
     private String getAsnName(String ip) {
         Matcher match = VALID_IPV4_PATTERN.matcher(ip);
         String asnName = null;
@@ -103,6 +152,9 @@ public class GeoIpFunction extends BaseFunction {
         return asnName;
     }
 
+    /**
+     * <p>This enriching gets the geoLocation from a IPv4 or IPv6 (source and destination).</p>
+     */
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
         Map<String, Object> event = (Map<String, Object>) tuple.getValue(0);
@@ -129,6 +181,9 @@ public class GeoIpFunction extends BaseFunction {
         collector.emit(new Values(geoIPMap));
     }
 
+    /**
+     * <p>Free the cache memory where database were loaded.</p>
+     */
     @Override
     public void cleanup() {
         _city.close();

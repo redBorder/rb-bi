@@ -19,26 +19,46 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Make a java.util.Map from the json string.
+ * <p>This function converts a JSON events to JAVA Map.</p>
  *
- * @author andresgomez
+ * @author Andres Gomez
  */
 public class MapperFunction extends BaseFunction {
 
+    /**
+     * This object is responsible for making the conversion.
+     */
     ObjectMapper _mapper;
+    /**
+     * This metrics is used to calculate the throughput.
+     */
     CountMetric _metric;
+    /**
+     * Name of throughput metric.
+     */
     String _metricName;
 
+    /**
+     * <p>This function converts a JSON events to JAVA Map.</p>
+     *
+     * @param metric The name of the metric.
+     */
     public MapperFunction(String metric){
         _metricName = metric;
     }
 
+    /**
+     * <p>Initialize ObjectMapper. Register throughput metrics.</p>
+     */
     @Override
     public void prepare(Map conf, TridentOperationContext context) {
          _mapper = new ObjectMapper();
         _metric = context.registerMetric("throughput_" + _metricName,  new CountMetric(), 50);
     }
 
+    /**
+     * <p>This function converts a JSON events to JAVA Map.</p>
+     */
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
         String jsonEvent = (String) tuple.getValue(0);
