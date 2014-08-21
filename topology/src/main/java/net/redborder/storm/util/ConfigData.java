@@ -240,20 +240,11 @@ public class ConfigData {
         return ret != null && ret;
     }
 
-    public List<String> getRiakServers() {
-        List<String> servers = _configFile.getFromGeneral("riak_servers");
-        List<String> riakServers;
-
-        if (servers != null) {
-            riakServers = servers;
-        } else {
-            Logger.getLogger(ConfigFile.class.getName()).log(Level.SEVERE, "No riak servers on config file");
-            riakServers = new ArrayList<>();
-            riakServers.add("localhost");
-        }
-
-        return riakServers;
+    public Map<String, Object> getGridGainConfig(){
+        Map<String, Object> ret = _configFile.getFromGeneral("gridgain");
+        return ret;
     }
+
 
     public List<String> getEnrichs() {
         List<String> enrichs = new ArrayList<>();

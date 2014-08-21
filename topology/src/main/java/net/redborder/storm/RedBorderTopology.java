@@ -161,7 +161,7 @@ public class RedBorderTopology {
         /* Location */
         if (_config.contains("location")) {
             locationPartition = _config.getKafkaPartitions("rb_loc");
-            locationStateFactory = new GridGainFactory("location", _config.getEnrichs());
+            locationStateFactory = new GridGainFactory("location", _config.getEnrichs(), _config.getGridGainConfig());
             locationState = topology.newStaticState(locationStateFactory);
 
             // Get msg
@@ -193,7 +193,7 @@ public class RedBorderTopology {
         /* Mobile */
         if (_config.contains("mobile")) {
             mobilePartition = _config.getKafkaPartitions("rb_mobile");
-            mobileStateFactory = new GridGainFactory("mobile", _config.getEnrichs());
+            mobileStateFactory = new GridGainFactory("mobile", _config.getEnrichs(),  _config.getGridGainConfig());
             mobileState = topology.newStaticState(mobileStateFactory);
 
             // Get msg and save it to enrich later on
@@ -216,7 +216,7 @@ public class RedBorderTopology {
         /* Trap */
         if (_config.contains("trap")) {
             trapPartition = _config.getKafkaPartitions("rb_trap");
-            trapStateFactory = new GridGainFactory("trap", _config.getEnrichs());
+            trapStateFactory = new GridGainFactory("trap", _config.getEnrichs(), _config.getGridGainConfig());
             trapState = topology.newStaticState(trapStateFactory);
 
             // Get msg and save it to enrich later on
@@ -236,7 +236,7 @@ public class RedBorderTopology {
         /* Radius */
         if (_config.contains("radius")) {
             radiusPartition = _config.getKafkaPartitions("rb_radius");
-            radiusStateFactory = new GridGainFactory("radius", _config.getEnrichs());
+            radiusStateFactory = new GridGainFactory("radius", _config.getEnrichs(),  _config.getGridGainConfig());
             radiusState = topology.newStaticState(radiusStateFactory);
 
             // Get msg
@@ -284,7 +284,7 @@ public class RedBorderTopology {
         /* Darklist */
         if (_config.darklistIsEnabled()) {
             // Create a static state to query the database
-            darklistState = topology.newStaticState(new GridGainFactory("darklist", _config.getEnrichs()));
+            darklistState = topology.newStaticState(new GridGainFactory("darklist", _config.getEnrichs(), _config.getGridGainConfig()));
 
             // Enrich flow stream with darklist fields
             if (_config.contains("traffics")) {

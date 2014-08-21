@@ -9,6 +9,9 @@ import org.gridgain.grid.cache.GridCache;
 import org.gridgain.grid.cache.GridCacheConfiguration;
 import org.gridgain.grid.cache.GridCacheDistributionMode;
 import org.gridgain.grid.cache.GridCacheMode;
+import org.gridgain.grid.spi.discovery.tcp.GridTcpDiscoverySpi;
+import org.gridgain.grid.spi.discovery.tcp.ipfinder.multicast.GridTcpDiscoveryMulticastIpFinder;
+import org.gridgain.grid.spi.discovery.tcp.ipfinder.vm.GridTcpDiscoveryVmIpFinder;
 import org.ho.yaml.Yaml;
 import storm.trident.state.State;
 import storm.trident.state.StateFactory;
@@ -16,9 +19,8 @@ import storm.trident.state.map.NonTransactionalMap;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.net.InetSocketAddress;
+import java.util.*;
 
 /**
  * Created by andresgomez on 30/06/14.
@@ -27,13 +29,17 @@ public class GridGainFactory implements StateFactory {
 
     String _cacheName;
     List<String> _topics;
+    List<String> _gridGainServers;
+    String _multicastGroup;
 
     private final static String CONFIG_FILE_PATH = "/opt/rb/etc/darklist_config.yml";
 
 
-    public GridGainFactory(String cacheName, List<String> topics) {
+    public GridGainFactory(String cacheName, List<String> topics, Map<String, Object> gridGainConfig) {
         _cacheName = cacheName;
         _topics = topics;
+        _gridGainServers = (List<String>) gridGainConfig.get("servers");
+        _multicastGroup = (String) gridGainConfig.get("multicast");
     }
 
 
@@ -44,6 +50,7 @@ public class GridGainFactory implements StateFactory {
         try {
             grid = GridGain.start(makeConfig());
         } catch (GridException e) {
+            System.out.println("EXCEPCION: " + e);
             grid = GridGain.grid();
         }
 
@@ -56,7 +63,28 @@ public class GridGainFactory implements StateFactory {
         GridConfiguration conf = new GridConfiguration();
         List<GridCacheConfiguration> caches = new ArrayList<GridCacheConfiguration>();
 
+        Collection<InetSocketAddress> ips = new ArrayList<>();
 
+        GridTcpDiscoveryMulticastIpFinder gridIpFinder = new GridTcpDiscoveryMulticastIpFinder();
+
+        if(_gridGainServers!=null) {
+            for (String server : _gridGainServers) {
+                String[] serverPort = server.split(":");
+                ips.add(new InetSocketAddress(serverPort[0], Integer.valueOf(serverPort[1])));
+            }
+
+            gridIpFinder.registerAddresses(ips);
+        }
+
+        if(_multicastGroup!=null) {
+            gridIpFinder.setMulticastGroup(_multicastGroup);
+        } else {
+            gridIpFinder.setMulticastGroup("228.10.10.157");
+        }
+
+        GridTcpDiscoverySpi gridTcp = new GridTcpDiscoverySpi();
+        gridTcp.setIpFinder(gridIpFinder);
+        conf.setDiscoverySpi(gridTcp);
 
         if (_topics.contains("darklist")) {
 
@@ -64,14 +92,14 @@ public class GridGainFactory implements StateFactory {
             Integer backups = 0;
 
             try {
-                Map<String, Object>  configMap = (Map<String, Object>) Yaml.load(new File(CONFIG_FILE_PATH));
+                Map<String, Object> configMap = (Map<String, Object>) Yaml.load(new File(CONFIG_FILE_PATH));
                 general = (Map<String, Object>) configMap.get("general");
                 backups = (Integer) general.get("backups");
-                if(backups==null){
-                    backups=0;
+                if (backups == null) {
+                    backups = 0;
                 }
             } catch (FileNotFoundException e) {
-                backups=0;
+                backups = 0;
                 e.printStackTrace();
             }
 
