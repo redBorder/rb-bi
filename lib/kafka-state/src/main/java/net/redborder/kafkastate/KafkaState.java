@@ -88,6 +88,8 @@ public class KafkaState<T> implements State {
         Properties props = new Properties();
         props.put("metadata.broker.list", _brokerList);
         props.put("serializer.class", "kafka.serializer.StringEncoder");
+        props.put("partitioner.class", "net.redborder.kafkastate.SimplePartitioner");
+
         ProducerConfig config = new ProducerConfig(props);
         producer = new Producer<>(config);
     }
