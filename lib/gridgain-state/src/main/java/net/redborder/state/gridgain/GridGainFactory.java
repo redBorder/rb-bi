@@ -19,7 +19,9 @@ import storm.trident.state.map.NonTransactionalMap;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.util.*;
 
 /**
@@ -50,7 +52,6 @@ public class GridGainFactory implements StateFactory {
         try {
             grid = GridGain.start(makeConfig());
         } catch (GridException e) {
-            System.out.println("EXCEPCION: " + e);
             grid = GridGain.grid();
         }
 
@@ -64,8 +65,14 @@ public class GridGainFactory implements StateFactory {
         List<GridCacheConfiguration> caches = new ArrayList<GridCacheConfiguration>();
 
         Collection<InetSocketAddress> ips = new ArrayList<>();
+        GridTcpDiscoveryVmIpFinder gridIpFinder = new GridTcpDiscoveryVmIpFinder();
 
-        GridTcpDiscoveryMulticastIpFinder gridIpFinder = new GridTcpDiscoveryMulticastIpFinder();
+
+        try {
+            conf.setLocalHost(InetAddress.getLocalHost().getHostName());
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
 
         if(_gridGainServers!=null) {
             for (String server : _gridGainServers) {
@@ -74,12 +81,6 @@ public class GridGainFactory implements StateFactory {
             }
 
             gridIpFinder.registerAddresses(ips);
-        }
-
-        if(_multicastGroup!=null) {
-            gridIpFinder.setMulticastGroup(_multicastGroup);
-        } else {
-            gridIpFinder.setMulticastGroup("228.10.10.157");
         }
 
         GridTcpDiscoverySpi gridTcp = new GridTcpDiscoverySpi();
