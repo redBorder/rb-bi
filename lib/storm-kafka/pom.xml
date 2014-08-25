@@ -22,7 +22,7 @@
     <parent>
         <artifactId>redborder-bi</artifactId>
         <groupId>net.redborder</groupId>
-        <version>1.1</version>
+        <version>1.2</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
