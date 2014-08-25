@@ -44,13 +44,13 @@ public class GetMSEdata extends BaseFunction {
             mseDataDruid = new HashMap<>();
 
             if (location != null) {
-                geoCoordinate = (Map<String, Object>) location.get("geoCoordinate");
+                geoCoordinate = (Map<String, Object>) location.get("GeoCoordinate");
                 if(geoCoordinate == null){
-                    geoCoordinate = (Map<String, Object>) location.get("GeoCoordinate");
+                    geoCoordinate = (Map<String, Object>) location.get("geoCoordinate");
                 }
-                mapInfo = (Map<String, Object>) location.get("mapInfo");
+                mapInfo = (Map<String, Object>) location.get("MapInfo");
                 if(mapInfo==null){
-                    mapInfo = (Map<String, Object>) location.get("MapInfo");
+                    mapInfo = (Map<String, Object>) location.get("mapInfo");
                 }
                 macAddress = (String) location.get("macAddress");
                 mseDataDruid.put("client_mac", macAddress);
