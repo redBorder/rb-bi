@@ -23,7 +23,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
  * @author andresgomez
  */
 public class ConfigData {
@@ -155,7 +154,7 @@ public class ConfigData {
             _conf.registerMetricsConsumer(KafkaConsumerMonitorMetrics.class, zkMetricsConf, 1);
 
 
-            if(getMetrics()) {
+            if (getMetrics()) {
 
                 Map<String, Object> functionMetricsConf = new HashMap<>();
                 List<String> metrics = new ArrayList<>();
@@ -226,7 +225,7 @@ public class ConfigData {
         return ret != null && ret.equals("true");
     }
 
-    public boolean getMetrics(){
+    public boolean getMetrics() {
         Boolean ret = _configFile.getFromGeneral("metrics");
         return ret != null && ret;
     }
@@ -240,7 +239,7 @@ public class ConfigData {
         return ret != null && ret;
     }
 
-    public Map<String, Object> getGridGainConfig(){
+    public Map<String, Object> getGridGainConfig() {
         Map<String, Object> ret = _configFile.getFromGeneral("gridgain");
         return ret;
     }
@@ -256,5 +255,30 @@ public class ConfigData {
         if (_configFile.contains("trap")) enrichs.add("trap");
 
         return enrichs;
+    }
+
+    public String getCacheType() {
+        Map<String, Object> ret = (Map<String, Object>) _configFile.getFromGeneral("cache");
+        String cacheType = (String) ret.get("type");
+        return cacheType == null ? "gridgain" : cacheType;
+    }
+
+    public List<String> getRiakServers() {
+        Map<String, Object> riakOpts = (Map<String, Object>) _configFile.getFromGeneral("riak");
+        List<String> riakServers = null;
+
+        if (riakOpts != null) {
+            List<String> servers = (List<String>) riakOpts.get("servers");
+
+            if (servers != null) {
+                riakServers = servers;
+            } else {
+                Logger.getLogger(ConfigFile.class.getName()).log(Level.SEVERE, "No riak servers on config file");
+                riakServers = new ArrayList<>();
+                riakServers.add("localhost");
+            }
+        }
+
+        return riakServers;
     }
 }

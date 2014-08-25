@@ -10,9 +10,9 @@ import java.util.Map;
 /**
  * Created by andresgomez on 03/07/14.
  */
-public class LocationQuery  extends StateQuery {
+public class RiakLocationQuery extends RiakQuery {
 
-    public LocationQuery(String key) {
+    public RiakLocationQuery(String key) {
         super(key);
     }
 

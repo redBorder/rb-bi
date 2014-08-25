@@ -11,13 +11,9 @@ import net.redborder.kafkastate.KafkaStateUpdater;
 import com.metamx.tranquility.storm.BeamFactory;
 import com.metamx.tranquility.storm.TridentBeamStateFactory;
 import com.metamx.tranquility.storm.TridentBeamStateUpdater;
-import net.redborder.state.gridgain.GridGainFactory;
 import net.redborder.storm.function.*;
 import net.redborder.storm.spout.TridentKafkaSpout;
-import net.redborder.storm.state.DarkListQuery;
-import net.redborder.storm.state.LocationQuery;
-import net.redborder.storm.state.StateQuery;
-import net.redborder.storm.state.StateUpdater;
+import net.redborder.storm.state.*;
 import net.redborder.storm.util.ConfigData;
 import net.redborder.storm.util.druid.BeamEvent;
 import net.redborder.storm.util.druid.BeamFlow;
@@ -25,6 +21,7 @@ import net.redborder.storm.util.druid.BeamMonitor;
 import storm.trident.Stream;
 import storm.trident.TridentState;
 import storm.trident.TridentTopology;
+import storm.trident.state.StateFactory;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -55,7 +52,7 @@ public class RedBorderTopology {
      * @throws AlreadyAliveException
      * @throws InvalidTopologyException
      */
-    public static void main(String[] args) throws AlreadyAliveException, InvalidTopologyException {
+    public static void main(String[] args) throws AlreadyAliveException, InvalidTopologyException, CacheNotValidException {
         String topologyName = "redBorder-Topology";
         List<String> argsList = new ArrayList<>();
 
@@ -103,14 +100,14 @@ public class RedBorderTopology {
      * This method build the redBorder topology based on available sections.
      * @return redBorder Trident Topology
      */
-    public static TridentTopology topology() {
+    public static TridentTopology topology() throws CacheNotValidException {
         TridentTopology topology = new TridentTopology();
         List<String> fieldsFlow = new ArrayList<>();
         List<String> fieldsEvent = new ArrayList<>();
 
         /* States and Streams*/
         TridentState locationState, mobileState, radiusState, trapState, darklistState;
-        GridGainFactory locationStateFactory, mobileStateFactory, trapStateFactory, radiusStateFactory;
+        StateFactory locationStateFactory, mobileStateFactory, trapStateFactory, radiusStateFactory;
         Stream locationStream, radiusStream, flowStream = null, eventsStream = null, monitorStream = null;
 
         /* Partitions */
@@ -161,7 +158,7 @@ public class RedBorderTopology {
         /* Location */
         if (_config.contains("location")) {
             locationPartition = _config.getKafkaPartitions("rb_loc");
-            locationStateFactory = new GridGainFactory("location", _config.getEnrichs(), _config.getGridGainConfig());
+            locationStateFactory = RedBorderState.getStateFactory(_config, "location");
             locationState = topology.newStaticState(locationStateFactory);
 
             // Get msg
@@ -174,7 +171,7 @@ public class RedBorderTopology {
 
             // Save it to enrich later on
             locationStream.partitionPersist(locationStateFactory, new Fields("src_mac", "mse_data"),
-                    new StateUpdater("src_mac", "mse_data"));
+                    StateUpdater.getStateUpdater(_config, "src_mac", "mse_data"));
 
             if (_config.contains("traffics")) {
                 // Generate a flow msg
@@ -184,7 +181,7 @@ public class RedBorderTopology {
 
                 // Enrich flow stream
                 flowStream = flowStream.stateQuery(locationState, new Fields("flows"),
-                        new LocationQuery("client_mac"), new Fields("mseMap"));
+                        StateQuery.getStateLocationQuery(_config), new Fields("mseMap"));
 
                 fieldsFlow.add("mseMap");
             }
@@ -193,20 +190,20 @@ public class RedBorderTopology {
         /* Mobile */
         if (_config.contains("mobile")) {
             mobilePartition = _config.getKafkaPartitions("rb_mobile");
-            mobileStateFactory = new GridGainFactory("mobile", _config.getEnrichs(),  _config.getGridGainConfig());
+            mobileStateFactory = RedBorderState.getStateFactory(_config, "mobile");
             mobileState = topology.newStaticState(mobileStateFactory);
 
             // Get msg and save it to enrich later on
             topology.newStream("rb_mobile", new TridentKafkaSpout(_config, "mobile").builder())
                     .name("Mobile").parallelismHint(mobilePartition).shuffle()
                     .each(new Fields("str"), new MobileBuilderFunction(), new Fields("key", "mobileMap"))
-                    .partitionPersist(mobileStateFactory, new Fields("key", "mobileMap"), new StateUpdater("key", "mobileMap"));
+                    .partitionPersist(mobileStateFactory, new Fields("key", "mobileMap"), StateUpdater.getStateUpdater(_config, "key", "mobileMap"));
 
             // Enrich flow stream
             flowStream = flowStream
-                    .stateQuery(mobileState, new Fields("flows"), new StateQuery("src"), new Fields("ipAssignMap"))
-                    .stateQuery(mobileState, new Fields("ipAssignMap"), new StateQuery("client_id"), new Fields("ueRegisterMap"))
-                    .stateQuery(mobileState, new Fields("ueRegisterMap"), new StateQuery("path"), new Fields("hnbRegisterMap"));
+                    .stateQuery(mobileState, new Fields("flows"), StateQuery.getStateQuery(_config, "src"), new Fields("ipAssignMap"))
+                    .stateQuery(mobileState, new Fields("ipAssignMap"), StateQuery.getStateQuery(_config, "client_id"), new Fields("ueRegisterMap"))
+                    .stateQuery(mobileState, new Fields("ueRegisterMap"), StateQuery.getStateQuery(_config, "path"), new Fields("hnbRegisterMap"));
 
             fieldsFlow.add("ipAssignMap");
             fieldsFlow.add("ueRegisterMap");
@@ -216,7 +213,7 @@ public class RedBorderTopology {
         /* Trap */
         if (_config.contains("trap")) {
             trapPartition = _config.getKafkaPartitions("rb_trap");
-            trapStateFactory = new GridGainFactory("trap", _config.getEnrichs(), _config.getGridGainConfig());
+            trapStateFactory = RedBorderState.getStateFactory(_config, "trap");
             trapState = topology.newStaticState(trapStateFactory);
 
             // Get msg and save it to enrich later on
@@ -224,11 +221,11 @@ public class RedBorderTopology {
                     .name("Trap").parallelismHint(trapPartition).shuffle()
                     .each(new Fields("str"), new MapperFunction("rb_trap"), new Fields("rssi"))
                     .each(new Fields("rssi"), new GetTRAPdata(), new Fields("rssiKey", "rssiValue"))
-                    .partitionPersist(trapStateFactory, new Fields("rssiKey", "rssiValue"), new StateUpdater("rssiKey", "rssiValue"));
+                    .partitionPersist(trapStateFactory, new Fields("rssiKey", "rssiValue"), StateUpdater.getStateUpdater(_config, "rssiKey", "rssiValue"));
 
             // Enrich flow stream
             flowStream = flowStream
-                    .stateQuery(trapState, new Fields("flows"), new StateQuery("client_mac"), new Fields("rssiMap"));
+                    .stateQuery(trapState, new Fields("flows"), StateQuery.getStateQuery(_config, "client_mac"), new Fields("rssiMap"));
 
             fieldsFlow.add("rssiMap");
         }
@@ -236,7 +233,7 @@ public class RedBorderTopology {
         /* Radius */
         if (_config.contains("radius")) {
             radiusPartition = _config.getKafkaPartitions("rb_radius");
-            radiusStateFactory = new GridGainFactory("radius", _config.getEnrichs(),  _config.getGridGainConfig());
+            radiusStateFactory = RedBorderState.getStateFactory(_config, "radius");
             radiusState = topology.newStaticState(radiusStateFactory);
 
             // Get msg
@@ -255,7 +252,7 @@ public class RedBorderTopology {
                 // specified on the radius message
                 radiusStream = radiusStream
                         .each(new Fields("radius"), new GetRadiusClient(), new Fields("clientMap"))
-                        .stateQuery(radiusState, new Fields("clientMap"), new StateQuery("client_mac"),
+                        .stateQuery(radiusState, new Fields("clientMap"), StateQuery.getStateQuery(_config, "client_mac"),
                                 new Fields("radiusCached"))
                         .each(new Fields("radius", "radiusCached"), new GetRadiusData(),
                                 new Fields("radiusKey", "radiusData", "radiusDruid"));
@@ -264,7 +261,7 @@ public class RedBorderTopology {
             // Save msg to enrich later on
             radiusStream.project(new Fields("radiusKey", "radiusData"))
                     .partitionPersist(radiusStateFactory, new Fields("radiusKey", "radiusData"),
-                            new StateUpdater("radiusKey", "radiusData"));
+                            StateUpdater.getStateUpdater(_config, "radiusKey", "radiusData"));
 
             // Generate a flow msg
             persist("traffics",
@@ -275,7 +272,7 @@ public class RedBorderTopology {
                                     new MergeMapsFunction(), new Fields("finalMap")));
 
             // Enrich flow stream
-            flowStream = flowStream.stateQuery(radiusState, new Fields("flows"), new StateQuery("client_mac"),
+            flowStream = flowStream.stateQuery(radiusState, new Fields("flows"), StateQuery.getStateQuery(_config, "client_mac"),
                     new Fields("radiusMap"));
 
             fieldsFlow.add("radiusMap");
@@ -284,7 +281,7 @@ public class RedBorderTopology {
         /* Darklist */
         if (_config.darklistIsEnabled()) {
             // Create a static state to query the database
-            darklistState = topology.newStaticState(new GridGainFactory("darklist", _config.getEnrichs(), _config.getGridGainConfig()));
+            darklistState = topology.newStaticState(RedBorderState.getStateFactory(_config, "darklist"));
 
             // Enrich flow stream with darklist fields
             if (_config.contains("traffics")) {

@@ -4,12 +4,10 @@ import backtype.storm.Config;
 import backtype.storm.LocalCluster;
 import backtype.storm.LocalDRPC;
 import backtype.storm.tuple.Fields;
-import junit.framework.TestCase;
 import net.redborder.state.gridgain.GridGainFactory;
 import net.redborder.storm.function.*;
-import net.redborder.storm.spout.TridentKafkaSpout;
-import net.redborder.storm.state.LocationQuery;
-import net.redborder.storm.state.StateQuery;
+import net.redborder.storm.state.GridGainLocationQuery;
+import net.redborder.storm.state.GridGainQuery;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.gridgain.grid.Grid;
 import org.gridgain.grid.GridConfiguration;
@@ -68,7 +66,7 @@ public class TopologyStateTest {
         topology.newDRPCStream("flow", drpc)
                 .each(new Fields("args"), new MapperFunction("rb_test"), new Fields("flows"))
                 .stateQuery(locationState, new Fields("flows"),
-                        new LocationQuery("client_mac"), new Fields("mseMap"))
+                        new GridGainLocationQuery("client_mac"), new Fields("mseMap"))
                 .each(new Fields(fieldsFlow), new MergeMapsFunction(), new Fields("finalMap"))
                 .each(new Fields("finalMap"), new MapToJSONFunction(), new Fields("jsonString"))
                 .project(new Fields("jsonString"));
@@ -144,7 +142,7 @@ public class TopologyStateTest {
         topology.newDRPCStream("radius", drpc)
                 .each(new Fields("args"), new MapperFunction("rb_radius"), new Fields("radius"))
                 .each(new Fields("radius"), new GetRadiusClient(), new Fields("clientMap"))
-                .stateQuery(radiusState, new Fields("clientMap"), new StateQuery("client_mac"),
+                .stateQuery(radiusState, new Fields("clientMap"), new GridGainQuery("client_mac"),
                         new Fields("radiusCached"))
                 .each(new Fields("radius", "radiusCached"), new GetRadiusData(),
                         new Fields("radiusKey", "radiusData", "radiusDruid"))
@@ -153,7 +151,7 @@ public class TopologyStateTest {
         topology.newDRPCStream("flow", drpc)
                 .each(new Fields("args"), new MapperFunction("rb_test"), new Fields("flows"))
                 .stateQuery(radiusState, new Fields("flows"),
-                        new StateQuery("client_mac"), new Fields("radiusMap"))
+                        new GridGainQuery("client_mac"), new Fields("radiusMap"))
                 .each(new Fields(fieldsFlow), new MergeMapsFunction(), new Fields("finalMap"))
                 .each(new Fields("finalMap"), new MapToJSONFunction(), new Fields("jsonString"))
                 .project(new Fields("jsonString"));
@@ -234,7 +232,7 @@ public class TopologyStateTest {
         topology.newDRPCStream("flow", drpc)
                 .each(new Fields("args"), new MapperFunction("rb_test"), new Fields("flows"))
                 .stateQuery(trapState, new Fields("flows"),
-                        new StateQuery("client_mac"), new Fields("trapMap"))
+                        new GridGainQuery("client_mac"), new Fields("trapMap"))
                 .each(new Fields(fieldsFlow), new MergeMapsFunction(), new Fields("finalMap"))
                 .each(new Fields("finalMap"), new MapToJSONFunction(), new Fields("jsonString"))
                 .project(new Fields("jsonString"));
@@ -314,9 +312,9 @@ public class TopologyStateTest {
 
         topology.newDRPCStream("flow", drpc)
                 .each(new Fields("args"), new MapperFunction("rb_test"), new Fields("flows"))
-                .stateQuery(mobileState, new Fields("flows"), new StateQuery("src"), new Fields("ipAssignMap"))
-                .stateQuery(mobileState, new Fields("ipAssignMap"), new StateQuery("client_id"), new Fields("ueRegisterMap"))
-                .stateQuery(mobileState, new Fields("ueRegisterMap"), new StateQuery("path"), new Fields("hnbRegisterMap"))
+                .stateQuery(mobileState, new Fields("flows"), new GridGainQuery("src"), new Fields("ipAssignMap"))
+                .stateQuery(mobileState, new Fields("ipAssignMap"), new GridGainQuery("client_id"), new Fields("ueRegisterMap"))
+                .stateQuery(mobileState, new Fields("ueRegisterMap"), new GridGainQuery("path"), new Fields("hnbRegisterMap"))
                 .each(new Fields(fieldsFlow), new MergeMapsFunction(), new Fields("finalMap"))
                 .each(new Fields("finalMap"), new MapToJSONFunction(), new Fields("jsonString"))
                 .project(new Fields("jsonString"));
