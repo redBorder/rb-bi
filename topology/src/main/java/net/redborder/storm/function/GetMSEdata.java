@@ -80,7 +80,10 @@ public class GetMSEdata extends BaseFunction {
             }
 
             if (geoCoordinate != null) {
-                lattitude = (Double) geoCoordinate.get("lattitude");
+                lattitude = (Double) geoCoordinate.get("latitude");
+                if(lattitude==null){
+                    lattitude = (Double) geoCoordinate.get("lattitude");
+                }
                 lattitude = (double) Math.round(lattitude * 100000) / 100000;
 
                 longitude = (Double) geoCoordinate.get("longitude");
@@ -115,7 +118,8 @@ public class GetMSEdata extends BaseFunction {
             }
 
         } catch (NullPointerException e) {
-            Logger.getLogger(GetMSEdata.class.getName()).log(Level.SEVERE, "Failed processing a MSE map: \n" + mseEvent.toString(), e);
+            Logger.getLogger(GetMSEdata.class.getName()).log(Level.SEVERE, "Failed processing a MSE map: \n" + mseEvent.toString());
+            e.printStackTrace();
         }
     }
 
