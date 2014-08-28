@@ -20,6 +20,7 @@ import java.util.logging.Logger;
 
 /**
  * <p>This function analyzes the MSE events and get interest fields.</p>
+ *
  * @author Andres Gomez
  */
 public class GetMSEdata extends BaseFunction {
@@ -45,11 +46,11 @@ public class GetMSEdata extends BaseFunction {
 
             if (location != null) {
                 geoCoordinate = (Map<String, Object>) location.get("GeoCoordinate");
-                if(geoCoordinate == null){
+                if (geoCoordinate == null) {
                     geoCoordinate = (Map<String, Object>) location.get("geoCoordinate");
                 }
                 mapInfo = (Map<String, Object>) location.get("MapInfo");
-                if(mapInfo==null){
+                if (mapInfo == null) {
                     mapInfo = (Map<String, Object>) location.get("mapInfo");
                 }
                 macAddress = (String) location.get("macAddress");
@@ -60,9 +61,12 @@ public class GetMSEdata extends BaseFunction {
                 if (mapHierachy != null) {
                     zone = mapHierachy.split(">");
 
-                    mseData.put("client_campus", zone[0]);
-                    mseData.put("client_building", zone[1]);
-                    mseData.put("client_floor", zone[2]);
+                    if (zone.length >= 1)
+                        mseData.put("client_campus", zone[0]);
+                    if (zone.length >= 2)
+                        mseData.put("client_building", zone[1]);
+                    if (zone.length >= 3)
+                        mseData.put("client_floor", zone[2]);
                 }
 
                 state = (String) location.get("dot11Status");
@@ -81,7 +85,7 @@ public class GetMSEdata extends BaseFunction {
 
             if (geoCoordinate != null) {
                 lattitude = (Double) geoCoordinate.get("latitude");
-                if(lattitude==null){
+                if (lattitude == null) {
                     lattitude = (Double) geoCoordinate.get("lattitude");
                 }
                 lattitude = (double) Math.round(lattitude * 100000) / 100000;
@@ -112,7 +116,7 @@ public class GetMSEdata extends BaseFunction {
             if (dateString != null && macAddress != null) {
                 mseDataDruid.put("timestamp", new DateTime(dateString).withZone(DateTimeZone.UTC).getMillis() / 1000);
                 collector.emit(new Values(macAddress, mseData, mseDataDruid));
-            }else{
+            } else {
                 mseDataDruid.put("timestamp", System.currentTimeMillis() / 1000);
                 collector.emit(new Values(macAddress, mseData, mseDataDruid));
             }
