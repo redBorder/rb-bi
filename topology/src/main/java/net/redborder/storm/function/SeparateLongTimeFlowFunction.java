@@ -39,6 +39,7 @@ public class SeparateLongTimeFlowFunction extends BaseFunction {
         Map<String, Object> event = (Map<String, Object>) tuple.getValue(0);
         List<Map<String, Object>> generatedPackets = new ArrayList<>();
 
+        System.out.println("Evento: " + event.toString());
         // last_switched is timestamp now
         if (event.containsKey("first_switched") && event.containsKey("timestamp")) {
             DateTime packet_start = new DateTime(Long.parseLong(event.get("first_switched").toString()) * 1000);
@@ -60,11 +61,14 @@ public class SeparateLongTimeFlowFunction extends BaseFunction {
                     (now.getMillis() - packet_end.getMillis() > 1000 * 60 * 60)) {
                 Logger.getLogger(SeparateLongTimeFlowFunction.class.getName()).log(Level.WARNING,
                     "Dropped packet {0} because its realtime processor is already shutdown.", event);
+                System.out.println("Dropped packet"+ event+" because its realtime processor is already shutdown.");
                 return;
             } else if (packet_start.isBefore(limit)) {
                 // If the lower limit date time is overpassed, correct it
                 Logger.getLogger(SeparateLongTimeFlowFunction.class.getName()).log(Level.WARNING,
                     "Packet {0} first switched was corrected because it overpassed the lower limit (event too old).", event);
+
+                System.out.println("Packet" +event+" first switched was corrected because it overpassed the lower limit (event too old).");
                 packet_start = limit;
                 event.put("first_switched", limit.getMillis() / 1000);
             }
@@ -74,7 +78,7 @@ public class SeparateLongTimeFlowFunction extends BaseFunction {
                     (packet_end.getMillis() - now.getMillis() > 1000 * 60 * 60))) {
                 Logger.getLogger(SeparateLongTimeFlowFunction.class.getName()).log(Level.WARNING,
                     "Packet {0} ended in a future segment and I modified its last and/or first switched values.", event);
-
+                System.out.println("Packet "+event+" ended in a future segment and I modified its last and/or first switched values.");
                 event.put("timestamp", now.getMillis() / 1000);
                 packet_end = now;
 
@@ -108,10 +112,10 @@ public class SeparateLongTimeFlowFunction extends BaseFunction {
                 return;
             }
 
-            int totalDiff = Seconds.secondsBetween(packet_start, packet_end).getSeconds();
-            int diff, this_bytes, this_pkts;
-            int bytes_count = 0;
-            int pkts_count = 0;
+            long totalDiff = Seconds.secondsBetween(packet_start, packet_end).getSeconds();
+            long diff, this_bytes, this_pkts;
+            long bytes_count = 0;
+            long pkts_count = 0;
 
             do {
                 this_start = this_end;
@@ -120,7 +124,7 @@ public class SeparateLongTimeFlowFunction extends BaseFunction {
                 diff = Seconds.secondsBetween(this_start, this_end).getSeconds();
 
                 if (totalDiff == 0) this_bytes = bytes;
-                else this_bytes = (int) Math.ceil(bytes * diff / totalDiff);
+                else this_bytes = (long) Math.ceil(bytes * diff / totalDiff);
 
                 if (totalDiff == 0) this_pkts = pkts;
                 else this_pkts = (int) Math.ceil(pkts * diff / totalDiff);
@@ -139,8 +143,8 @@ public class SeparateLongTimeFlowFunction extends BaseFunction {
             if (bytes != bytes_count || pkts != pkts_count) {
                 int last_index = generatedPackets.size() - 1;
                 Map<String, Object> last = generatedPackets.get(last_index);
-                int new_pkts = ((int) last.get("pkts")) + (pkts - pkts_count);
-                int new_bytes = ((int) last.get("bytes")) + (bytes - bytes_count);
+                long new_pkts = ((long) last.get("pkts")) + (pkts - pkts_count);
+                long new_bytes = ((long) last.get("bytes")) + (bytes - bytes_count);
 
                 if (new_pkts > 0) last.put("pkts", new_pkts);
                 if (new_bytes > 0) last.put("bytes", new_bytes);
