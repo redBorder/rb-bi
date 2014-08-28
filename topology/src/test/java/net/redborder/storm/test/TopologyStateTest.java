@@ -8,6 +8,7 @@ import net.redborder.state.gridgain.GridGainFactory;
 import net.redborder.storm.function.*;
 import net.redborder.storm.state.GridGainLocationQuery;
 import net.redborder.storm.state.GridGainQuery;
+import net.redborder.storm.state.RedBorderState;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.gridgain.grid.Grid;
 import org.gridgain.grid.GridConfiguration;
@@ -23,10 +24,7 @@ import storm.trident.TridentTopology;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
+import java.util.*;
 
 /**
  * Created by andresgomez on 14/07/14.
@@ -54,7 +52,13 @@ public class TopologyStateTest {
 
         TridentTopology topology = new TridentTopology();
 
-        GridGainFactory locationStateFactory = new GridGainFactory("location", topics);
+        Map<String, Object> gridGainConfig = new HashMap<>();
+        List<String> list = new ArrayList<String>();
+        list.add("localhost:47500");
+
+        gridGainConfig.put("servers", list);
+
+        GridGainFactory locationStateFactory = new GridGainFactory("location", topics, gridGainConfig);
         TridentState locationState = topology.newStaticState(locationStateFactory);
 
         topology.newDRPCStream("location", drpc)
@@ -135,8 +139,14 @@ public class TopologyStateTest {
         LocalDRPC drpc = new LocalDRPC();
 
         TridentTopology topology = new TridentTopology();
+        Map<String, Object> gridGainConfig = new HashMap<>();
 
-        GridGainFactory radiusStateFactory = new GridGainFactory("radius", topics);
+        List<String> list = new ArrayList<String>();
+        list.add("localhost:47500");
+
+        gridGainConfig.put("servers", list);
+
+        GridGainFactory radiusStateFactory = new GridGainFactory("radius", topics, gridGainConfig);
         TridentState radiusState = topology.newStaticState(radiusStateFactory);
 
         topology.newDRPCStream("radius", drpc)
@@ -221,7 +231,14 @@ public class TopologyStateTest {
 
         TridentTopology topology = new TridentTopology();
 
-        GridGainFactory trapStateFactory = new GridGainFactory("trap", topics);
+        Map<String, Object> gridGainConfig = new HashMap<>();
+
+        List<String> list = new ArrayList<String>();
+        list.add("localhost:47500");
+
+        gridGainConfig.put("servers", list);
+
+        GridGainFactory trapStateFactory = new GridGainFactory("radius", topics, gridGainConfig);
         TridentState trapState = topology.newStaticState(trapStateFactory);
 
         topology.newDRPCStream("trap", drpc)
@@ -303,7 +320,14 @@ public class TopologyStateTest {
 
         TridentTopology topology = new TridentTopology();
 
-        GridGainFactory mobileStateFactory = new GridGainFactory("mobile", topics);
+        Map<String, Object> gridGainConfig = new HashMap<>();
+
+        List<String> list = new ArrayList<String>();
+        list.add("localhost:47500");
+
+        gridGainConfig.put("servers", list);
+
+        GridGainFactory mobileStateFactory = new GridGainFactory("radius", topics, gridGainConfig);
         TridentState mobileState = topology.newStaticState(mobileStateFactory);
 
         topology.newDRPCStream("mobile", drpc)
