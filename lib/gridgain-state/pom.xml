@@ -28,7 +28,7 @@
         <dependency>
             <groupId>org.gridgain</groupId>
             <artifactId>gridgain-core</artifactId>
-            <version>6.1.9</version>
+            <version>6.2.0</version>
         </dependency>
         <!-- Yaml -->
         <dependency>
