@@ -39,7 +39,6 @@ public class SeparateLongTimeFlowFunction extends BaseFunction {
         Map<String, Object> event = (Map<String, Object>) tuple.getValue(0);
         List<Map<String, Object>> generatedPackets = new ArrayList<>();
 
-        System.out.println("Evento: " + event.toString());
         // last_switched is timestamp now
         if (event.containsKey("first_switched") && event.containsKey("timestamp")) {
             DateTime packet_start = new DateTime(Long.parseLong(event.get("first_switched").toString()) * 1000);
