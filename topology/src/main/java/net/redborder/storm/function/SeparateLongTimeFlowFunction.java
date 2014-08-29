@@ -91,8 +91,8 @@ public class SeparateLongTimeFlowFunction extends BaseFunction {
             DateTime this_start;
             DateTime this_end = packet_start;
 
-            int bytes = 0;
-            int pkts = 0;
+            long bytes = 0;
+            long pkts = 0;
 
             try {
                 if (event.containsKey("bytes"))
@@ -127,7 +127,7 @@ public class SeparateLongTimeFlowFunction extends BaseFunction {
                 else this_bytes = (long) Math.ceil(bytes * diff / totalDiff);
 
                 if (totalDiff == 0) this_pkts = pkts;
-                else this_pkts = (int) Math.ceil(pkts * diff / totalDiff);
+                else this_pkts = (long) Math.ceil(pkts * diff / totalDiff);
 
                 bytes_count += this_bytes;
                 pkts_count += this_pkts;
