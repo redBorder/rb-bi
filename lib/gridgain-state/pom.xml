@@ -30,6 +30,12 @@
             <artifactId>gridgain-core</artifactId>
             <version>6.2.0</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.gridgain</groupId>
+            <artifactId>gridgain-aws</artifactId>
+            <version>6.2.0</version>
+        </dependency>
         <!-- Yaml -->
         <dependency>
             <groupId>org.jyaml</groupId>

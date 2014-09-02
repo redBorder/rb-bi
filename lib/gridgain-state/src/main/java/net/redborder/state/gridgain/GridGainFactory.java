@@ -1,6 +1,8 @@
 package net.redborder.state.gridgain;
 
 import backtype.storm.task.IMetricsContext;
+import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.BasicAWSCredentials;
 import org.gridgain.grid.Grid;
 import org.gridgain.grid.GridConfiguration;
 import org.gridgain.grid.GridException;
@@ -10,7 +12,7 @@ import org.gridgain.grid.cache.GridCacheConfiguration;
 import org.gridgain.grid.cache.GridCacheDistributionMode;
 import org.gridgain.grid.cache.GridCacheMode;
 import org.gridgain.grid.spi.discovery.tcp.GridTcpDiscoverySpi;
-import org.gridgain.grid.spi.discovery.tcp.ipfinder.multicast.GridTcpDiscoveryMulticastIpFinder;
+import org.gridgain.grid.spi.discovery.tcp.ipfinder.s3.GridTcpDiscoveryS3IpFinder;
 import org.gridgain.grid.spi.discovery.tcp.ipfinder.vm.GridTcpDiscoveryVmIpFinder;
 import org.ho.yaml.Yaml;
 import storm.trident.state.State;
@@ -33,6 +35,7 @@ public class GridGainFactory implements StateFactory {
     List<String> _topics;
     List<String> _gridGainServers;
     String _multicastGroup;
+    Map<String, Object> _s3Config = null;
 
     private final static String CONFIG_FILE_PATH = "/opt/rb/etc/darklist_config.yml";
 
@@ -40,8 +43,13 @@ public class GridGainFactory implements StateFactory {
     public GridGainFactory(String cacheName, List<String> topics, Map<String, Object> gridGainConfig) {
         _cacheName = cacheName;
         _topics = topics;
-        _gridGainServers = (List<String>) gridGainConfig.get("servers");
-        _multicastGroup = (String) gridGainConfig.get("multicast");
+        if(!gridGainConfig.containsKey("s3")) {
+            _gridGainServers = (List<String>) gridGainConfig.get("servers");
+            _multicastGroup = (String) gridGainConfig.get("multicast");
+        }
+        else{
+            _s3Config = (Map<String, Object>) gridGainConfig.get("s3");
+        }
     }
 
 
@@ -63,28 +71,38 @@ public class GridGainFactory implements StateFactory {
     public GridConfiguration makeConfig() {
         GridConfiguration conf = new GridConfiguration();
         List<GridCacheConfiguration> caches = new ArrayList<GridCacheConfiguration>();
-
-        Collection<InetSocketAddress> ips = new ArrayList<>();
-        GridTcpDiscoveryVmIpFinder gridIpFinder = new GridTcpDiscoveryVmIpFinder();
+        GridTcpDiscoverySpi gridTcp = new GridTcpDiscoverySpi();
 
 
-        try {
-            conf.setLocalHost(InetAddress.getLocalHost().getHostName());
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-        }
+        if(_s3Config==null) {
+            GridTcpDiscoveryVmIpFinder gridIpFinder = new GridTcpDiscoveryVmIpFinder();
 
-        if(_gridGainServers!=null) {
-            for (String server : _gridGainServers) {
-                String[] serverPort = server.split(":");
-                ips.add(new InetSocketAddress(serverPort[0], Integer.valueOf(serverPort[1])));
+            Collection<InetSocketAddress> ips = new ArrayList<>();
+
+            try {
+                conf.setLocalHost(InetAddress.getLocalHost().getHostName());
+            } catch (UnknownHostException e) {
+                e.printStackTrace();
             }
 
-            gridIpFinder.registerAddresses(ips);
+            if (_gridGainServers != null) {
+                for (String server : _gridGainServers) {
+                    String[] serverPort = server.split(":");
+                    ips.add(new InetSocketAddress(serverPort[0], Integer.valueOf(serverPort[1])));
+                }
+
+                gridIpFinder.registerAddresses(ips);
+            }
+
+            gridTcp.setIpFinder(gridIpFinder);
+
+        } else {
+            GridTcpDiscoveryS3IpFinder s3IpFinder = new GridTcpDiscoveryS3IpFinder();
+            s3IpFinder.setBucketName(_s3Config.get("bucket").toString());
+            s3IpFinder.setAwsCredentials(new BasicAWSCredentials(_s3Config.get("access_key").toString(), _s3Config.get("secret_key").toString()));
+            gridTcp.setIpFinder(s3IpFinder);
         }
 
-        GridTcpDiscoverySpi gridTcp = new GridTcpDiscoverySpi();
-        gridTcp.setIpFinder(gridIpFinder);
         conf.setDiscoverySpi(gridTcp);
 
         if (_topics.contains("darklist")) {
