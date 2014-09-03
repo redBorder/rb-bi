@@ -33,7 +33,7 @@
     <description>Storm Spouts for Apache Kafka</description>
 
     <properties>
-        <scalaVersion>2.9.2</scalaVersion>
+        <scalaVersion>2.10.2</scalaVersion>
         <curator.version>2.4.0</curator.version>
     </properties>
 

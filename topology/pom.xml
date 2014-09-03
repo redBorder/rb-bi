@@ -25,18 +25,27 @@
     </repositories>
 
     <dependencies>
-
-        <!-- Memcached State -->
         <dependency>
-            <groupId>storm</groupId>
-            <artifactId>trident-memcached</artifactId>
-            <version>0.0.5-wip3</version>
-        </dependency>
+            <groupId>com.twitter</groupId>
+            <artifactId>finagle-memcached_2.10</artifactId>
+            <version>6.20.0</version>
 
-        <dependency>
-            <groupId>org.scala-lang</groupId>
-            <artifactId>scala-reflect</artifactId>
-            <version>2.10.2</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.twitter.common.zookeeper</groupId>
+                    <artifactId>server-set</artifactId>
+                </exclusion>
+
+                <exclusion>
+                    <groupId>com.twitter.common.zookeeper</groupId>
+                    <artifactId>group</artifactId>
+                </exclusion>
+
+                <exclusion>
+                    <groupId>com.twitter.common.zookeeper</groupId>
+                    <artifactId>client</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!-- Stratio Streaming -->
