@@ -15,6 +15,7 @@ import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -280,5 +281,27 @@ public class ConfigData {
         }
 
         return riakServers;
+    }
+
+    public List<InetSocketAddress> getMemcachedServers() {
+        Map<String, Object> memcachedOpts = (Map<String, Object>) _configFile.getFromGeneral("memcached");
+        List<InetSocketAddress> memcachedServers = new ArrayList<>();
+
+        if (memcachedOpts != null) {
+            List<String> servers = (List<String>) memcachedOpts.get("servers");
+
+            if (servers != null) {
+                for(String server : servers) {
+                    String[] inetAddress = server.split(":");
+                    memcachedServers.add(new InetSocketAddress(inetAddress[0], Integer.valueOf(inetAddress[1])));
+                }
+            } else {
+                Logger.getLogger(ConfigFile.class.getName()).log(Level.SEVERE, "No riak servers on config file");
+                memcachedServers = new ArrayList<>();
+                memcachedServers.add(new InetSocketAddress("localhost", 11211));
+            }
+        }
+
+        return memcachedServers;
     }
 }

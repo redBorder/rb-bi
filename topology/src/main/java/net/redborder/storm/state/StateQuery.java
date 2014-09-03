@@ -8,11 +8,15 @@ import storm.trident.state.BaseQueryFunction;
  */
 public class StateQuery {
 
-    public static BaseQueryFunction getStateQuery(ConfigData config, String key){
+    public static BaseQueryFunction getStateQuery(ConfigData config, String key, String bucket) throws CacheNotValidException{
         if(config.getCacheType().equals("gridgain")){
             return new GridGainQuery(key);
-        }else{
+        }else if(config.getCacheType().equals("riak")){
             return new RiakQuery(key);
+        } else if(config.getCacheType().equals("memcached")){
+            return new MemcachedQuery(key, bucket);
+        }else{
+            throw new CacheNotValidException("Not cache backend found: " + config.getCacheType());
         }
     }
 
@@ -21,6 +25,8 @@ public class StateQuery {
             return new GridGainLocationQuery("client_mac");
         }else if(config.getCacheType().equals("riak")){
             return new RiakLocationQuery("client_mac");
+        }else if(config.getCacheType().equals("memcached")){
+            return new MemcachedLocation("client_mac");
         } else {
             throw new CacheNotValidException("Not cache backend found: " + config.getCacheType());
         }

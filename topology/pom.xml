@@ -26,6 +26,18 @@
 
     <dependencies>
 
+        <!-- Memcached State -->
+        <dependency>
+            <groupId>storm</groupId>
+            <artifactId>trident-memcached</artifactId>
+            <version>0.0.5-wip3</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-reflect</artifactId>
+            <version>2.10.2</version>
+        </dependency>
 
         <!-- Stratio Streaming -->
         <dependency>
