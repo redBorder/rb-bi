@@ -10,9 +10,11 @@ import java.util.Map;
 /**
  * Created by andresgomez on 03/09/14.
  */
-public class MemcachedLocation extends MemcachedQuery {
-    public MemcachedLocation(String key) {
-        super(key, "location");
+public class MemcachedLocationQuery extends MemcachedQuery {
+
+
+    public MemcachedLocationQuery(String key, String generalKey) {
+        super(key, generalKey);
     }
 
     @Override

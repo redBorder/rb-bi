@@ -26,7 +26,7 @@ public class StateQuery {
         }else if(config.getCacheType().equals("riak")){
             return new RiakLocationQuery("client_mac");
         }else if(config.getCacheType().equals("memcached")){
-            return new MemcachedLocation("client_mac");
+            return new MemcachedLocationQuery("client_mac", "location");
         } else {
             throw new CacheNotValidException("Not cache backend found: " + config.getCacheType());
         }

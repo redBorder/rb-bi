@@ -33,7 +33,7 @@ public class MemcachedQuery extends BaseQueryFunction<MapState<Map<String, Objec
     }
     
     public MemcachedQuery(String key, String generalKey) {
-        this(key);
+        _key = key;
         _generalkey="rbbi:"+generalKey+":";
     }
 
@@ -45,7 +45,8 @@ public class MemcachedQuery extends BaseQueryFunction<MapState<Map<String, Objec
         List<String> keysToAppend = Lists.newArrayList();
         
         for (TridentTuple t : tuples) {
-            String key = (String) t.getValueByField(_key);
+            Map<String, Object> flow = (Map<String, Object>) t.getValue(0);
+            String key = (String) flow.get(_key);
             keysToAppend.add(_generalkey + key);
             
             if(!key.equals("null") && !keysToRequest.contains(_generalkey + key)) {
