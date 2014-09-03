@@ -245,6 +245,15 @@ public class ConfigData {
         return ret;
     }
 
+    public List<String> getGridGainServers() {
+        Map<String, Object> gridGainConfig = _configFile.getFromGeneral("gridgain");
+        return (List<String>) gridGainConfig.get("servers");
+    }
+
+    public String getGridGainMulticast() {
+        Map<String, Object> gridGainConfig = _configFile.getFromGeneral("gridgain");
+        return (String) gridGainConfig.get("multicast");
+    }
 
     public List<String> getEnrichs() {
         List<String> enrichs = new ArrayList<>();
@@ -283,6 +292,20 @@ public class ConfigData {
         return riakServers;
     }
 
+    public List<String> getMemcachedServersAsString() {
+        Map<String, Object> memcachedOpts = (Map<String, Object>) _configFile.getFromGeneral("memcached");
+        List<String> servers = null;
+        if (memcachedOpts != null) {
+            servers = (List<String>) memcachedOpts.get("servers");
+
+        } else {
+            Logger.getLogger(ConfigFile.class.getName()).log(Level.SEVERE, "No riak servers on config file");
+            servers = new ArrayList<>();
+            servers.add("localhost:11211");
+        }
+        return servers;
+    }
+
     public List<InetSocketAddress> getMemcachedServers() {
         Map<String, Object> memcachedOpts = (Map<String, Object>) _configFile.getFromGeneral("memcached");
         List<InetSocketAddress> memcachedServers = new ArrayList<>();
@@ -291,7 +314,7 @@ public class ConfigData {
             List<String> servers = (List<String>) memcachedOpts.get("servers");
 
             if (servers != null) {
-                for(String server : servers) {
+                for (String server : servers) {
                     String[] inetAddress = server.split(":");
                     memcachedServers.add(new InetSocketAddress(inetAddress[0], Integer.valueOf(inetAddress[1])));
                 }

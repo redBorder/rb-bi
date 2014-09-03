@@ -26,10 +26,8 @@ import storm.trident.state.StateFactory;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Scanner;
+import java.net.InetSocketAddress;
+import java.util.*;
 
 /**
  * <p> This is the main class on the project. </p>
@@ -357,6 +355,22 @@ public class RedBorderTopology {
 
 
         print(pw, "- Zookeeper Servers: " + _config.getZkHost());
+
+        print(pw, "- Cache Backend: " + _config.getCacheType());
+
+
+        List<String> servers = null;
+
+        if (_config.getCacheType().equals("gridgain")) {
+            servers = _config.getGridGainServers();
+            print(pw, "   - multicast: " + _config.getGridGainMulticast());
+        } else if (_config.getCacheType().equals("riak")) {
+            servers = _config.getRiakServers();
+        } else if (_config.getCacheType().equals("memcached")) {
+            servers = _config.getMemcachedServersAsString();
+        }
+
+        print(pw, "   - servers: " + servers);
 
 
         print(pw, "\n----------------------- Topology Enrichment -----------------------");
