@@ -1,4 +1,4 @@
-package net.redborder.storm.state;
+package net.redborder.storm.state.riak;
 
 import backtype.storm.task.IMetricsContext;
 import com.basho.riak.client.IRiakClient;

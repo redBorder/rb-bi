@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package net.redborder.storm.state;
+package net.redborder.storm.state.memcached;
 
 import backtype.storm.topology.ReportedFailedException;
 import backtype.storm.tuple.Values;

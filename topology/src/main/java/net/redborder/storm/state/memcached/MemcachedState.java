@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package net.redborder.storm.state;
+package net.redborder.storm.state.memcached;
 
 import backtype.storm.task.IMetricsContext;
 import backtype.storm.topology.ReportedFailedException;

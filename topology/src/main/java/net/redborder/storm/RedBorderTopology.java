@@ -14,6 +14,7 @@ import com.metamx.tranquility.storm.TridentBeamStateUpdater;
 import net.redborder.storm.function.*;
 import net.redborder.storm.spout.TridentKafkaSpout;
 import net.redborder.storm.state.*;
+import net.redborder.storm.state.gridgain.DarkListQuery;
 import net.redborder.storm.util.ConfigData;
 import net.redborder.storm.util.druid.BeamEvent;
 import net.redborder.storm.util.druid.BeamFlow;
@@ -26,7 +27,6 @@ import storm.trident.state.StateFactory;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.net.InetSocketAddress;
 import java.util.*;
 
 /**
@@ -200,7 +200,9 @@ public class RedBorderTopology {
 
             // Enrich flow stream
             flowStream = flowStream
-                    .stateQuery(mobileState, new Fields("flows"), StateQuery.getStateQuery(_config, "src", "mobile"), new Fields("ipAssignMap"))
+                    .stateQuery(mobileState, new Fields("flows"), StateQuery.getStateQuery(_config, "src", "mobile"), new Fields("ipAssignMapSrc"))
+                    .stateQuery(mobileState, new Fields("flows"), StateQuery.getStateQuery(_config, "dst", "mobile"), new Fields("ipAssignMapDst"))
+                    .each(new Fields("ipAssignMapDst","ipAssignMapSrc"), new MergeMapsFunction(), new Fields("ipAssignMap"))
                     .stateQuery(mobileState, new Fields("ipAssignMap"), StateQuery.getStateQuery(_config, "client_id", "mobile"), new Fields("ueRegisterMap"))
                     .stateQuery(mobileState, new Fields("ueRegisterMap"), StateQuery.getStateQuery(_config, "path", "mobile"), new Fields("hnbRegisterMap"));
 

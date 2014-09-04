@@ -1,4 +1,4 @@
-package net.redborder.storm.state;
+package net.redborder.storm.state.gridgain;
 
 import backtype.storm.topology.ReportedFailedException;
 import backtype.storm.tuple.Values;

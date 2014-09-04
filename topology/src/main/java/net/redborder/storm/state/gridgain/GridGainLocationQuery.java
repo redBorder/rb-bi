@@ -1,4 +1,4 @@
-package net.redborder.storm.state;
+package net.redborder.storm.state.gridgain;
 
 import backtype.storm.tuple.Values;
 import storm.trident.operation.TridentCollector;
