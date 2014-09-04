@@ -1,6 +1,8 @@
 package net.redborder.storm.state;
 
 import net.redborder.state.gridgain.GridGainFactory;
+import net.redborder.storm.state.memcached.MemcachedState;
+import net.redborder.storm.state.riak.RiakState;
 import net.redborder.storm.util.ConfigData;
 import storm.trident.state.StateFactory;
 import java.util.Map;

@@ -1,5 +1,11 @@
 package net.redborder.storm.state;
 
+import net.redborder.storm.state.gridgain.GridGainLocationQuery;
+import net.redborder.storm.state.gridgain.GridGainQuery;
+import net.redborder.storm.state.memcached.MemcachedLocationQuery;
+import net.redborder.storm.state.memcached.MemcachedQuery;
+import net.redborder.storm.state.riak.RiakLocationQuery;
+import net.redborder.storm.state.riak.RiakQuery;
 import net.redborder.storm.util.ConfigData;
 import storm.trident.state.BaseQueryFunction;
 

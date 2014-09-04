@@ -1,5 +1,8 @@
 package net.redborder.storm.state;
 
+import net.redborder.storm.state.gridgain.GridGainUpdater;
+import net.redborder.storm.state.memcached.MemcachedUpdater;
+import net.redborder.storm.state.riak.RiakUpdater;
 import net.redborder.storm.util.ConfigData;
 import storm.trident.state.BaseStateUpdater;
 
