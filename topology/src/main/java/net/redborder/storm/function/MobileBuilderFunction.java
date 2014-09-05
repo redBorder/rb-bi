@@ -79,6 +79,7 @@ public class MobileBuilderFunction extends BaseFunction {
             Node apn = document.getElementsByTagName("apn").item(0);
             Node ipAddress = document.getElementsByTagName("ipAddress").item(0);
             Node rat = document.getElementsByTagName("rat").item(0);
+            Node msisdn = document.getElementsByTagName("msisdn").item(0);
 
             if (imsi != null)
                 event.put("client_id", imsi.getTextContent());
@@ -91,6 +92,9 @@ public class MobileBuilderFunction extends BaseFunction {
 
             if (rat != null)
                 event.put("rat", rat.getTextContent());
+
+            if(msisdn != null)
+                event.put("msisdn", msisdn.getTextContent());
 
         } catch (NullPointerException ex) {
             Logger.getLogger(MobileBuilderFunction.class.getName()).log(Level.SEVERE, "Failed reading a UE IP Assign message", ex);
