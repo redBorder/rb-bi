@@ -18,8 +18,13 @@
 
     <repositories>
         <repository>
-            <id>central-local</id>
-            <name>Central</name>
+            <id>central</id>
+            <name>Maven Repository Switchboard</name>
+            <url>http://central.maven.org/maven2</url>
+        </repository>
+        <repository>
+            <id>Metmax</id>
+            <name>Metamx-Repo</name>
             <url>https://metamx.artifactoryonline.com/metamx/pub-libs-releases-local</url>
         </repository>
     </repositories>
@@ -113,8 +118,8 @@
         <!-- Tranquility (druid) -->
         <dependency>
             <groupId>com.metamx</groupId>
-            <artifactId>tranquility</artifactId>
-            <version>0.1.19</version>
+            <artifactId>tranquility_2.10</artifactId>
+            <version>0.2.12</version>
             <exclusions>
                 <exclusion>
                     <artifactId>slf4j-log4j12</artifactId>
