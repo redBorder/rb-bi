@@ -1,6 +1,5 @@
 package net.redborder.kafkastate;
 
-import kafka.producer.KeyedMessage;
 import storm.trident.operation.TridentCollector;
 import storm.trident.state.BaseStateUpdater;
 import storm.trident.tuple.TridentTuple;
@@ -22,7 +21,7 @@ public class KafkaStateUpdater extends BaseStateUpdater<KafkaState> {
         for (TridentTuple t : tuples) {            
             try {
                 if (t.size() > 0) {
-                    state.enqueue(new KeyedMessage<String, String>(_topic, t.getStringByField(_messageFieldName)));
+                    state.send(_topic, t.getStringByField(_messageFieldName));
                 }
             } catch (Exception e) {
                 e.printStackTrace();

@@ -13,7 +13,6 @@ import storm.trident.state.State;
 import storm.trident.state.StateFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -21,7 +20,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class KafkaState<T> implements State {
-    List<KeyedMessage<String, String>> messages = new ArrayList<>();
     String _brokerList = new String();
     Producer<String, String> producer;
 
@@ -88,7 +86,13 @@ public class KafkaState<T> implements State {
         Properties props = new Properties();
         props.put("metadata.broker.list", _brokerList);
         props.put("serializer.class", "kafka.serializer.StringEncoder");
-        props.put("partitioner.class", "net.redborder.kafkastate.SimplePartitioner");
+        props.put("partitioner.class", "net.redborder.metrics.SimplePartitioner");
+        props.put("request.required.acks", "1");
+        props.put("message.send.max.retries", "60");
+        props.put("retry.backoff.ms", "1000");
+        props.put("producer.type", "async");
+        props.put("queue.buffering.max.messages", "10000");
+        props.put("queue.buffering.max.ms", "500");
 
         ProducerConfig config = new ProducerConfig(props);
         producer = new Producer<>(config);
@@ -96,22 +100,14 @@ public class KafkaState<T> implements State {
 
     @Override
     public void beginCommit(Long txid) {
-        if (messages.size() > 0) {
-            throw new RuntimeException("Kafka State is invalid, the previous transaction didn't flush");
-        }
     }
 
-    public void enqueue(KeyedMessage<String, String> message) {
-        messages.add(message);
-    }
-
-    private void sendMessage() {
-        producer.send(messages);
+    public void send(String topic, String message) {
+        KeyedMessage keyedMessage = new KeyedMessage<String, String>(topic, message);
+        producer.send(keyedMessage);
     }
 
     @Override
     public void commit(Long txid) {
-        sendMessage();
-        messages.clear();
     }
 }

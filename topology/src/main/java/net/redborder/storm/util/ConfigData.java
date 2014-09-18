@@ -7,7 +7,7 @@ package net.redborder.storm.util;
 
 import backtype.storm.Config;
 import net.redborder.metrics.KafkaConsumerMonitorMetrics;
-import net.redborder.metrics.Metrics2KafkaConsumer;
+import net.redborder.metrics.Metrics2KafkaProducer;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -165,7 +165,7 @@ public class ConfigData {
                 functionMetricsConf.put("metrics", metrics);
                 functionMetricsConf.put("topic", "rb_monitor");
 
-                _conf.registerMetricsConsumer(Metrics2KafkaConsumer.class, functionMetricsConf, 1);
+                _conf.registerMetricsConsumer(Metrics2KafkaProducer.class, functionMetricsConf, 1);
 
             }
         }

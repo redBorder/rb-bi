@@ -16,7 +16,9 @@ public class SimplePartitioner implements Partitioner {
         int partition = 0;
         int offset = key.toString().lastIndexOf('.');
         if (offset > 0) {
-            partition = Integer.parseInt( key.toString().substring(offset + 1)) % numPartitions;
+            partition = Integer.parseInt(key.toString().substring(offset + 1)) % numPartitions;
         }
-        return partition;    }
+
+        return partition;
+    }
 }

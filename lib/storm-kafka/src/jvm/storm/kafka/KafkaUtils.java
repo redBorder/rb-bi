@@ -180,7 +180,7 @@ public class KafkaUtils {
                         e instanceof IOException ||
                         e instanceof UnresolvedAddressException
                         ) {
-                    LOG.warn("Network error when fetching messages:", e);
+                    //LOG.warn("Network error when fetching messages:", e);
                     throw new FailedFetchException(e);
                 } else {
                     throw new RuntimeException(e);

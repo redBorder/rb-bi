@@ -202,7 +202,7 @@ public class RedBorderTopology {
             flowStream = flowStream
                     .stateQuery(mobileState, new Fields("flows"), StateQuery.getStateQuery(_config, "src", "mobile"), new Fields("ipAssignMapSrc"))
                     .stateQuery(mobileState, new Fields("flows"), StateQuery.getStateQuery(_config, "dst", "mobile"), new Fields("ipAssignMapDst"))
-                    .each(new Fields("ipAssignMapSrc","ipAssignMapDst"), new MergeMapsFunction(), new Fields("ipAssignMap"))
+                    .each(new Fields("ipAssignMapSrc", "ipAssignMapDst"), new MergeMapsFunction(), new Fields("ipAssignMap"))
                     .stateQuery(mobileState, new Fields("ipAssignMap"), StateQuery.getStateQuery(_config, "client_id", "mobile"), new Fields("ueRegisterMap"))
                     .stateQuery(mobileState, new Fields("ueRegisterMap"), StateQuery.getStateQuery(_config, "path", "mobile"), new Fields("hnbRegisterMap"));
 
@@ -425,7 +425,7 @@ public class RedBorderTopology {
 
         print(pw, "\n----------------------- Topology Metrics -----------------------");
         print(pw, " - KafkaOffsetsConsumerMonitor: " + getEnrichment(true));
-        print(pw, " - Metrics2KafkaConsumer: ");
+        print(pw, " - Metrics2KafkaProducer: ");
         print(pw, "   * Throughput: " + getEnrichment(_config.getMetrics()));
         print(pw, "\n----------------------------------------------------------------");
 

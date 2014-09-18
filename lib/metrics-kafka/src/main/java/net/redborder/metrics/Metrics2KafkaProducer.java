@@ -23,7 +23,7 @@ import java.util.logging.Level;
 /**
  * Created by andresgomez on 23/06/14.
  */
-public class Metrics2KafkaConsumer implements IMetricsConsumer {
+public class Metrics2KafkaProducer implements IMetricsConsumer {
 
     Producer<String, String> producer;
     org.codehaus.jackson.map.ObjectMapper _mapper;
@@ -35,7 +35,7 @@ public class Metrics2KafkaConsumer implements IMetricsConsumer {
 
 
 
-    public static final Logger LOG = LoggerFactory.getLogger(Metrics2KafkaConsumer.class);
+    public static final Logger LOG = LoggerFactory.getLogger(Metrics2KafkaProducer.class);
 
     @Override
     public void prepare(Map map, Object conf, TopologyContext topologyContext, IErrorReporter iErrorReporter) {
@@ -51,7 +51,7 @@ public class Metrics2KafkaConsumer implements IMetricsConsumer {
         try {
             ids = client.getChildren().forPath("/brokers/ids");
         } catch (Exception ex) {
-            java.util.logging.Logger.getLogger(Metrics2KafkaConsumer.class.getName()).log(Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(Metrics2KafkaProducer.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         for (String id : ids) {
@@ -60,7 +60,7 @@ public class Metrics2KafkaConsumer implements IMetricsConsumer {
             try {
                 jsonString = new String(client.getData().forPath("/brokers/ids/" + id), "UTF-8");
             } catch (Exception ex) {
-                java.util.logging.Logger.getLogger(Metrics2KafkaConsumer.class.getName()).log(Level.SEVERE, null, ex);
+                java.util.logging.Logger.getLogger(Metrics2KafkaProducer.class.getName()).log(Level.SEVERE, null, ex);
             }
 
             if (jsonString != null) {
@@ -77,7 +77,7 @@ public class Metrics2KafkaConsumer implements IMetricsConsumer {
                         _brokerList = _brokerList.concat("," + json.get("host") + ":" + json.get("port"));
                     }
                 } catch (NullPointerException ex) {
-                    java.util.logging.Logger.getLogger(Metrics2KafkaConsumer.class.getName()).log(Level.SEVERE, "Failed converting a JSON tuple to a Map class", ex);
+                    java.util.logging.Logger.getLogger(Metrics2KafkaProducer.class.getName()).log(Level.SEVERE, "Failed converting a JSON tuple to a Map class", ex);
                 } catch (JsonMappingException e) {
                     e.printStackTrace();
                 } catch (JsonParseException e) {
@@ -93,7 +93,11 @@ public class Metrics2KafkaConsumer implements IMetricsConsumer {
         props.put("serializer.class", "kafka.serializer.StringEncoder");
         props.put("partitioner.class", "net.redborder.metrics.SimplePartitioner");
         props.put("request.required.acks", "1");
-        props.put("message.send.max.retries", "10");
+        props.put("message.send.max.retries", "60");
+        props.put("retry.backoff.ms", "1000");
+        props.put("producer.type", "async");
+        props.put("queue.buffering.max.messages", "10000");
+        props.put("queue.buffering.max.ms", "500");
 
         ProducerConfig configKafka = new ProducerConfig(props);
 
@@ -162,7 +166,7 @@ public class Metrics2KafkaConsumer implements IMetricsConsumer {
             try {
                 metricsJSON = _mapper.writeValueAsString(map);
             } catch (IOException ex) {
-                java.util.logging.Logger.getLogger(Metrics2KafkaConsumer.class.getName()).log(Level.SEVERE, null, ex);
+                java.util.logging.Logger.getLogger(Metrics2KafkaProducer.class.getName()).log(Level.SEVERE, null, ex);
             }
 
             KeyedMessage<String, String> data = new KeyedMessage<String, String>(_topic, metricsJSON);

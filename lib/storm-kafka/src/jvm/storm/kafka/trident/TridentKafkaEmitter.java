@@ -22,6 +22,7 @@ import backtype.storm.metric.api.CombinedMetric;
 import backtype.storm.metric.api.MeanReducer;
 import backtype.storm.metric.api.ReducedMetric;
 import backtype.storm.task.TopologyContext;
+import backtype.storm.utils.Utils;
 import com.google.common.collect.ImmutableMap;
 import kafka.javaapi.consumer.SimpleConsumer;
 import kafka.javaapi.message.ByteBufferMessageSet;
@@ -128,8 +129,22 @@ public class TridentKafkaEmitter {
     }
 
     private ByteBufferMessageSet fetchMessages(SimpleConsumer consumer, Partition partition, long offset) {
+        ByteBufferMessageSet msgs = null;
         long start = System.nanoTime();
-        ByteBufferMessageSet msgs = KafkaUtils.fetchMessages(_config, consumer, partition, offset);
+        int tries = 0;
+        boolean done = false;
+
+        while (!done) {
+            try {
+                tries++;
+                msgs = KafkaUtils.fetchMessages(_config, consumer, partition, offset);
+                done = true;
+            } catch (FailedFetchException e) {
+                LOG.warn("Failed fetch exception on try #" + tries);
+                Utils.sleep(1000);
+            }
+        }
+
         long end = System.nanoTime();
         long millis = (end - start) / 1000000;
         _kafkaMeanFetchLatencyMetric.update(millis);
