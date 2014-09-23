@@ -85,6 +85,7 @@ public class AnalizeHttpUrlFunction extends BaseFunction {
             result = new HashMap<>();
             collector.emit(new Values(result));
             System.out.println("Could not enrich with Http Analyzer function: " + event.toString() + "\n" + ex);
+            ex.printStackTrace();
         }
     }
 
@@ -242,7 +243,11 @@ public class AnalizeHttpUrlFunction extends BaseFunction {
     private void mediaData() {
         String host = event.get("http_host").toString();
         String url = event.get("http_url").toString();
-        String extension = url.substring(url.length() - 5, url.length());
+        String extension = "";
+
+        if(url.length()>5) {
+            extension = url.substring(url.length() - 5, url.length());
+        }
 
         if (extension.contains(".jpg") || extension.contains(".gif")
                 || extension.contains(".png") || extension.contains(".mp4")
