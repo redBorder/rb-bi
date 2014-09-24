@@ -161,17 +161,28 @@ public class RedBorderTopology {
             trapState = topology.newStaticState(trapStateFactory);
 
             // Get msg and save it to enrich later on
-            topology.newStream("rb_trap", new TridentKafkaSpout(_config, "trap").builder())
+            Stream rssiStream = topology.newStream("rb_trap", new TridentKafkaSpout(_config, "trap").builder())
                     .name("Trap").parallelismHint(trapPartition).shuffle()
                     .each(new Fields("str"), new MapperFunction("rb_trap"), new Fields("rssi"))
-                    .each(new Fields("rssi"), new GetTRAPdata(), new Fields("rssiKey", "rssiValue"))
-                    .partitionPersist(trapStateFactory, new Fields("rssiKey", "rssiValue"), StateUpdater.getStateUpdater(_config, "rssiKey", "rssiValue", "trap"));
+                    .each(new Fields("rssi"), new GetTRAPdata(), new Fields("rssiKey", "rssiValue", "rssiDruid"))
+                    .each(new Fields("rssiDruid"), new MacVendorFunction(), new Fields("rssiMacVendorMap"));
 
-            // Enrich flow stream
-            flowStream = flowStream
-                    .stateQuery(trapState, new Fields("flows"), StateQuery.getStateQuery(_config, "client_mac", "trap"), new Fields("rssiMap"));
 
-            fieldsFlow.add("rssiMap");
+
+            rssiStream.partitionPersist(trapStateFactory, new Fields("rssiKey", "rssiValue"), StateUpdater.getStateUpdater(_config, "rssiKey", "rssiValue", "trap"));
+
+            if (_config.contains("traffics")) {
+
+                persist("traffics",
+                        rssiStream.each(new Fields("rssiDruid", "rssiMacVendorMap"),
+                                new MergeMapsFunction(), new Fields("finalMap")));
+
+                // Enrich flow stream
+                flowStream = flowStream
+                        .stateQuery(trapState, new Fields("flows"), StateQuery.getStateQuery(_config, "client_mac", "trap"), new Fields("rssiMap"));
+
+                fieldsFlow.add("rssiMap");
+            }
         }
 
         /* Location */

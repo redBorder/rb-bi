@@ -35,8 +35,11 @@ public class GetTRAPdata extends BaseFunction {
         Object macAP = rssi.get(".1.3.6.1.4.1.9.9.599.1.3.1.1.8.0");
         Object snr = rssi.get(".1.3.6.1.4.1.9.9.599.1.2.2.0");
         Object location = rssi.get(".1.3.6.1.4.1.9.9.513.1.1.1.1.49.0");
+        Object sensorName = rssi.get("host");
 
         Map<String, Object> rssiData = new HashMap<>();
+        Map<String, Object> rssiDataDruid = new HashMap<>();
+
 
         String macAddress = null;
 
@@ -46,6 +49,7 @@ public class GetTRAPdata extends BaseFunction {
             if (macAuxObject != null) {
                 String macAux = macAuxObject.toString();
                 macAddress = macAux.split("/")[1];
+                rssiDataDruid.put("client_mac", macAddress);
             }
 
 
@@ -96,8 +100,17 @@ public class GetTRAPdata extends BaseFunction {
                     rssiData.put("client_building", locationStr.trim());
             }
 
+            if(sensorName != null){
+                String sensor = sensorName.toString();
+                sensor = sensor.substring(sensor.indexOf("[")+1, sensor.indexOf("]"));
+                rssiDataDruid.put("sensor_name", sensor);
+            }
+
             if (macAddress != null && !rssiData.isEmpty()) {
-                collector.emit(new Values(macAddress, rssiData));
+                rssiDataDruid.putAll(rssiData);
+                rssiDataDruid.put("bytes", 0);
+                rssiDataDruid.put("pkts", 0);
+                collector.emit(new Values(macAddress, rssiData, rssiDataDruid));
             }
 
         } catch (NullPointerException e) {
