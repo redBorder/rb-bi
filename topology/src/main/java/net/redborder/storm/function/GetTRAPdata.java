@@ -17,6 +17,7 @@ import java.util.logging.Logger;
 
 /**
  * <p>This function analyzes the trap events and get interest fields.</p>
+ *
  * @author Andres Gomez
  */
 public class GetTRAPdata extends BaseFunction {
@@ -30,18 +31,26 @@ public class GetTRAPdata extends BaseFunction {
 
         Object macAuxObject = rssi.get(".1.3.6.1.4.1.9.9.599.1.2.32.0");
         Object clientRssiObject = rssi.get(".1.3.6.1.4.1.9.9.599.1.2.1.0");
+        Object ssid = rssi.get(".1.3.6.1.4.1.9.9.599.1.3.1.1.28.0");
+        Object macAP = rssi.get(".1.3.6.1.4.1.9.9.599.1.3.1.1.8.0");
+        Object snr = rssi.get(".1.3.6.1.4.1.9.9.599.1.2.2.0");
+        Object location = rssi.get(".1.3.6.1.4.1.9.9.513.1.1.1.1.49.0");
+
+        Map<String, Object> rssiData = new HashMap<>();
+
+        String macAddress = null;
 
 
         try {
 
-            if (macAuxObject != null && clientRssiObject != null) {
-
-                Integer rssiInt = (Integer) clientRssiObject;
-
+            if (macAuxObject != null) {
                 String macAux = macAuxObject.toString();
-                String macAddress = macAux.split("/")[1];
+                macAddress = macAux.split("/")[1];
+            }
 
-                Map<String, Object> rssiData = new HashMap<>();
+
+            if (clientRssiObject != null) {
+                Integer rssiInt = (Integer) clientRssiObject;
 
                 if (rssiInt <= -90)
                     rssiData.put("client_rssi", "bad");
@@ -57,9 +66,40 @@ public class GetTRAPdata extends BaseFunction {
                     rssiData.put("client_rssi", "unknown");
 
                 rssiData.put("client_rssi_value", rssiInt);
-                
+            }
+
+            if (ssid != null) {
+                rssiData.put("wireless_id", ssid.toString());
+            }
+
+            if (macAP != null) {
+                rssiData.put("wireless_station", macAP.toString().toLowerCase().replaceAll(" ", ":"));
+            }
+
+            if (snr != null) {
+                rssiData.put("client_snr_value", snr);
+            }
+
+            if (location != null) {
+                String locationStr = location.toString();
+                if (locationStr.contains("-")) {
+                    String[] zones = locationStr.split("-");
+                    if (zones.length == 3) {
+                        rssiData.put("client_campus", zones[0]);
+                        rssiData.put("client_building", zones[1]);
+                        rssiData.put("client_floor", zones[2]);
+                    } else {
+                        rssiData.put("client_building", zones[0]);
+                        rssiData.put("client_floor", zones[1]);
+                    }
+                }
+                rssiData.put("client_building", locationStr);
+            }
+
+            if (macAddress != null && !rssiData.isEmpty()) {
                 collector.emit(new Values(macAddress, rssiData));
             }
+
         } catch (NullPointerException e) {
             Logger.getLogger(GetTRAPdata.class.getName()).log(Level.SEVERE, "Failed reading a TRAP JSON tuple: \n" + rssi.toString(), e);
         }

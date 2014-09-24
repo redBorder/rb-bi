@@ -154,6 +154,26 @@ public class RedBorderTopology {
                     .each(new Fields("monitorMap"), new CheckTimestampFunction(), new Fields("finalMap"));
         }
 
+        /* Trap */
+        if (_config.contains("trap")) {
+            trapPartition = _config.getKafkaPartitions("rb_trap");
+            trapStateFactory = RedBorderState.getStateFactory(_config, "trap");
+            trapState = topology.newStaticState(trapStateFactory);
+
+            // Get msg and save it to enrich later on
+            topology.newStream("rb_trap", new TridentKafkaSpout(_config, "trap").builder())
+                    .name("Trap").parallelismHint(trapPartition).shuffle()
+                    .each(new Fields("str"), new MapperFunction("rb_trap"), new Fields("rssi"))
+                    .each(new Fields("rssi"), new GetTRAPdata(), new Fields("rssiKey", "rssiValue"))
+                    .partitionPersist(trapStateFactory, new Fields("rssiKey", "rssiValue"), StateUpdater.getStateUpdater(_config, "rssiKey", "rssiValue", "trap"));
+
+            // Enrich flow stream
+            flowStream = flowStream
+                    .stateQuery(trapState, new Fields("flows"), StateQuery.getStateQuery(_config, "client_mac", "trap"), new Fields("rssiMap"));
+
+            fieldsFlow.add("rssiMap");
+        }
+
         /* Location */
         if (_config.contains("location")) {
             locationPartition = _config.getKafkaPartitions("rb_loc");
@@ -209,26 +229,6 @@ public class RedBorderTopology {
             fieldsFlow.add("ipAssignMap");
             fieldsFlow.add("ueRegisterMap");
             fieldsFlow.add("hnbRegisterMap");
-        }
-
-        /* Trap */
-        if (_config.contains("trap")) {
-            trapPartition = _config.getKafkaPartitions("rb_trap");
-            trapStateFactory = RedBorderState.getStateFactory(_config, "trap");
-            trapState = topology.newStaticState(trapStateFactory);
-
-            // Get msg and save it to enrich later on
-            topology.newStream("rb_trap", new TridentKafkaSpout(_config, "trap").builder())
-                    .name("Trap").parallelismHint(trapPartition).shuffle()
-                    .each(new Fields("str"), new MapperFunction("rb_trap"), new Fields("rssi"))
-                    .each(new Fields("rssi"), new GetTRAPdata(), new Fields("rssiKey", "rssiValue"))
-                    .partitionPersist(trapStateFactory, new Fields("rssiKey", "rssiValue"), StateUpdater.getStateUpdater(_config, "rssiKey", "rssiValue", "trap"));
-
-            // Enrich flow stream
-            flowStream = flowStream
-                    .stateQuery(trapState, new Fields("flows"), StateQuery.getStateQuery(_config, "client_mac", "trap"), new Fields("rssiMap"));
-
-            fieldsFlow.add("rssiMap");
         }
 
         /* Radius */
