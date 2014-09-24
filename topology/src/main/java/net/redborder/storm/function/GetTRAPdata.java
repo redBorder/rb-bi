@@ -56,6 +56,8 @@ public class GetTRAPdata extends BaseFunction {
                 else if (rssiInt == 0)
                     rssiData.put("client_rssi", "unknown");
 
+                rssiData.put("client_rssi_value", rssiInt);
+                
                 collector.emit(new Values(macAddress, rssiData));
             }
         } catch (NullPointerException e) {
