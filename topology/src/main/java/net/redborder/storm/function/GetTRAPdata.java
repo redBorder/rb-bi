@@ -65,7 +65,7 @@ public class GetTRAPdata extends BaseFunction {
                 else if (rssiInt == 0)
                     rssiData.put("client_rssi", "unknown");
 
-                rssiData.put("client_rssi_value", rssiInt);
+                rssiData.put("client_rssi_num", rssiInt);
             }
 
             if (ssid != null) {
@@ -73,11 +73,11 @@ public class GetTRAPdata extends BaseFunction {
             }
 
             if (macAP != null) {
-                rssiData.put("wireless_station", macAP.toString().toLowerCase().replaceAll(" ", ":"));
+                rssiData.put("wireless_station", macAP.toString().trim().toLowerCase().replaceAll(" ", ":"));
             }
 
             if (snr != null) {
-                rssiData.put("client_snr_value", snr);
+                rssiData.put("client_snr_num", snr);
             }
 
             if (location != null) {
@@ -85,15 +85,15 @@ public class GetTRAPdata extends BaseFunction {
                 if (locationStr.contains("-")) {
                     String[] zones = locationStr.split("-");
                     if (zones.length == 3) {
-                        rssiData.put("client_campus", zones[0]);
-                        rssiData.put("client_building", zones[1]);
-                        rssiData.put("client_floor", zones[2]);
+                        rssiData.put("client_campus", zones[0].trim());
+                        rssiData.put("client_building", zones[1].trim());
+                        rssiData.put("client_floor", zones[2].trim());
                     } else {
-                        rssiData.put("client_building", zones[0]);
-                        rssiData.put("client_floor", zones[1]);
+                        rssiData.put("client_building", zones[0].trim());
+                        rssiData.put("client_floor", zones[1].trim());
                     }
-                }
-                rssiData.put("client_building", locationStr);
+                } else
+                    rssiData.put("client_building", locationStr.trim());
             }
 
             if (macAddress != null && !rssiData.isEmpty()) {
