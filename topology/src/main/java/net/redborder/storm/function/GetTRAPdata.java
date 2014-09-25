@@ -81,6 +81,19 @@ public class GetTRAPdata extends BaseFunction {
             }
 
             if (snr != null) {
+                Integer snrInt = (Integer) snr;
+
+                if (snrInt <= 10)
+                    rssiData.put("client_snr", "bad");
+                else if (snrInt <= 15)
+                    rssiData.put("client_snr", "low");
+                else if (snrInt <= 25)
+                    rssiData.put("client_snr", "medium");
+                else if (snrInt < 40)
+                    rssiData.put("client_snr", "good");
+                else if (snrInt >= 40)
+                    rssiData.put("client_snr", "excelent");
+
                 rssiData.put("client_snr_num", snr);
             }
 
