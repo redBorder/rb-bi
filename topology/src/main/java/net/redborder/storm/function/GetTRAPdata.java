@@ -36,6 +36,7 @@ public class GetTRAPdata extends BaseFunction {
         Object snr = rssi.get(".1.3.6.1.4.1.9.9.599.1.2.2.0");
         Object location = rssi.get(".1.3.6.1.4.1.9.9.513.1.1.1.1.49.0");
         Object sensorName = rssi.get("host");
+        Object timestamp = rssi.get("timestamp");
 
         Map<String, Object> rssiData = new HashMap<>();
         Map<String, Object> rssiDataDruid = new HashMap<>();
@@ -70,6 +71,9 @@ public class GetTRAPdata extends BaseFunction {
                     rssiData.put("client_rssi", "unknown");
 
                 rssiData.put("client_rssi_num", rssiInt);
+            } else {
+                rssiData.put("client_rssi", "unknown");
+                rssiData.put("client_rssi_num", 0);
             }
 
             if (ssid != null) {
@@ -123,6 +127,12 @@ public class GetTRAPdata extends BaseFunction {
 
             if (macAddress != null && !rssiData.isEmpty()) {
                 rssiDataDruid.putAll(rssiData);
+
+                if(timestamp != null)
+                    rssiDataDruid.put("timestamp", timestamp);
+                else
+                    rssiDataDruid.put("timestamp", System.currentTimeMillis()/1000);
+                
                 rssiDataDruid.put("bytes", 0);
                 rssiDataDruid.put("pkts", 0);
                 collector.emit(new Values(macAddress, rssiData, rssiDataDruid));
