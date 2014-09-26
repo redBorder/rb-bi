@@ -122,7 +122,9 @@ public class GetTRAPdata extends BaseFunction {
             if(sensorName != null){
                 String sensor = sensorName.toString();
                 sensor = sensor.substring(sensor.indexOf("[")+1, sensor.indexOf("]"));
-                rssiDataDruid.put("sensor_name", sensor);
+                rssiDataDruid.put("sensor_name", "trap: " + sensor);
+                rssiDataDruid.put("sensor_ip", sensor);
+
             }
 
             if (macAddress != null && !rssiData.isEmpty()) {
@@ -132,7 +134,7 @@ public class GetTRAPdata extends BaseFunction {
                     rssiDataDruid.put("timestamp", timestamp);
                 else
                     rssiDataDruid.put("timestamp", System.currentTimeMillis()/1000);
-                
+
                 rssiDataDruid.put("bytes", 0);
                 rssiDataDruid.put("pkts", 0);
                 collector.emit(new Values(macAddress, rssiData, rssiDataDruid));
