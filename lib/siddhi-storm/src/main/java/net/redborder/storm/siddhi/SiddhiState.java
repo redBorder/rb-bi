@@ -1,7 +1,6 @@
 package net.redborder.storm.siddhi;
 
 import backtype.storm.task.IMetricsContext;
-import backtype.storm.utils.Utils;
 import kafka.javaapi.producer.Producer;
 import kafka.producer.KeyedMessage;
 import kafka.producer.ProducerConfig;
@@ -9,15 +8,11 @@ import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.api.CuratorWatcher;
-import org.apache.curator.framework.recipes.barriers.DistributedBarrier;
-import org.apache.curator.framework.recipes.locks.InterProcessMutex;
-import org.apache.curator.framework.recipes.locks.InterProcessSemaphoreMutex;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.ho.yaml.Yaml;
-import org.ho.yaml.exception.YamlException;
 import org.wso2.siddhi.core.SiddhiManager;
 import org.wso2.siddhi.core.config.SiddhiConfiguration;
 import org.wso2.siddhi.core.event.ComplexEvent;
@@ -33,7 +28,6 @@ import storm.trident.state.StateFactory;
 import storm.trident.tuple.TridentTuple;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
 import java.util.logging.Level;

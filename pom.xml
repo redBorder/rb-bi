@@ -20,8 +20,8 @@
         <module>lib/kafka-state</module>
         <module>lib/storm-kafka</module>
         <module>lib/siddhi-storm</module>
-        <module>topology</module>
         <module>lib/siddhi-redBorder</module>
+        <module>topology</module>
     </modules>
 
     <repositories>
