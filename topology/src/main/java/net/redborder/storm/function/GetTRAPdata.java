@@ -97,6 +97,7 @@ public class GetTRAPdata extends BaseFunction {
                 rssiData.put("client_snr_num", snr);
             } else {
                 rssiData.put("client_snr", "unknown");
+                rssiData.put("client_snr_num", 0);
             }
 
             if (location != null) {
