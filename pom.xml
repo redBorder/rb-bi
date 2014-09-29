@@ -4,7 +4,7 @@
 
     <groupId>net.redborder</groupId>
     <artifactId>redborder-bi</artifactId>
-    <version>1.2</version>
+    <version>1.3</version>
     <packaging>pom</packaging>
 
     <name>redBorder-BI</name>
@@ -19,7 +19,9 @@
         <module>lib/metrics-kafka</module>
         <module>lib/kafka-state</module>
         <module>lib/storm-kafka</module>
+        <module>lib/siddhi-storm</module>
         <module>topology</module>
+        <module>lib/siddhi-redBorder</module>
     </modules>
 
     <repositories>

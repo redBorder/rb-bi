@@ -6,12 +6,15 @@ import backtype.storm.StormSubmitter;
 import backtype.storm.generated.AlreadyAliveException;
 import backtype.storm.generated.InvalidTopologyException;
 import backtype.storm.tuple.Fields;
+import backtype.storm.tuple.Values;
 import net.redborder.kafkastate.KafkaState;
 import net.redborder.kafkastate.KafkaStateUpdater;
 import com.metamx.tranquility.storm.BeamFactory;
 import com.metamx.tranquility.storm.TridentBeamStateFactory;
 import com.metamx.tranquility.storm.TridentBeamStateUpdater;
 import net.redborder.storm.function.*;
+import net.redborder.storm.siddhi.SiddhiState;
+import net.redborder.storm.siddhi.SiddhiUpdater;
 import net.redborder.storm.spout.TridentKafkaSpout;
 import net.redborder.storm.state.*;
 import net.redborder.storm.state.gridgain.DarkListQuery;
@@ -22,7 +25,14 @@ import net.redborder.storm.util.druid.BeamMonitor;
 import storm.trident.Stream;
 import storm.trident.TridentState;
 import storm.trident.TridentTopology;
+import storm.trident.operation.BaseFunction;
+import storm.trident.operation.CombinerAggregator;
+import storm.trident.operation.TridentCollector;
+import storm.trident.operation.builtin.Count;
+import storm.trident.operation.builtin.Sum;
 import storm.trident.state.StateFactory;
+import storm.trident.testing.MemoryMapState;
+import storm.trident.tuple.TridentTuple;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -151,7 +161,7 @@ public class RedBorderTopology {
             monitorStream = topology.newStream("rb_monitor", new TridentKafkaSpout(_config, "monitor").builder())
                     .parallelismHint(monitorPartition).shuffle().name("Monitor")
                     .each(new Fields("str"), new MapperFunction("rb_monitor"), new Fields("monitorMap"))
-                    .each(new Fields("monitorMap"), new CheckTimestampFunction(), new Fields("finalMap"));
+                    .each(new Fields("monitorMap"), new CheckTimestampFunction(), new Fields("monitor"));
         }
 
         /* Trap */
@@ -168,14 +178,13 @@ public class RedBorderTopology {
                     .each(new Fields("rssiDruid"), new MacVendorFunction(), new Fields("rssiMacVendorMap"));
 
 
-
             rssiStream.partitionPersist(trapStateFactory, new Fields("rssiKey", "rssiValue"), StateUpdater.getStateUpdater(_config, "rssiKey", "rssiValue", "trap"));
 
             if (_config.contains("traffics")) {
 
                 persist("traffics",
                         rssiStream.each(new Fields("rssiDruid", "rssiMacVendorMap"),
-                                new MergeMapsFunction(), new Fields("finalMap")));
+                                new MergeMapsFunction(), new Fields("traffics")), "traffics");
 
                 // Enrich flow stream
                 flowStream = flowStream
@@ -207,7 +216,7 @@ public class RedBorderTopology {
                 // Generate a flow msg
                 persist("traffics",
                         locationStream.each(new Fields("mse_data_druid", "mseMacVendorMap", "mseGeoIPMap"),
-                                new MergeMapsFunction(), new Fields("finalMap")));
+                                new MergeMapsFunction(), new Fields("traffics")), "traffics");
 
                 // Enrich flow stream
                 flowStream = flowStream.stateQuery(locationState, new Fields("flows"),
@@ -281,7 +290,7 @@ public class RedBorderTopology {
                             .each(new Fields("radiusDruid"), new MacVendorFunction(), new Fields("radiusMacVendorMap"))
                             .each(new Fields("radiusDruid"), new GeoIpFunction(), new Fields("radiusGeoIPMap"))
                             .each(new Fields("radiusDruid", "radiusMacVendorMap", "radiusGeoIPMap"),
-                                    new MergeMapsFunction(), new Fields("finalMap")));
+                                    new MergeMapsFunction(), new Fields("traffics")), "traffics");
 
             // Enrich flow stream
             flowStream = flowStream.stateQuery(radiusState, new Fields("flows"), StateQuery.getStateQuery(_config, "client_mac", "radius"),
@@ -321,28 +330,39 @@ public class RedBorderTopology {
 
             flowStream = flowStream.each(new Fields(fieldsFlow), new MergeMapsFunction(), new Fields("mergedMap"))
                     .each(new Fields("mergedMap"), new SeparateLongTimeFlowFunction(), new Fields("separateTime"))
-                    .each(new Fields("separateTime"), new CheckTimestampFunction(), new Fields("finalMap"));
+                    .each(new Fields("separateTime"), new CheckTimestampFunction(), new Fields("traffics"));
 
             persist("traffics", flowStream
-                    .project(new Fields("finalMap"))
+                    .project(new Fields("traffics"))
                     .parallelismHint(_config.getWorkers())
-                    .shuffle().name("Flow Producer"));
+                    .shuffle().name("Flow Producer"), "traffics");
+
+            if (_config.getCorrealtionEnabled())
+                flowStream.partitionPersist(SiddhiState.nonTransactional(_config.getZkHost(), "traffics"), new Fields("traffics"), new SiddhiUpdater());
+
         }
 
         if (_config.contains("events")) {
             persist("events",
                     eventsStream.each(new Fields(fieldsEvent), new MergeMapsFunction(), new Fields("mergedMap"))
-                            .each(new Fields("mergedMap"), new CheckTimestampFunction(), new Fields("finalMap"))
-                            .project(new Fields("finalMap"))
+                            .each(new Fields("mergedMap"), new CheckTimestampFunction(), new Fields("events"))
+                            .project(new Fields("events"))
                             .parallelismHint(_config.getWorkers())
-                            .shuffle().name("Event Producer"));
+                            .shuffle().name("Event Producer"), "events");
+
+            if (_config.getCorrealtionEnabled())
+                eventsStream.partitionPersist(SiddhiState.nonTransactional(_config.getZkHost(), "events"), new Fields("events"), new SiddhiUpdater());
+
         }
 
         if (_config.contains("monitor")) {
             persist("monitor",
-                    monitorStream.project(new Fields("finalMap"))
+                    monitorStream.project(new Fields("monitor"))
                             .parallelismHint(_config.getWorkers())
-                            .shuffle().name("Monitor Producer"));
+                            .shuffle().name("Monitor Producer"), "monitor");
+
+            if (_config.getCorrealtionEnabled())
+                monitorStream.partitionPersist(SiddhiState.nonTransactional(_config.getZkHost(), "monitor"), new Fields("monitor"), new SiddhiUpdater());
         }
 
         /* Show info */
@@ -384,6 +404,7 @@ public class RedBorderTopology {
         }
 
         print(pw, "   - servers: " + servers);
+        print(pw, "- Correlation Engine: " + _config.getCorrealtionEnabled());
 
 
         print(pw, "\n----------------------- Topology Enrichment -----------------------");
@@ -448,7 +469,7 @@ public class RedBorderTopology {
         return topology;
     }
 
-    private static TridentState persist(String topic, Stream s) {
+    private static TridentState persist(String topic, Stream s, String field) {
         String outputTopic = _config.getOutputTopic(topic);
         int partitions = _config.tranquilityPartitions(topic);
         int replication = _config.tranquilityReplication();
@@ -457,7 +478,7 @@ public class RedBorderTopology {
         if (outputTopic != null) {
             int flowPrePartitions = _config.getKafkaPartitions(outputTopic);
 
-            ret = s.each(new Fields("finalMap"), new MapToJSONFunction(), new Fields("jsonString"))
+            ret = s.each(new Fields(field), new MapToJSONFunction(), new Fields("jsonString"))
                     .partitionPersist(KafkaState.nonTransactional(_config.getZkHost()),
                             new Fields("jsonString"), new KafkaStateUpdater("jsonString", outputTopic))
                     .parallelismHint(flowPrePartitions);
@@ -466,18 +487,22 @@ public class RedBorderTopology {
             TridentBeamStateFactory druidState;
             String zkHost = _config.getZkHost();
 
-            if (topic.equals("traffics")) {
-                bf = new BeamFlow(partitions, replication, zkHost);
-                druidState = new TridentBeamStateFactory<BeamFlow>(bf);
-            } else if (topic.equals("events")) {
-                bf = new BeamEvent(partitions, replication, zkHost);
-                druidState = new TridentBeamStateFactory<BeamEvent>(bf);
-            } else {
-                bf = new BeamMonitor(partitions, replication, zkHost);
-                druidState = new TridentBeamStateFactory<BeamMonitor>(bf);
+            switch (topic) {
+                case "traffics":
+                    bf = new BeamFlow(partitions, replication, zkHost);
+                    druidState = new TridentBeamStateFactory<BeamFlow>(bf);
+                    break;
+                case "events":
+                    bf = new BeamEvent(partitions, replication, zkHost);
+                    druidState = new TridentBeamStateFactory<BeamEvent>(bf);
+                    break;
+                default:
+                    bf = new BeamMonitor(partitions, replication, zkHost);
+                    druidState = new TridentBeamStateFactory<BeamMonitor>(bf);
+                    break;
             }
 
-            ret = s.partitionPersist(druidState, new Fields("finalMap"), new TridentBeamStateUpdater())
+            ret = s.partitionPersist(druidState, new Fields(field), new TridentBeamStateUpdater())
                     .parallelismHint(partitions);
         }
 

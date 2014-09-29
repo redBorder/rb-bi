@@ -97,6 +97,11 @@ public class ConfigData {
         return _numWorkers;
     }
 
+    public boolean getCorrealtionEnabled(){
+        Boolean ret = _configFile.getFromGeneral("correlation");
+        return ret != null && ret;
+    }
+
     private void initMiddleManagerCapacity() {
         int servers = 0;
         int minimum = 99999;
