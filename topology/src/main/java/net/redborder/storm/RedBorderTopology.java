@@ -7,6 +7,7 @@ import backtype.storm.generated.AlreadyAliveException;
 import backtype.storm.generated.InvalidTopologyException;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Values;
+import com.github.pmerienne.trident.ml.nlp.TwitterSentimentClassifier;
 import net.redborder.kafkastate.KafkaState;
 import net.redborder.kafkastate.KafkaStateUpdater;
 import com.metamx.tranquility.storm.BeamFactory;
@@ -102,6 +103,15 @@ public class RedBorderTopology {
                 }
             }
         }
+    }
+
+    public static TridentTopology test() throws CacheNotValidException {
+        TridentTopology topology = new TridentTopology();
+         topology.newStream("rb_flow", new TridentKafkaSpout(_config, "traffics").builder())
+                 .each(new Fields("str"), new TwitterSentimentClassifier(), new Fields("sentiment"))
+                 .each(new Fields("sentiment"), new PrinterFunction("SENTIMENT: "), new Fields("a"));
+
+        return topology;
     }
 
     /**

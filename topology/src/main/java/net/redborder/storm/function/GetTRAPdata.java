@@ -41,18 +41,14 @@ public class GetTRAPdata extends BaseFunction {
         Map<String, Object> rssiData = new HashMap<>();
         Map<String, Object> rssiDataDruid = new HashMap<>();
 
-
         String macAddress = null;
 
-
         try {
-
             if (macAuxObject != null) {
                 String macAux = macAuxObject.toString();
                 macAddress = macAux.split("/")[1];
                 rssiDataDruid.put("client_mac", macAddress);
             }
-
 
             if (clientRssiObject != null) {
                 Integer rssiInt = (Integer) clientRssiObject;

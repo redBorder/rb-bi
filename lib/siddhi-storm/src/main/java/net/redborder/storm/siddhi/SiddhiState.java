@@ -343,6 +343,7 @@ public class SiddhiState implements State {
 
     private void sendToKafka(Map<String, Object> alert) {
         String strAlert = "";
+        alert.put("timestamp", System.currentTimeMillis()/1000);
         try {
             strAlert = _mapper.writeValueAsString(alert);
         } catch (IOException e) {

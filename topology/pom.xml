@@ -27,9 +27,18 @@
             <name>Metamx-Repo</name>
             <url>https://metamx.artifactoryonline.com/metamx/pub-libs-releases-local</url>
         </repository>
+        <repository>
+            <id>clojars.org</id>
+            <url>http://clojars.org/repo</url>
+        </repository>
     </repositories>
 
     <dependencies>
+        <dependency>
+            <groupId>com.github.pmerienne</groupId>
+            <artifactId>trident-ml</artifactId>
+            <version>0.0.5-SNAPSHOT</version>
+        </dependency>
         <dependency>
             <groupId>com.twitter</groupId>
             <artifactId>finagle-memcached_2.10</artifactId>
