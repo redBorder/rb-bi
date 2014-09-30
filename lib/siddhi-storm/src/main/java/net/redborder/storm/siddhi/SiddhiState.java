@@ -191,7 +191,7 @@ public class SiddhiState implements State {
     }
 
     private void parserQuerysFile() {
-        SiddhiExecutionPlan executionPlan = new SiddhiExecutionPlan("storm");
+        SiddhiExecutionPlan executionPlan = new SiddhiExecutionPlan();
 
         _inputStreams = new HashMap<String, List<StreamDefinition>>();
         _inputStreams.put("traffics", new ArrayList<StreamDefinition>());
@@ -206,9 +206,10 @@ public class SiddhiState implements State {
 
         SiddhiConfiguration configuration = new SiddhiConfiguration();
         configuration.setDistributedProcessing(false);
-        configuration.setQueryPlanIdentifier(executionPlan._hazelCastInstance);
+        configuration.setQueryPlanIdentifier("redBorderCEP-Cluster");
+        configuration.setInstanceIdentifier("redBorderCEP-Instance-" + UUID.randomUUID().toString());
         configuration.setEventBatchSize(3000);
-        configuration.setAsyncProcessing(true);
+
         try {
 
             _siddhiManager = new SiddhiManager(configuration);

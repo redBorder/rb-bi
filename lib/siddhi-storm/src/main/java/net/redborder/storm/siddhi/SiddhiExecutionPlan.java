@@ -18,16 +18,13 @@ public class SiddhiExecutionPlan implements Serializable {
     public Map<String, List<String>> outPutEventNames;
     public List<String> inputStreamName;
     public List<String> outputStreamName;
-    public String _hazelCastInstance;
 
-
-    public SiddhiExecutionPlan(String hazelCastInstance) {
+    public SiddhiExecutionPlan() {
         streams = new HashMap<String, SiddhiStream>();
         querys = new HashMap<String, String>();
         outputStreamName = new ArrayList<String>();
         outPutEventNames = new HashMap<String, List<String>>();
         inputStreamName = new ArrayList<String>();
-        _hazelCastInstance = hazelCastInstance;
     }
 
     private SiddhiExecutionPlan setInputStreamName(String streamName, String source) {
