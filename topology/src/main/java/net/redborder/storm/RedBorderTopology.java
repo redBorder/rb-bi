@@ -107,9 +107,9 @@ public class RedBorderTopology {
 
     public static TridentTopology test() throws CacheNotValidException {
         TridentTopology topology = new TridentTopology();
-         topology.newStream("rb_flow", new TridentKafkaSpout(_config, "traffics").builder())
-                 .each(new Fields("str"), new TwitterSentimentClassifier(), new Fields("sentiment"))
-                 .each(new Fields("sentiment"), new PrinterFunction("SENTIMENT: "), new Fields("a"));
+        topology.newStream("rb_flow", new TridentKafkaSpout(_config, "traffics").builder())
+                .each(new Fields("str"), new TwitterSentimentClassifier(), new Fields("sentiment"))
+                .each(new Fields("sentiment"), new PrinterFunction("SENTIMENT: "), new Fields("a"));
 
         return topology;
     }
@@ -335,45 +335,72 @@ public class RedBorderTopology {
 
         }
 
+        List<Stream> mainStream = new ArrayList<>();
         /* Join fields and persist */
         if (_config.contains("traffics")) {
 
             flowStream = flowStream.each(new Fields(fieldsFlow), new MergeMapsFunction(), new Fields("mergedMap"))
                     .each(new Fields("mergedMap"), new SeparateLongTimeFlowFunction(), new Fields("separateTime"))
-                    .each(new Fields("separateTime"), new CheckTimestampFunction(), new Fields("traffics"));
+                    .each(new Fields("separateTime"), new CheckTimestampFunction(), new Fields("traffics"))
+                    .each(new Fields("traffics"), new AddSection("traffics"), new Fields("section"))
+                    .project(new Fields("section", "traffics"));
+            ;
 
             persist("traffics", flowStream
                     .project(new Fields("traffics"))
                     .parallelismHint(_config.getWorkers())
                     .shuffle().name("Flow Producer"), "traffics");
 
-            if (_config.getCorrealtionEnabled())
-                flowStream.partitionPersist(SiddhiState.nonTransactional(_config.getZkHost(), "traffics"), new Fields("traffics"), new SiddhiUpdater());
+          //  if (_config.getCorrealtionEnabled()) {
+          //      flowStream.partitionPersist(SiddhiState.nonTransactional(_config.getZkHost()), new Fields("section", "traffics"), new SiddhiUpdater());
+          //  }
 
+            mainStream.add(flowStream);
         }
 
         if (_config.contains("events")) {
+
+            eventsStream = eventsStream.each(new Fields(fieldsEvent), new MergeMapsFunction(), new Fields("mergedMap"))
+                    .each(new Fields("mergedMap"), new CheckTimestampFunction(), new Fields("events"))
+                    .each(new Fields("events"), new AddSection("events"), new Fields("section"))
+                    .project(new Fields("section", "events"));
+
             persist("events",
-                    eventsStream.each(new Fields(fieldsEvent), new MergeMapsFunction(), new Fields("mergedMap"))
-                            .each(new Fields("mergedMap"), new CheckTimestampFunction(), new Fields("events"))
+                    eventsStream
                             .project(new Fields("events"))
                             .parallelismHint(_config.getWorkers())
                             .shuffle().name("Event Producer"), "events");
 
-            if (_config.getCorrealtionEnabled())
-                eventsStream.partitionPersist(SiddhiState.nonTransactional(_config.getZkHost(), "events"), new Fields("events"), new SiddhiUpdater());
+         //   if (_config.getCorrealtionEnabled()) {
+         //       eventsStream.partitionPersist(SiddhiState.nonTransactional(_config.getZkHost()), new Fields("section", "events"), new SiddhiUpdater());
+         //   }
 
+            mainStream.add(eventsStream);
         }
 
         if (_config.contains("monitor")) {
+
+            monitorStream = monitorStream.each(new Fields("monitor"), new AddSection("monitor"), new Fields("section"))
+                    .project(new Fields("section", "monitor"));
+
             persist("monitor",
                     monitorStream.project(new Fields("monitor"))
                             .parallelismHint(_config.getWorkers())
                             .shuffle().name("Monitor Producer"), "monitor");
 
-            if (_config.getCorrealtionEnabled())
-                monitorStream.partitionPersist(SiddhiState.nonTransactional(_config.getZkHost(), "monitor"), new Fields("monitor"), new SiddhiUpdater());
+           // if (_config.getCorrealtionEnabled()) {
+           //     monitorStream.partitionPersist(SiddhiState.nonTransactional(_config.getZkHost()), new Fields("section", "monitor"), new SiddhiUpdater());
+           // }
+
+            mainStream.add(monitorStream);
         }
+
+        if (_config.getCorrealtionEnabled()) {
+            topology.merge(new Fields("sections", "maps"), mainStream)
+                    .partitionPersist(SiddhiState.nonTransactional(_config.getZkHost()), new Fields("sections", "maps"), new SiddhiUpdater())
+                    .parallelismHint(1);
+        }
+
 
         /* Show info */
         PrintWriter pw = null;

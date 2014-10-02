@@ -46,7 +46,6 @@ public class SiddhiState implements State {
     private final String CONFIG_FILE_PATH = "/opt/rb/etc/redBorder-BI/queries.yml";
     List<String> _streams;
     Map<String, String> _queries;
-    String _inputField;
     static boolean _debug = false;
 
     ObjectMapper _mapper;
@@ -54,31 +53,28 @@ public class SiddhiState implements State {
     String _brokerList = new String();
     Producer<String, String> producer;
 
-    public static StateFactory nonTransactional(String zookeeper, String inputField) {
-        return new Factory(zookeeper, inputField);
+    public static StateFactory nonTransactional(String zookeeper) {
+        return new Factory(zookeeper);
     }
 
     protected static class Factory implements StateFactory {
 
         private final String zookeeper;
-        private final String inputField;
 
-        public Factory(String zookeeper, String inputField) {
+        public Factory(String zookeeper) {
             this.zookeeper = zookeeper;
-            this.inputField = inputField;
         }
 
         @Override
         public State makeState(Map map, IMetricsContext iMetricsContext, int i, int i2) {
             _debug = (boolean) map.get("rbDebug");
-            return new SiddhiState(zookeeper, inputField);
+            return new SiddhiState(zookeeper);
         }
     }
 
 
-    public SiddhiState(String zookeeper, String inputField) {
+    public SiddhiState(String zookeeper) {
         _zookeeper = zookeeper;
-        _inputField = inputField;
 
         _mapper = new ObjectMapper();
 
@@ -354,14 +350,15 @@ public class SiddhiState implements State {
     }
 
     public void sendToSiddhi(TridentTuple tuple) {
-        Map<String, Object> map = (Map<String, Object>) tuple.getValueByField(_inputField);
-        for (int i = 0; i < _inputsHandler.get(_inputField).size(); i++) {
-            try {
-                _inputsHandler.get(_inputField).get(i).send(mapToArray(map, _inputField, i).toArray());
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+            String section = tuple.getStringByField("sections");
+            Map<String, Object> map = (Map<String, Object>) tuple.getValueByField("maps");
+            for (int i = 0; i < _inputsHandler.get(section).size(); i++) {
+                try {
+                    _inputsHandler.get(section).get(i).send(mapToArray(map, section, i).toArray());
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
-        }
     }
 
     private List<Object> mapToArray(Map<String, Object> map, String inputField, int index) {

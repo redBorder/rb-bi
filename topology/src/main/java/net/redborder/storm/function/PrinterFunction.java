@@ -27,7 +27,6 @@ public class PrinterFunction extends BaseFunction {
     public void execute(TridentTuple tuple, TridentCollector collector) {
         List<Object> list = tuple.getValues();
         for (Object o : list) {
-
             System.out.println(_str + " " + o.toString());
         }
 
