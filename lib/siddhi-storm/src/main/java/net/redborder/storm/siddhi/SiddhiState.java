@@ -73,7 +73,7 @@ public class SiddhiState implements State {
     }
 
 
-    public SiddhiState(String zookeeper) {
+    private SiddhiState(String zookeeper) {
         _zookeeper = zookeeper;
 
         _mapper = new ObjectMapper();
@@ -111,7 +111,7 @@ public class SiddhiState implements State {
     public void commit(Long aLong) {
     }
 
-    public void kafkaDiscover() {
+    private void kafkaDiscover() {
         RetryPolicy retryPolicy = new ExponentialBackoffRetry(1000, 3);
         CuratorFramework client = CuratorFrameworkFactory.newClient(_zookeeper, retryPolicy);
         client.start();
@@ -164,7 +164,7 @@ public class SiddhiState implements State {
         producer = new Producer<String, String>(config);
     }
 
-    public void checkSignal() {
+    private void checkSignal() {
 
         try {
             client.checkExists().usingWatcher(new CuratorWatcher() {
@@ -349,7 +349,7 @@ public class SiddhiState implements State {
         producer.send(new KeyedMessage<String, String>("rb_alarm", strAlert));
     }
 
-    public void sendToSiddhi(TridentTuple tuple) {
+    private void sendToSiddhi(TridentTuple tuple) {
             String section = tuple.getStringByField("sections");
             Map<String, Object> map = (Map<String, Object>) tuple.getValueByField("maps");
             for (int i = 0; i < _inputsHandler.get(section).size(); i++) {
