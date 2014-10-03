@@ -156,10 +156,15 @@ public class SeparateLongTimeFlowFunction extends BaseFunction {
                 collector.emit(new Values(e));
             }
         } else if (event.containsKey("timestamp")) {
+            Long bytes = (Long) event.get("bytes");
+            event.put("bytes", bytes);
             collector.emit(new Values(event));
         } else {
+            Long bytes = (Long) event.get("bytes");
+            event.put("bytes", bytes);
             Logger.getLogger(SeparateLongTimeFlowFunction.class.getName()).log(Level.WARNING,
                     "Packet without timestamp -> {0}.", event);
+            collector.emit(new Values(event));
         }
     }
 }
