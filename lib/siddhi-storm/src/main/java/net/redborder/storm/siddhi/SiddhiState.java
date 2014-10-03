@@ -338,7 +338,7 @@ public class SiddhiState implements State {
     }
 
 
-    private void sendToKafka(Map<String, Object> alert) {
+    public void sendToKafka(Map<String, Object> alert) {
         String strAlert = "";
         alert.put("timestamp", System.currentTimeMillis()/1000);
         try {
@@ -349,7 +349,7 @@ public class SiddhiState implements State {
         producer.send(new KeyedMessage<String, String>("rb_alarm", strAlert));
     }
 
-    private void sendToSiddhi(TridentTuple tuple) {
+    public void sendToSiddhi(TridentTuple tuple) {
             String section = tuple.getStringByField("sections");
             Map<String, Object> map = (Map<String, Object>) tuple.getValueByField("maps");
             for (int i = 0; i < _inputsHandler.get(section).size(); i++) {
@@ -361,7 +361,7 @@ public class SiddhiState implements State {
             }
     }
 
-    private List<Object> mapToArray(Map<String, Object> map, String inputField, int index) {
+    public List<Object> mapToArray(Map<String, Object> map, String inputField, int index) {
         List<Object> event = new ArrayList<Object>();
 
         for (Attribute field : _inputStreams.get(inputField).get(index).getAttributeList()) {

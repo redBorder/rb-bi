@@ -344,16 +344,11 @@ public class RedBorderTopology {
                     .each(new Fields("separateTime"), new CheckTimestampFunction(), new Fields("traffics"))
                     .each(new Fields("traffics"), new AddSection("traffics"), new Fields("section"))
                     .project(new Fields("section", "traffics"));
-            ;
 
             persist("traffics", flowStream
                     .project(new Fields("traffics"))
                     .parallelismHint(_config.getWorkers())
                     .shuffle().name("Flow Producer"), "traffics");
-
-          //  if (_config.getCorrealtionEnabled()) {
-          //      flowStream.partitionPersist(SiddhiState.nonTransactional(_config.getZkHost()), new Fields("section", "traffics"), new SiddhiUpdater());
-          //  }
 
             mainStream.add(flowStream);
         }
@@ -371,10 +366,6 @@ public class RedBorderTopology {
                             .parallelismHint(_config.getWorkers())
                             .shuffle().name("Event Producer"), "events");
 
-         //   if (_config.getCorrealtionEnabled()) {
-         //       eventsStream.partitionPersist(SiddhiState.nonTransactional(_config.getZkHost()), new Fields("section", "events"), new SiddhiUpdater());
-         //   }
-
             mainStream.add(eventsStream);
         }
 
@@ -387,10 +378,6 @@ public class RedBorderTopology {
                     monitorStream.project(new Fields("monitor"))
                             .parallelismHint(_config.getWorkers())
                             .shuffle().name("Monitor Producer"), "monitor");
-
-           // if (_config.getCorrealtionEnabled()) {
-           //     monitorStream.partitionPersist(SiddhiState.nonTransactional(_config.getZkHost()), new Fields("section", "monitor"), new SiddhiUpdater());
-           // }
 
             mainStream.add(monitorStream);
         }
