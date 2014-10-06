@@ -26,14 +26,7 @@ import net.redborder.storm.util.druid.BeamMonitor;
 import storm.trident.Stream;
 import storm.trident.TridentState;
 import storm.trident.TridentTopology;
-import storm.trident.operation.BaseFunction;
-import storm.trident.operation.CombinerAggregator;
-import storm.trident.operation.TridentCollector;
-import storm.trident.operation.builtin.Count;
-import storm.trident.operation.builtin.Sum;
 import storm.trident.state.StateFactory;
-import storm.trident.testing.MemoryMapState;
-import storm.trident.tuple.TridentTuple;
 
 import java.io.FileWriter;
 import java.io.IOException;
