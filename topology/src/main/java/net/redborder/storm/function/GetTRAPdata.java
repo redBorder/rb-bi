@@ -119,7 +119,7 @@ public class GetTRAPdata extends BaseFunction {
             if(sensorName != null){
                 String sensor = sensorName.toString();
                 sensor = sensor.substring(sensor.indexOf("[")+1, sensor.indexOf("]"));
-                rssiDataDruid.put("sensor_name", "trap: " + sensor);
+                rssiDataDruid.put("sensor_name", "trap:" + sensor);
                 rssiDataDruid.put("sensor_ip", sensor);
 
             }
