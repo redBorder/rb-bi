@@ -2,10 +2,13 @@ package net.redborder.storm.state;
 
 import net.redborder.storm.state.gridgain.GridGainLocationQuery;
 import net.redborder.storm.state.gridgain.GridGainQuery;
+import net.redborder.storm.state.gridgain.GridGainTrapQuery;
 import net.redborder.storm.state.memcached.MemcachedLocationQuery;
 import net.redborder.storm.state.memcached.MemcachedQuery;
+import net.redborder.storm.state.memcached.MemcachedTrapQuery;
 import net.redborder.storm.state.riak.RiakLocationQuery;
 import net.redborder.storm.state.riak.RiakQuery;
+import net.redborder.storm.state.riak.RiakTrapQuery;
 import net.redborder.storm.util.ConfigData;
 import storm.trident.state.BaseQueryFunction;
 
@@ -33,6 +36,18 @@ public class StateQuery {
             return new RiakLocationQuery("client_mac");
         }else if(config.getCacheType().equals("memcached")){
             return new MemcachedLocationQuery("client_mac", "location");
+        } else {
+            throw new CacheNotValidException("Not cache backend found: " + config.getCacheType());
+        }
+    }
+
+    public static BaseQueryFunction getStateTrapQuery(ConfigData config) throws CacheNotValidException {
+        if(config.getCacheType().equals("gridgain")){
+            return new GridGainTrapQuery("client_mac");
+        }else if(config.getCacheType().equals("riak")){
+            return new RiakTrapQuery("client_mac");
+        }else if(config.getCacheType().equals("memcached")){
+            return new MemcachedTrapQuery("client_mac", "trap");
         } else {
             throw new CacheNotValidException("Not cache backend found: " + config.getCacheType());
         }

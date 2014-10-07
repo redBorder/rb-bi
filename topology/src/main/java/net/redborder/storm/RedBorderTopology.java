@@ -189,7 +189,7 @@ public class RedBorderTopology {
 
                 // Enrich flow stream
                 flowStream = flowStream
-                        .stateQuery(trapState, new Fields("flows"), StateQuery.getStateQuery(_config, "client_mac", "trap"), new Fields("rssiMap"));
+                        .stateQuery(trapState, new Fields("flows"), StateQuery.getStateTrapQuery(_config), new Fields("rssiMap"));
 
                 fieldsFlow.add("rssiMap");
             }
