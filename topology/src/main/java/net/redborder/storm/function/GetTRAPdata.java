@@ -53,7 +53,10 @@ public class GetTRAPdata extends BaseFunction {
             if (clientRssiObject != null) {
                 Integer rssiInt = (Integer) clientRssiObject;
 
-                if (rssiInt <= -90)
+
+                if (rssiInt == 0)
+                    rssiData.put("client_rssi", "unknown");
+                else if (rssiInt <= -85)
                     rssiData.put("client_rssi", "bad");
                 else if (rssiInt <= -80)
                     rssiData.put("client_rssi", "low");
@@ -61,10 +64,8 @@ public class GetTRAPdata extends BaseFunction {
                     rssiData.put("client_rssi", "medium");
                 else if (rssiInt <= -60)
                     rssiData.put("client_rssi", "good");
-                else if (rssiInt <= -50)
+                else
                     rssiData.put("client_rssi", "excelent");
-                else if (rssiInt == 0)
-                    rssiData.put("client_rssi", "unknown");
 
                 rssiData.put("client_rssi_num", rssiInt);
             } else {
@@ -115,6 +116,8 @@ public class GetTRAPdata extends BaseFunction {
                 } else
                     rssiData.put("client_building", locationStr.trim());
             }
+
+
 
             if(sensorName != null){
                 String sensor = sensorName.toString();
