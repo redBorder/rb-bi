@@ -75,7 +75,8 @@ public class MacVendorFunction extends BaseFunction {
 
         if (clientMac != null) {
             String oui = buildOui(clientMac);
-            vendorMap.put("client_mac_vendor", _ouiMap.get(oui));
+            if (_ouiMap.get(oui) != null)
+                vendorMap.put("client_mac_vendor", _ouiMap.get(oui));
         }
 
         collector.emit(new Values(vendorMap));

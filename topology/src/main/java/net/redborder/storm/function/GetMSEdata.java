@@ -75,8 +75,10 @@ public class GetMSEdata extends BaseFunction {
 
                 if (state != null && state.equals("ASSOCIATED")) {
                     ArrayList ip = (ArrayList) location.get("ipAddress");
-                    mseData.put("wireless_id", location.get("ssId"));
-                    mseData.put("wireless_station", location.get("apMacAddress"));
+                    if (location.get("ssId") != null)
+                        mseData.put("wireless_id", location.get("ssId"));
+                    if (location.get("apMacAddress") != null)
+                        mseData.put("wireless_station", location.get("apMacAddress"));
                     if (ip != null && ip.get(0) != null) {
                         mseDataDruid.put("src", ip.get(0));
                     }
