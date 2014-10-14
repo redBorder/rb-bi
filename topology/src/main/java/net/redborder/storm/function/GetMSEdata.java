@@ -110,6 +110,10 @@ public class GetMSEdata extends BaseFunction {
             }
 
             mseDataDruid.putAll(mseData);
+            mseDataDruid.put("client_rssi", "unknown");
+            mseDataDruid.put("client_rssi_num", 0);
+            mseDataDruid.put("client_snr", "unknown");
+            mseDataDruid.put("client_snr_num", 0);
             mseDataDruid.put("bytes", 0);
             mseDataDruid.put("pkts", 0);
 

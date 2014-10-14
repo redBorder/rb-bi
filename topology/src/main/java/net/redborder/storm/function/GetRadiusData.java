@@ -102,6 +102,10 @@ public class GetRadiusData extends BaseFunction {
 
                 radiusDruid.putAll(radiusMap);
                 radiusDruid.put("timestamp", timestamp);
+                radiusDruid.put("client_rssi", "unknown");
+                radiusDruid.put("client_rssi_num", 0);
+                radiusDruid.put("client_snr", "unknown");
+                radiusDruid.put("client_snr_num", 0);
                 radiusDruid.put("bytes", 0);
                 radiusDruid.put("pkts", 0);
 
