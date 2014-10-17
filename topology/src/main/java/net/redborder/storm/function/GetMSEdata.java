@@ -97,8 +97,8 @@ public class GetMSEdata extends BaseFunction {
 
                 locationFormat = lattitude.toString() + "," + longitude.toString();
 
-                mseData.put("client_lat", lattitude.toString());
-                mseData.put("client_long", longitude.toString());
+                //mseData.put("client_lat", lattitude.toString());
+                //mseData.put("client_long", longitude.toString());
                 mseData.put("client_latlong", locationFormat);
             }
 
