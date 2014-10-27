@@ -9,6 +9,7 @@ import backtype.storm.spout.SchemeAsMultiScheme;
 import net.redborder.storm.util.ConfigData;
 import storm.kafka.StringScheme;
 import storm.kafka.ZkHosts;
+import storm.kafka.trident.OpaqueTridentKafkaSpout;
 import storm.kafka.trident.TransactionalTridentKafkaSpout;
 import storm.kafka.trident.TridentKafkaConfig;
 
@@ -40,8 +41,8 @@ public class TridentKafkaSpout {
      *
      * @return Trident spout of kafka.
      */
-    public TransactionalTridentKafkaSpout builder() {
-        return new TransactionalTridentKafkaSpout(_kafkaConfig);
+    public OpaqueTridentKafkaSpout builder() {
+        return new OpaqueTridentKafkaSpout(_kafkaConfig);
     }
 
 }
