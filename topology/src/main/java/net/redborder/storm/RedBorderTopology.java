@@ -15,6 +15,7 @@ import net.redborder.storm.function.*;
 import net.redborder.storm.siddhi.SiddhiState;
 import net.redborder.storm.siddhi.SiddhiUpdater;
 import net.redborder.storm.spout.TridentKafkaSpout;
+import net.redborder.storm.spout.TwitterSpout;
 import net.redborder.storm.state.*;
 import net.redborder.storm.state.gridgain.DarkListQuery;
 import net.redborder.storm.util.ConfigData;
@@ -53,7 +54,7 @@ public class RedBorderTopology {
      * @throws InvalidTopologyException
      */
     public static void main(String[] args) throws AlreadyAliveException, InvalidTopologyException, CacheNotValidException {
-        String topologyName = "redBorder-Topology";
+        String topologyName = "redBorder-twitter-Topology";
         List<String> argsList = new ArrayList<>();
 
         for (String arg : args) {
@@ -69,7 +70,7 @@ public class RedBorderTopology {
                 _config.debug = true;
             }
 
-            TridentTopology topology = topology();
+            TridentTopology topology = twitterTopology(args);
 
             if (args[0].equalsIgnoreCase("local")) {
                 Config conf = _config.setConfig(args[0]);
@@ -95,16 +96,26 @@ public class RedBorderTopology {
             }
         }
     }
-/*
-    public static TridentTopology test() throws CacheNotValidException {
+
+    public static TridentTopology twitterTopology(String[] args) {
         TridentTopology topology = new TridentTopology();
-        topology.newStream("rb_flow", new TridentKafkaSpout(_config, "traffics").builder())
-                .each(new Fields("str"), new TwitterSentimentClassifier(), new Fields("sentiment"))
-                .each(new Fields("sentiment"), new PrinterFunction("SENTIMENT: "), new Fields("a"));
+
+        String twitterFilter = "none";
+
+        List<String> argsList = Arrays.asList(args);
+        if (argsList.contains("twitterFilter")) {
+            Integer index = argsList.indexOf("twitterFilter");
+            twitterFilter=argsList.get(index+1);
+        }
+        topology.newStream("twitterStream", new TwitterSpout("gC9XIMBLUaRXc8wy3IFj7HV2P", "y1zx12rL9eps3rVfxArYJMMYtmcXgytMZYoBermJIQ9QwjjdCL",
+                 "154536310-Yxg7DqA6mg982MSxG2peKa6TIUf00loFJnVMwOaP", "oG5JIcg1CKCDNQwqIVrt1RVR2bqPWZ91DUJXEYefnjCkX", twitterFilter))
+                .partitionPersist(KafkaState.nonTransactional(_config.getZkHost()),
+                        new Fields("tweet"), new KafkaStateUpdater("tweet", "rb_social"));
 
         return topology;
     }
-*/
+
+
     /**
      * This method build the redBorder topology based on available sections.
      *

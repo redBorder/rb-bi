@@ -146,7 +146,7 @@
             <artifactId>jackson-annotations</artifactId>
             <version>2.2.2</version>
         </dependency>
-        
+
         <!-- GridGain State -->
         <dependency>
             <groupId>net.redborder</groupId>
@@ -180,6 +180,20 @@
             <groupId>net.redborder</groupId>
             <artifactId>siddhi-storm</artifactId>
             <version>1.2</version>
+        </dependency>
+
+        <!-- Twitter Client -->
+        <dependency>
+            <groupId>com.twitter</groupId>
+            <artifactId>hbc-core</artifactId>
+            <version>2.2.0</version>
+            <type>jar</type>
+            <exclusions>
+                <exclusion>
+                    <artifactId>slf4j-api</artifactId>
+                    <groupId>org.slf4j</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
     </dependencies>
