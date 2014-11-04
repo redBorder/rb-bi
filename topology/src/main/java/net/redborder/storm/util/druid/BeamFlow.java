@@ -67,8 +67,8 @@ public class BeamFlow implements BeamFactory<Map<String, Object>> {
                     "dst_country_code", "dst_net_name", "dst_port", "dst_as_name",
                     "dst_vlan", "dst_map", "input_snmp", "output_snmp", "tos",
                     "client_latlong", "coordinates_map", "client_campus",
-                    "client_building", "client_floor", "wireless_id", "client_rssi",
-                    "wireless_station", "hnblocation", "hnbgeolocation", "rat",
+                    "client_building", "client_floor", "wireless_id","client_rssi", "client_rssi_num",
+                    "client_snr", "client_snr_num", "wireless_station", "hnblocation", "hnbgeolocation", "rat",
                     "darklist_score_name", "darklist_category", "darklist_protocol",
                     "darklist_direction", "darklist_score");
             final List<AggregatorFactory> aggregators = ImmutableList.<AggregatorFactory>of(
