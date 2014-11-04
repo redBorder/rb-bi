@@ -83,7 +83,13 @@ public class BeamMonitor implements BeamFactory<Map<String, Object>> {
                             )
                     )
                     .rollup(DruidRollup.create(DruidDimensions.schemalessWithExclusions(exclusions), aggregators, QueryGranularity.MINUTE))
-                    .tuning(ClusteredBeamTuning.create(Granularity.HOUR, new Period("PT0M"), new Period("PT30M"), partitions, replicas))
+                    .tuning(ClusteredBeamTuning.builder()
+                            .partitions(partitions)
+                            .replicants(replicas)
+                            .segmentGranularity(Granularity.HOUR)
+                            .warmingPeriod(new Period("PT0M"))
+                            .windowPeriod(new Period("PT15M"))
+                            .build())
                     .timestampSpec(new TimestampSpec("timestamp", "posix"));
 
             final Beam<Map<String, Object>> beam = builder.buildBeam();

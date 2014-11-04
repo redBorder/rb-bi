@@ -99,8 +99,16 @@ public class BeamFlow implements BeamFactory<Map<String, Object>> {
                             )
                     )
                     .rollup(DruidRollup.create(DruidDimensions.specific(dimesions), aggregators, QueryGranularity.MINUTE))
-                    .tuning(ClusteredBeamTuning.create(Granularity.HOUR, new Period("PT0M"), new Period("PT15M"), partitions, replicas))
+                    .tuning(ClusteredBeamTuning.builder()
+                                    .partitions(partitions)
+                                    .replicants(replicas)
+                                    .segmentGranularity(Granularity.HOUR)
+                                    .warmingPeriod(new Period("PT0M"))
+                                    .windowPeriod(new Period("PT15M"))
+                                    .build())
                     .timestampSpec(new TimestampSpec("timestamp", "posix"));
+
+
             
             final Beam<Map<String, Object>> beam = builder.buildBeam();
 
