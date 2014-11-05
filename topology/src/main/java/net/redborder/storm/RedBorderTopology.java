@@ -398,7 +398,7 @@ public class RedBorderTopology {
         if (_config.contains("location") && locationPartition > 0) print(pw, "   * rb_loc: " + locationPartition);
         if (_config.contains("mobile") && mobilePartition > 0) print(pw, "   * rb_mobile: " + mobilePartition);
         if (_config.contains("trap") && trapPartition > 0) print(pw, "   * rb_trap: " + trapPartition);
-        if (_config.contains("flow") && flowPartition > 0) print(pw, "   * rb_flow: " + flowPartition);
+        if (_config.contains("traffics") && flowPartition > 0) print(pw, "   * rb_flow: " + flowPartition);
         if (_config.contains("radius") && radiusPartition > 0) print(pw, "   * rb_radius: " + radiusPartition);
 
 
@@ -504,7 +504,7 @@ public class RedBorderTopology {
 
             switch (topic) {
                 case "traffics":
-                    bf = new BeamFlow(partitions, replication, zkHost);
+                    bf = new BeamFlow(partitions, replication, zkHost, _config.getMaxRows());
                     druidState = new TridentBeamStateFactory<BeamFlow>(bf);
                     break;
                 case "events":

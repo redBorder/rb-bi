@@ -97,7 +97,7 @@ public class ConfigData {
         return _numWorkers;
     }
 
-    public boolean getCorrealtionEnabled(){
+    public boolean getCorrealtionEnabled() {
         Boolean ret = _configFile.getFromGeneral("correlation");
         return ret != null && ret;
     }
@@ -143,6 +143,12 @@ public class ConfigData {
 
     public int getMiddleManagerCapacity() {
         return _middleManagers;
+    }
+
+    public int getMaxRows() {
+        //Integer ret = _configFile.getFromGeneral("maxRows");
+        //return ret != null && ret;
+        return 100000;
     }
 
     public Config setConfig(String mode) {

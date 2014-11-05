@@ -38,11 +38,13 @@ public class BeamFlow implements BeamFactory<Map<String, Object>> {
     int partitions;
     int replicas;
     String zk;
+    int maxRows;
     
-    public BeamFlow(int partitions, int replicas, String zk){
+    public BeamFlow(int partitions, int replicas, String zk, int maxRows){
         this.partitions = partitions;
         this.replicas = replicas;
         this.zk = zk;
+        this.maxRows=maxRows;
     }
 
     @Override
@@ -99,6 +101,7 @@ public class BeamFlow implements BeamFactory<Map<String, Object>> {
                             )
                     )
                     .rollup(DruidRollup.create(DruidDimensions.specific(dimesions), aggregators, QueryGranularity.MINUTE))
+                    .druidTuning(DruidTuning.create(100000,new Period("PT20M"), 3))
                     .tuning(ClusteredBeamTuning.builder()
                                     .partitions(partitions)
                                     .replicants(replicas)
