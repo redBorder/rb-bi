@@ -20,6 +20,7 @@ public class RiakLocationQuery extends RiakQuery {
     public void execute(TridentTuple tuple, Map<String, Object> result, TridentCollector collector) {
         if (result == null) {
             Map<String, Object> empty = new HashMap<>();
+            //empty.put("quality", 100);
             collector.emit(new Values(empty));
         } else {
             result.put("dot11_status", "ASSOCIATED");

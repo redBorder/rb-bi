@@ -31,12 +31,13 @@ public class GetMSEdata extends BaseFunction {
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
         Map<String, Object> mseEvent = (Map<String, Object>) tuple.get(0);
-        Map<String, Object> mseEventContent, location, geoCoordinate = null, mapInfo, mseData, mseDataDruid;
+        Map<String, Object> mseEventContent, location, geoCoordinate = null, mapInfo, mseData, mseDataDruid, statistics;
         String mapHierachy, locationFormat, state;
         String macAddress = null;
         String dateString = null;
         Double lattitude, longitude;
         String[] zone;
+
 
         try {
             mseEventContent = (Map<String, Object>) mseEvent.get("StreamingNotification");

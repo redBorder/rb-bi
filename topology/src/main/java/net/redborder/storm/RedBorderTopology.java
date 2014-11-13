@@ -6,6 +6,7 @@ import backtype.storm.StormSubmitter;
 import backtype.storm.generated.AlreadyAliveException;
 import backtype.storm.generated.InvalidTopologyException;
 import backtype.storm.tuple.Fields;
+import backtype.storm.tuple.Values;
 import net.redborder.kafkastate.KafkaState;
 import net.redborder.kafkastate.KafkaStateUpdater;
 import com.metamx.tranquility.storm.BeamFactory;
@@ -24,7 +25,10 @@ import net.redborder.storm.util.druid.BeamMonitor;
 import storm.trident.Stream;
 import storm.trident.TridentState;
 import storm.trident.TridentTopology;
+import storm.trident.operation.BaseFunction;
+import storm.trident.operation.TridentCollector;
 import storm.trident.state.StateFactory;
+import storm.trident.tuple.TridentTuple;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -105,6 +109,7 @@ public class RedBorderTopology {
         return topology;
     }
 */
+
     /**
      * This method build the redBorder topology based on available sections.
      *
@@ -133,13 +138,13 @@ public class RedBorderTopology {
                     .parallelismHint(flowPartition).shuffle().name("Flows")
                     .each(new Fields("str"), new MapperFunction("rb_flow"), new Fields("flows"))
                     .each(new Fields("flows"), new MacVendorFunction(), new Fields("macVendorMap"))
-                    .each(new Fields("flows"), new GeoIpFunction(), new Fields("geoIPMap"))
-                    .each(new Fields("flows"), new AnalizeHttpUrlFunction(), new Fields("httpUrlMap"));
+                    .each(new Fields("flows"), new GeoIpFunction(), new Fields("geoIPMap"));
+            //.each(new Fields("flows"), new AnalizeHttpUrlFunction(), new Fields("httpUrlMap"));
 
             fieldsFlow.add("flows");
             fieldsFlow.add("geoIPMap");
             fieldsFlow.add("macVendorMap");
-            fieldsFlow.add("httpUrlMap");
+            //fieldsFlow.add("httpUrlMap");
         }
 
         /* Events */
@@ -204,19 +209,27 @@ public class RedBorderTopology {
             // Get msg
             locationStream = topology.newStream("rb_loc", new TridentKafkaSpout(_config, "location").builder())
                     .name("Location").parallelismHint(locationPartition).shuffle()
-                    .each(new Fields("str"), new MapperFunction("rb_loc"), new Fields("mse_map"))
-                    .each(new Fields("mse_map"), new GetMSEdata(), new Fields("src_mac", "mse_data", "mse_data_druid"))
+                    .each(new Fields("str"), new MapperFunction("rb_loc"), new Fields("mse_map"));
+
+            Stream mseData = locationStream.each(new Fields("mse_map"), new GetMSEdata(), new Fields("src_mac", "mse_data", "mse_data_druid"))
                     .each(new Fields("mse_data_druid"), new MacVendorFunction(), new Fields("mseMacVendorMap"))
                     .each(new Fields("mse_data_druid"), new GeoIpFunction(), new Fields("mseGeoIPMap"));
 
+            Stream stateData = locationStream.each(new Fields("mse_map"), new GetLocationClient(), new Fields("client"))
+                    .stateQuery(locationState, new Fields("client"), StateQuery.getStateLocationQuery(_config), new Fields("mseMap"))
+                    .each(new Fields("mse_map", "mseMap"), new GetLocationState(), new Fields("locationState"));
+
             // Save it to enrich later on
-            locationStream.partitionPersist(locationStateFactory, new Fields("src_mac", "mse_data"),
+            mseData.partitionPersist(locationStateFactory, new Fields("src_mac", "mse_data"),
                     StateUpdater.getStateUpdater(_config, "src_mac", "mse_data", "location"));
+
+            persist("location",
+                    stateData, "locationState");
 
             if (_config.contains("traffics")) {
                 // Generate a flow msg
                 persist("traffics",
-                        locationStream.each(new Fields("mse_data_druid", "mseMacVendorMap", "mseGeoIPMap"),
+                        mseData.each(new Fields("mse_data_druid", "mseMacVendorMap", "mseGeoIPMap"),
                                 new MergeMapsFunction(), new Fields("traffics")), "traffics");
 
                 // Enrich flow stream
