@@ -84,7 +84,7 @@ public class ConfigData {
 
 
     public boolean locationStateEnabled(){
-        Boolean ret =  _configFile.getFromGeneral("locationState");
+        Boolean ret =  _configFile.getFromGeneral("location_state");
         return ret != null && ret;
     }
 

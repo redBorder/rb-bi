@@ -523,7 +523,7 @@ public class RedBorderTopology {
                     .parallelismHint(flowPrePartitions);
         } else {
             BeamFactory bf;
-            TridentBeamStateFactory druidState;
+            TridentBeamStateFactory druidState = null;
             String zkHost = _config.getZkHost();
 
             switch (topic) {
@@ -535,9 +535,12 @@ public class RedBorderTopology {
                     bf = new BeamEvent(partitions, replication, zkHost);
                     druidState = new TridentBeamStateFactory<BeamEvent>(bf);
                     break;
-                default:
+                case "monitor":
                     bf = new BeamMonitor(partitions, replication, zkHost);
                     druidState = new TridentBeamStateFactory<BeamMonitor>(bf);
+                    break;
+                default:
+                    System.out.println("Tranquility beams not defined!");
                     break;
             }
 
