@@ -38,16 +38,35 @@ public class GetLocationState extends BaseFunction {
 
                     if (!cacheLocation.isEmpty()) {
                         String oldFloor = (String) cacheLocation.get("client_floor");
-                        if (oldFloor != null) {
+                        String oldBuilding = (String) cacheLocation.get("client_building");
+                        String oldCampus = (String) cacheLocation.get("client_campus");
+
+                        if (oldFloor != null)
                             if (!oldFloor.equals(zone[2])) {
                                 state.put("client_floor_old", oldFloor);
                                 state.put("client_floor_new", zone[2]);
                             }
-                        }
-                        state.put("client_floor", zone[2]);
-                    } else {
+
+                        if (oldBuilding != null)
+                            if (!oldBuilding.equals(zone[1])) {
+                                state.put("client_building_old", oldBuilding);
+                                state.put("client_building_new", zone[1]);
+                            }
+
+                        if (oldCampus != null)
+                            if (!oldCampus.equals(zone[0])) {
+                                state.put("client_campus_old", oldCampus);
+                                state.put("client_campus_new", zone[0]);
+                            }
+
+                    }else{
                         state.put("client_floor_new", zone[2]);
+                        state.put("client_campus_new", zone[0]);
+                        state.put("client_building_new", zone[1]);
                     }
+                    state.put("client_floor", zone[2]);
+                    state.put("client_campus", zone[0]);
+                    state.put("client_building", zone[1]);
                 }
 
                 String macAddress = (String) location.get("macAddress");
