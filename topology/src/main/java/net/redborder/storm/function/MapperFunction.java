@@ -61,7 +61,7 @@ public class MapperFunction extends BaseFunction {
      */
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
-        String jsonEvent = (String) tuple.getValue(0);
+        String jsonEvent = tuple.getString(0);
         if (jsonEvent != null && jsonEvent.length() > 0) {
             Map<String, Object> event;
             try {

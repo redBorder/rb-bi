@@ -127,7 +127,7 @@ public class GridGainFactory implements StateFactory {
             cacheDarkList.setName("darklist");
             cacheDarkList.setCacheMode(GridCacheMode.PARTITIONED);
             cacheDarkList.setBackups(backups);
-            cacheDarkList.setDistributionMode(GridCacheDistributionMode.CLIENT_ONLY);
+            cacheDarkList.setDistributionMode(GridCacheDistributionMode.NEAR_ONLY);
             cacheDarkList.setStartSize(2 * 1024 * 1024);
             cacheDarkList.setOffHeapMaxMemory(0);
             cacheDarkList.setPreloadBatchSize(1024 * 1024);
@@ -138,7 +138,7 @@ public class GridGainFactory implements StateFactory {
         if (_topics.contains("mobile")) {
             GridCacheConfiguration cacheMobile = new GridCacheConfiguration();
             cacheMobile.setName("mobile");
-            cacheMobile.setDistributionMode(GridCacheDistributionMode.CLIENT_ONLY);
+            cacheMobile.setDistributionMode(GridCacheDistributionMode.NEAR_ONLY);
             cacheMobile.setCacheMode(GridCacheMode.PARTITIONED);
             caches.add(cacheMobile);
         }
@@ -146,7 +146,7 @@ public class GridGainFactory implements StateFactory {
         if (_topics.contains("radius")) {
             GridCacheConfiguration cacheRadius = new GridCacheConfiguration();
             cacheRadius.setName("radius");
-            cacheRadius.setDistributionMode(GridCacheDistributionMode.CLIENT_ONLY);
+            cacheRadius.setDistributionMode(GridCacheDistributionMode.NEAR_ONLY);
             cacheRadius.setCacheMode(GridCacheMode.PARTITIONED);
             caches.add(cacheRadius);
         }
@@ -154,7 +154,7 @@ public class GridGainFactory implements StateFactory {
         if (_topics.contains("location")) {
             GridCacheConfiguration cacheLocation = new GridCacheConfiguration();
             cacheLocation.setName("location");
-            cacheLocation.setDistributionMode(GridCacheDistributionMode.CLIENT_ONLY);
+            cacheLocation.setDistributionMode(GridCacheDistributionMode.NEAR_ONLY);
             cacheLocation.setCacheMode(GridCacheMode.PARTITIONED);
             caches.add(cacheLocation);
         }
@@ -162,7 +162,7 @@ public class GridGainFactory implements StateFactory {
         if (_topics.contains("trap")) {
             GridCacheConfiguration cacheTrap = new GridCacheConfiguration();
             cacheTrap.setName("trap");
-            cacheTrap.setDistributionMode(GridCacheDistributionMode.CLIENT_ONLY);
+            cacheTrap.setDistributionMode(GridCacheDistributionMode.NEAR_ONLY);
             cacheTrap.setCacheMode(GridCacheMode.PARTITIONED);
             caches.add(cacheTrap);
         }
