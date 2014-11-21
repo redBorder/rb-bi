@@ -61,6 +61,7 @@ public class ConfigData {
         _curator.close();
     }
 
+
     private void initKafkaPartitions() {
         List<String> partitionsList;
 
@@ -79,6 +80,12 @@ public class ConfigData {
     public int getKafkaPartitions(String topic) {
         Integer ret = _kafkaPartitions.get(topic);
         return ret != null ? ret : 0;
+    }
+
+
+    public boolean locationStateEnabled(){
+        Boolean ret =  _configFile.getFromGeneral("locationState");
+        return ret != null && ret;
     }
 
     private void initWorkers() {

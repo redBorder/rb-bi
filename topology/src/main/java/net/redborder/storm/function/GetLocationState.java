@@ -49,7 +49,7 @@ public class GetLocationState extends BaseFunction {
                     }
                 }
 
-                Integer macAddress = location.get("macAddress").toString().hashCode();
+                String macAddress = (String) location.get("macAddress");
 
 /*
                 statistics = (Map<String, Object>) location.get("Statistics");
@@ -81,7 +81,7 @@ public class GetLocationState extends BaseFunction {
                 String timestamp = (String) mseEvent.get("timestamp");
 
                 state.put("timestamp", new DateTime(timestamp).withZone(DateTimeZone.UTC).getMillis() / 1000);
-                state.put("client_mac_hash", macAddress);
+                state.put("client_mac", macAddress);
                 state.put("state", 1);
                 tridentCollector.emit(new Values(state));
             }

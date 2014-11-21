@@ -139,7 +139,7 @@ public class RedBorderTopology {
                     .each(new Fields("str"), new MapperFunction("rb_flow"), new Fields("flows"))
                     .each(new Fields("flows"), new MacVendorFunction(), new Fields("macVendorMap"))
                     .each(new Fields("flows"), new GeoIpFunction(), new Fields("geoIPMap"));
-                    //.each(new Fields("flows"), new AnalizeHttpUrlFunction(), new Fields("httpUrlMap"));
+            //.each(new Fields("flows"), new AnalizeHttpUrlFunction(), new Fields("httpUrlMap"));
 
             fieldsFlow.add("flows");
             fieldsFlow.add("geoIPMap");
@@ -215,16 +215,17 @@ public class RedBorderTopology {
                     .each(new Fields("mse_data_druid"), new MacVendorFunction(), new Fields("mseMacVendorMap"))
                     .each(new Fields("mse_data_druid"), new GeoIpFunction(), new Fields("mseGeoIPMap"));
 
-            Stream stateData = locationStream.each(new Fields("mse_map"), new GetLocationClient(), new Fields("client"))
-                    .stateQuery(locationState, new Fields("client"), StateQuery.getStateLocationQuery(_config), new Fields("mseMap"))
-                    .each(new Fields("mse_map", "mseMap"), new GetLocationState(), new Fields("locationState"));
-
             // Save it to enrich later on
             mseData.partitionPersist(locationStateFactory, new Fields("src_mac", "mse_data"),
                     StateUpdater.getStateUpdater(_config, "src_mac", "mse_data", "location"));
 
-            persist("location",
-                    stateData, "locationState");
+            if (_config.locationStateEnabled()) {
+                Stream stateData = locationStream.each(new Fields("mse_map"), new GetLocationClient(), new Fields("client"))
+                        .stateQuery(locationState, new Fields("client"), StateQuery.getStateLocationQuery(_config), new Fields("mseMap"))
+                        .each(new Fields("mse_map", "mseMap"), new GetLocationState(), new Fields("locationState"));
+                persist("location",
+                        stateData, "locationState");
+            }
 
             if (_config.contains("traffics")) {
                 // Generate a flow msg
