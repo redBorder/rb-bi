@@ -105,6 +105,7 @@ public class RedBorderTopology {
         return topology;
     }
 */
+
     /**
      * This method build the redBorder topology based on available sections.
      *
@@ -332,10 +333,15 @@ public class RedBorderTopology {
 
             flowStream = flowStream.each(new Fields(fieldsFlow), new MergeMapsFunction(), new Fields("mergedMap"))
                     .each(new Fields("mergedMap"), new SeparateLongTimeFlowFunction(), new Fields("separateTime"))
-                    .each(new Fields("separateTime"), new CheckTimestampFunction(), new Fields("traffics"))
-                    .each(new Fields("traffics"), new AddSection("traffics"), new Fields("section"))
-                    .project(new Fields("section", "traffics"));
+                    .each(new Fields("separateTime"), new CheckTimestampFunction(), new Fields("traffics"));
 
+            if (_config.getCorrealtionEnabled()) {
+
+                flowStream = flowStream.each(new Fields("traffics"), new AddSection("traffics"), new Fields("section"))
+                        .project(new Fields("section", "traffics"));
+            }
+
+            flowStream = flowStream.parallelismHint(2);
             persist("traffics", flowStream
                     .project(new Fields("traffics"))
                     .parallelismHint(_config.getWorkers())
@@ -347,9 +353,12 @@ public class RedBorderTopology {
         if (_config.contains("events")) {
 
             eventsStream = eventsStream.each(new Fields(fieldsEvent), new MergeMapsFunction(), new Fields("mergedMap"))
-                    .each(new Fields("mergedMap"), new CheckTimestampFunction(), new Fields("events"))
-                    .each(new Fields("events"), new AddSection("events"), new Fields("section"))
-                    .project(new Fields("section", "events"));
+                    .each(new Fields("mergedMap"), new CheckTimestampFunction(), new Fields("events"));
+
+            if (_config.getCorrealtionEnabled()) {
+                eventsStream = eventsStream.each(new Fields("events"), new AddSection("events"), new Fields("section"))
+                        .project(new Fields("section", "events"));
+            }
 
             persist("events",
                     eventsStream
@@ -362,8 +371,10 @@ public class RedBorderTopology {
 
         if (_config.contains("monitor")) {
 
-            monitorStream = monitorStream.each(new Fields("monitor"), new AddSection("monitor"), new Fields("section"))
-                    .project(new Fields("section", "monitor"));
+            if (_config.getCorrealtionEnabled()) {
+                monitorStream = monitorStream.each(new Fields("monitor"), new AddSection("monitor"), new Fields("section"))
+                        .project(new Fields("section", "monitor"));
+            }
 
             persist("monitor",
                     monitorStream.project(new Fields("monitor"))

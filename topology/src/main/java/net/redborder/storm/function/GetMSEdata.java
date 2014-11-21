@@ -104,7 +104,7 @@ public class GetMSEdata extends BaseFunction {
 
             if (mseEventContent != null) {
                 dateString = (String) mseEventContent.get("timestamp");
-                String sensorName = (String) mseEventContent.get("mseUdi");
+                String sensorName = (String) mseEventContent.get("subscriptionName");
 
                 if (sensorName != null) {
                     mseDataDruid.put("sensor_name", sensorName);
