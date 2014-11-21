@@ -44,6 +44,7 @@ public class GetLocationState extends BaseFunction {
                                 state.put("client_floor_new", zone[2]);
                             }
                         }
+                        state.put("client_floor", zone[2]);
                     } else {
                         state.put("client_floor_new", zone[2]);
                     }
@@ -80,6 +81,7 @@ public class GetLocationState extends BaseFunction {
 */
                 String timestamp = (String) mseEvent.get("timestamp");
 
+                state.put("sensor_name", mseEventContent.get("subscriptionName"));
                 state.put("timestamp", new DateTime(timestamp).withZone(DateTimeZone.UTC).getMillis() / 1000);
                 state.put("client_mac", macAddress);
                 state.put("state", 1);
