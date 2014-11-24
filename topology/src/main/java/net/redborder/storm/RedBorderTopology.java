@@ -450,7 +450,7 @@ public class RedBorderTopology {
 
         if (_config.contains("traffics")) {
             print(pw, " - flow: ");
-            print(pw, "   * location: " + getEnrichment(_config.contains("location")));
+            print(pw, "   * location: " + getEnrichment(_config.contains("location")) + "   (location state: " + _config.locationStateEnabled() + ")");
             print(pw, "   * mobile: " + getEnrichment(_config.contains("mobile")));
             print(pw, "   * trap: " + getEnrichment(_config.contains("trap")));
             print(pw, "   * radius (overwrite_cache: " + _config.getOverwriteCache("radius") + ") : " + getEnrichment(_config.contains("radius")));
@@ -463,6 +463,10 @@ public class RedBorderTopology {
             } else {
                 String output = _config.getOutputTopic("traffics");
                 print(pw, "   * output topic: " + output + " (partitions: " + _config.getKafkaPartitions(output) + ")");
+                if(_config.locationStateEnabled()) {
+                    output = _config.getOutputTopic("location");
+                    print(pw, "   * output topic: " + output + " (partitions: " + _config.getKafkaPartitions(output) + ")");
+                }
             }
         }
 
