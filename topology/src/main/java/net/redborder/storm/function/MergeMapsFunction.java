@@ -45,13 +45,13 @@ public class MergeMapsFunction extends BaseFunction {
             }
         }
 
-        if(_hash_mac){
-            String mac = (String) flow.get("client_mac");
-            if(mac!=null)
-                flow.put("client_mac", mac.hashCode());
-        }
-        
         finalMap.putAll(flow);
+
+        if(_hash_mac){
+            String mac = (String) finalMap.get("client_mac");
+            if(mac!=null)
+                finalMap.put("client_mac", mac.hashCode());
+        }
         collector.emit(new Values(finalMap));
     }
 
