@@ -159,6 +159,12 @@ public class ConfigData {
             _conf.put(Config.TOPOLOGY_WORKERS, getWorkers());
             _conf.put(Config.TOPOLOGY_MAX_SPOUT_PENDING, 5);
             _conf.put("rbDebug", debug);
+            Boolean hash_mac = _configFile.getFromGeneral("hash_mac");
+
+            if (hash_mac != null)
+                _conf.put("hash_mac", hash_mac);
+            else
+                _conf.put("hash_mac", false);
 
             /*  Metrics  */
             Map<String, Object> zkMetricsConf = new HashMap<>();
