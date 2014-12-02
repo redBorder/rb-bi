@@ -8,6 +8,7 @@ package net.redborder.storm.function;
 import backtype.storm.tuple.Values;
 import storm.trident.operation.BaseFunction;
 import storm.trident.operation.TridentCollector;
+import storm.trident.operation.TridentOperationContext;
 import storm.trident.tuple.TridentTuple;
 
 import java.util.HashMap;
@@ -20,6 +21,14 @@ import java.util.Map;
  * @author andresgomez
  */
 public class MergeMapsFunction extends BaseFunction {
+
+    Boolean _hash_mac = false;
+
+    @Override
+    public void prepare(Map conf, TridentOperationContext context) {
+        super.prepare(conf, context);
+        _hash_mac = (Boolean) conf.get("hash_mac");
+    }
 
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
@@ -35,8 +44,14 @@ public class MergeMapsFunction extends BaseFunction {
                 finalMap.putAll(valueMap);
             }
         }
-        
+
         finalMap.putAll(flow);
+
+        if(_hash_mac){
+            String mac = (String) finalMap.get("client_mac");
+            if(mac!=null)
+                finalMap.put("client_mac", mac.hashCode());
+        }
         collector.emit(new Values(finalMap));
     }
 

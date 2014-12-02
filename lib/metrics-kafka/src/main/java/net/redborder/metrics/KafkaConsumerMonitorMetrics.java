@@ -49,7 +49,7 @@ public class KafkaConsumerMonitorMetrics implements IMetricsConsumer {
             try {
                 report(metric, metric.value);
             } catch (Exception e) {
-                e.printStackTrace();
+               System.out.println("This metric is not to kafka.");
             }
         }
     }

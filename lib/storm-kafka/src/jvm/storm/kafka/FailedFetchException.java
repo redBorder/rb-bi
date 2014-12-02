@@ -19,11 +19,25 @@ package storm.kafka;
 
 public class FailedFetchException extends RuntimeException {
 
+
+    KafkaError _error;
+
+    public KafkaError get_error() {
+        return _error;
+    }
+
     public FailedFetchException(String message) {
         super(message);
     }
 
+    public FailedFetchException(String message, KafkaError error) {
+        super(message);
+        _error = error;
+    }
+
     public FailedFetchException(Exception e) {
         super(e);
+        _error=null;
     }
+
 }

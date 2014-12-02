@@ -30,10 +30,7 @@ import kafka.message.Message;
 import kafka.message.MessageAndOffset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import storm.kafka.DynamicPartitionConnections;
-import storm.kafka.FailedFetchException;
-import storm.kafka.KafkaUtils;
-import storm.kafka.Partition;
+import storm.kafka.*;
 import storm.trident.operation.TridentCollector;
 import storm.trident.spout.IOpaquePartitionedTridentSpout;
 import storm.trident.spout.IPartitionedTridentSpout;
@@ -140,6 +137,10 @@ public class TridentKafkaEmitter {
                 msgs = KafkaUtils.fetchMessages(_config, consumer, partition, offset);
                 done = true;
             } catch (FailedFetchException e) {
+                if(e.get_error().equals(KafkaError.NOT_LEADER_FOR_PARTITION)){
+                    LOG.warn("Not leader found -> restart topology, wait please!");
+                    break;
+                }
                 LOG.warn("Failed fetch exception on try #" + tries);
                 Utils.sleep(1000);
             }

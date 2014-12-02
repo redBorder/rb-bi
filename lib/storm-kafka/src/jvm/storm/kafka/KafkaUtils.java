@@ -197,7 +197,7 @@ public class KafkaUtils {
                 } else {
                     String message = "Error fetching data from [" + partition + "] for topic [" + topic + "]: [" + error + "]";
                     LOG.error(message);
-                    throw new FailedFetchException(message);
+                    throw new FailedFetchException(message, error);
                 }
             } else {
                 msgs = fetchResponse.messageSet(topic, partitionId);
