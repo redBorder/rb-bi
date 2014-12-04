@@ -55,17 +55,22 @@ public class GridGainQuery extends BaseQueryFunction<MapState<Map<String, Map<St
         List<Object> keysToRequest = new ArrayList<>();
         List<String> keysToAppend = new ArrayList<>();
 
+
         for (TridentTuple t : tuples) {
-            Map<String, Object> flow = (Map<String, Object>) t.getValue(0);
-            String key = (String) flow.get(_key);
+                Map<String, Object> flow = (Map<String, Object>) t.getValue(0);
+            if(flow!=null) {
+                String key = (String) flow.get(_key);
 
-            if (key != null) {
-                keysToAppend.add(_generalkey + key);
+                if (key != null) {
+                    keysToAppend.add(_generalkey + key);
 
-                if (!keysToRequest.contains(_generalkey + key)) {
-                    keysToRequest.add(_generalkey + key);
+                    if (!keysToRequest.contains(_generalkey + key)) {
+                        keysToRequest.add(_generalkey + key);
+                    }
+                } else {
+                    keysToAppend.add(null);
                 }
-            } else {
+            }else{
                 keysToAppend.add(null);
             }
         }

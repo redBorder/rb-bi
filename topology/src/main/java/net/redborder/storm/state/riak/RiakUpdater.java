@@ -50,14 +50,16 @@ public class RiakUpdater extends BaseStateUpdater<MapState<Map<String, Object>>>
         List<Map<String, Object>> events = new ArrayList<>();
         List<List<Object>> keys = new ArrayList<>();
         for (TridentTuple t : tuples) {
-            List<Object> l = new ArrayList<>();
-            l.add(_generalKey + t.getValueByField(_key));
-            keys.add(l);
-            events.add((Map<String, Object>) t.getValueByField(_value));
+            if(t!=null) {
+                List<Object> l = new ArrayList<>();
+                l.add(_generalKey + t.getValueByField(_key));
+                keys.add(l);
+                events.add((Map<String, Object>) t.getValueByField(_value));
 
-            if (_debug) {
-                System.out.println("SAVED TO RIAK KEY: " + _generalKey + t.getValueByField(_key)
-                        + " VALUE: " + t.getValueByField(_value));
+                if (_debug) {
+                    System.out.println("SAVED TO RIAK KEY: " + _generalKey + t.getValueByField(_key)
+                            + " VALUE: " + t.getValueByField(_value));
+                }
             }
         }
 

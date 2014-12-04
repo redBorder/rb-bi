@@ -53,14 +53,16 @@ public class GridGainUpdater extends BaseStateUpdater<MapState<Map<String, Map<S
         List<Map<String, Map<String, Object>>> events = new ArrayList<>();
         List<List<Object>> keys = new ArrayList<>();
         for (TridentTuple t : tuples) {
-            List<Object> l = new ArrayList<>();
-            l.add(_generalKey + t.getValueByField(_key));
-            keys.add(l);
-            keyValue.put(_generalKey + t.getValueByField(_key), (Map<String, Object>) t.getValueByField(_value));
+            if (t != null) {
+                List<Object> l = new ArrayList<>();
+                l.add(_generalKey + t.getValueByField(_key));
+                keys.add(l);
+                keyValue.put(_generalKey + t.getValueByField(_key), (Map<String, Object>) t.getValueByField(_value));
 
-            if (_debug) {
-                System.out.println("SAVED TO GRIDGAIN, KEY: " + _generalKey + t.getValueByField(_key)
-                        + " VALUE: " + t.getValueByField(_value));
+                if (_debug) {
+                    System.out.println("SAVED TO GRIDGAIN, KEY: " + _generalKey + t.getValueByField(_key)
+                            + " VALUE: " + t.getValueByField(_value));
+                }
             }
         }
 

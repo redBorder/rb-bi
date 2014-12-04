@@ -21,7 +21,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
  * @author andresgomez
  */
 public class RiakQuery extends BaseQueryFunction<MapState<Map<String, Object>>, Map<String, Object>> {
@@ -30,7 +29,7 @@ public class RiakQuery extends BaseQueryFunction<MapState<Map<String, Object>>, 
     String _generalkey;
     private boolean _debug;
 
-    public RiakQuery(){
+    public RiakQuery() {
 
     }
 
@@ -57,13 +56,17 @@ public class RiakQuery extends BaseQueryFunction<MapState<Map<String, Object>>, 
 
         for (TridentTuple t : tuples) {
             Map<String, Object> flow = (Map<String, Object>) t.getValue(0);
-            String key = (String) flow.get(_key);
+            if (flow != null) {
+                String key = (String) flow.get(_key);
 
-            if (key != null) {
-                keysToAppend.add(_generalkey + key);
+                if (key != null) {
+                    keysToAppend.add(_generalkey + key);
 
-                if (!keysToRequest.contains(_generalkey + key)) {
-                    keysToRequest.add(_generalkey + key);
+                    if (!keysToRequest.contains(_generalkey + key)) {
+                        keysToRequest.add(_generalkey + key);
+                    }
+                } else {
+                    keysToAppend.add(null);
                 }
             } else {
                 keysToAppend.add(null);
