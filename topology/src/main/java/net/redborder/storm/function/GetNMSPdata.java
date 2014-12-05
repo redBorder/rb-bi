@@ -23,13 +23,11 @@ public class GetNMSPdata extends BaseFunction {
         if (nmspType.toLowerCase().equals("measure")) {
             List<Map<String, Object>> datas = (List<Map<String, Object>>) nmspEvent.get("data");
             for (Map<String, Object> data : datas) {
-                System.out.println("Sending MEAS: " + data.toString());
                 collector.emit(new Values(data, null));
             }
         } else if (nmspType.toLowerCase().equals("info")) {
             List<Map<String, Object>> datas = (List<Map<String, Object>>) nmspEvent.get("data");
             for (Map<String, Object> data : datas) {
-                System.out.println("Sending INFO: " + data.toString());
                 collector.emit(new Values(null, data));
             }
         } else {

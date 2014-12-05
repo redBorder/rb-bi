@@ -374,7 +374,7 @@ public class RedBorderTopology {
         /* Join fields and persist */
         if (_config.contains("traffics")) {
 
-            flowStream = flowStream.each(new Fields(fieldsFlow), new MergeMapsFunction(), new Fields("mergedMap"))
+            flowStream = flowStream.each(new Fields(fieldsFlow), new MergeMapsFunction(fieldsFlow), new Fields("mergedMap"))
                     .each(new Fields("mergedMap"), new SeparateLongTimeFlowFunction(), new Fields("separateTime"))
                     .each(new Fields("separateTime"), new CheckTimestampFunction(), new Fields("traffics"));
 
@@ -395,7 +395,7 @@ public class RedBorderTopology {
 
         if (_config.contains("events")) {
 
-            eventsStream = eventsStream.each(new Fields(fieldsEvent), new MergeMapsFunction(), new Fields("mergedMap"))
+            eventsStream = eventsStream.each(new Fields(fieldsEvent), new MergeMapsFunction(fieldsEvent), new Fields("mergedMap"))
                     .each(new Fields("mergedMap"), new CheckTimestampFunction(), new Fields("events"));
 
             if (_config.getCorrealtionEnabled()) {

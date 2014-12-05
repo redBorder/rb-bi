@@ -25,7 +25,7 @@ public class GridGainNmspMeasureQuery extends GridGainQuery {
         String client_mac = (String) nmspEvent.get("client_mac");
         List<String> apMacs = (List<String>) nmspEvent.get("ap_mac");
         List<Integer> clientRssis = (List<Integer>) nmspEvent.get("rssi");
-        Integer rssi = Collections.min(clientRssis);
+        Integer rssi = Collections.max(clientRssis);
         String apMac = apMacs.get(clientRssis.indexOf(rssi));
 
         Map<String, Object> map = new HashMap<>();
@@ -46,7 +46,7 @@ public class GridGainNmspMeasureQuery extends GridGainQuery {
         if (result == null) {
             map.put("client_rssi_num", rssi);
             map.put("wireless_station", apMac);
-            map.put("dot11status", "PROBING");
+            map.put("dot11_status", "PROBING");
         } else {
             if (apMacs.contains(result.get("wireless_station"))) {
                 map.put("client_rssi_num", rssi);
@@ -54,7 +54,7 @@ public class GridGainNmspMeasureQuery extends GridGainQuery {
             } else {
                 map.put("client_rssi_num", rssi);
                 map.put("wireless_station", apMac);
-                map.put("dot11status", "PROBING");
+                map.put("dot11_status", "PROBING");
             }
         }
         Map<String, Object> druid = new HashMap<>();
