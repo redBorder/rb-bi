@@ -58,16 +58,18 @@ public class SeparateLongTimeFlowFunction extends BaseFunction {
             // Discard too old events
             if ((packet_end_hour == now_hour - 1 && now.getMinuteOfHour() > DELAYED_REALTIME_TIME) ||
                     (now.getMillis() - packet_end.getMillis() > 1000 * 60 * 60)) {
-                Logger.getLogger(SeparateLongTimeFlowFunction.class.getName()).log(Level.WARNING,
-                    "Dropped packet {0} because its realtime processor is already shutdown.", event);
-                System.out.println("Dropped packet"+ event+" because its realtime processor is already shutdown.");
+                if (_debug)
+                    System.out.println("Dropped packet" + event + " because its realtime processor is already shutdown.");
+                else
+                    System.out.println("Dropped packet because its realtime processor is already shutdown.");
+
                 return;
             } else if (packet_start.isBefore(limit)) {
                 // If the lower limit date time is overpassed, correct it
                 Logger.getLogger(SeparateLongTimeFlowFunction.class.getName()).log(Level.WARNING,
-                    "Packet {0} first switched was corrected because it overpassed the lower limit (event too old).", event);
+                        "Packet {0} first switched was corrected because it overpassed the lower limit (event too old).", event);
 
-                System.out.println("Packet" +event+" first switched was corrected because it overpassed the lower limit (event too old).");
+                System.out.println("Packet" + event + " first switched was corrected because it overpassed the lower limit (event too old).");
                 packet_start = limit;
                 event.put("first_switched", limit.getMillis() / 1000);
             }
@@ -76,8 +78,8 @@ public class SeparateLongTimeFlowFunction extends BaseFunction {
             if (packet_end.isAfter(now) && ((packet_end.getHourOfDay() != packet_start.getHourOfDay()) ||
                     (packet_end.getMillis() - now.getMillis() > 1000 * 60 * 60))) {
                 Logger.getLogger(SeparateLongTimeFlowFunction.class.getName()).log(Level.WARNING,
-                    "Packet {0} ended in a future segment and I modified its last and/or first switched values.", event);
-                System.out.println("Packet "+event+" ended in a future segment and I modified its last and/or first switched values.");
+                        "Packet {0} ended in a future segment and I modified its last and/or first switched values.", event);
+                System.out.println("Packet " + event + " ended in a future segment and I modified its last and/or first switched values.");
                 event.put("timestamp", now.getMillis() / 1000);
                 packet_end = now;
 
