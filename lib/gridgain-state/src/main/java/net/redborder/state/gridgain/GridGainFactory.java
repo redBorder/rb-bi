@@ -160,11 +160,17 @@ public class GridGainFactory implements StateFactory {
         }
 
         if (_topics.contains("nmsp")) {
-            GridCacheConfiguration cacheLocation = new GridCacheConfiguration();
-            cacheLocation.setName("nmsp");
-            cacheLocation.setDistributionMode(GridCacheDistributionMode.NEAR_ONLY);
-            cacheLocation.setCacheMode(GridCacheMode.PARTITIONED);
-            caches.add(cacheLocation);
+            GridCacheConfiguration cacheNmsp = new GridCacheConfiguration();
+            cacheNmsp.setName("nmsp");
+            cacheNmsp.setDistributionMode(GridCacheDistributionMode.NEAR_ONLY);
+            cacheNmsp.setCacheMode(GridCacheMode.PARTITIONED);
+            caches.add(cacheNmsp);
+
+            GridCacheConfiguration cacheNmspInfo = new GridCacheConfiguration();
+            cacheNmspInfo.setName("nmsp-info");
+            cacheNmspInfo.setDistributionMode(GridCacheDistributionMode.NEAR_ONLY);
+            cacheNmspInfo.setCacheMode(GridCacheMode.PARTITIONED);
+            caches.add(cacheNmspInfo);
         }
 
         if (_topics.contains("trap")) {

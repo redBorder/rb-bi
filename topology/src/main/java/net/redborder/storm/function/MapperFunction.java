@@ -38,12 +38,14 @@ public class MapperFunction extends BaseFunction {
      */
     String _metricName;
 
+    boolean firstTime = true;
+
     /**
      * <p>This function converts a JSON events to JAVA Map.</p>
      *
      * @param metric The name of the metric.
      */
-    public MapperFunction(String metric){
+    public MapperFunction(String metric) {
         _metricName = metric;
     }
 
@@ -52,8 +54,8 @@ public class MapperFunction extends BaseFunction {
      */
     @Override
     public void prepare(Map conf, TridentOperationContext context) {
-         _mapper = new ObjectMapper();
-        _metric = context.registerMetric("throughput_" + _metricName,  new CountMetric(), 50);
+        _mapper = new ObjectMapper();
+        _metric = context.registerMetric("throughput_" + _metricName, new CountMetric(), 50);
     }
 
     /**
@@ -63,16 +65,16 @@ public class MapperFunction extends BaseFunction {
     public void execute(TridentTuple tuple, TridentCollector collector) {
         String jsonEvent = tuple.getString(0);
         if (jsonEvent != null && jsonEvent.length() > 0) {
-            Map<String, Object> event;
+            Map<String, Object> event = null;
             try {
                 event = _mapper.readValue(jsonEvent, Map.class);
                 _metric.incrEvent();
-                collector.emit(new Values(event));
             } catch (IOException | NullPointerException ex) {
                 Logger.getLogger(MapperFunction.class.getName()).log(Level.SEVERE, "Failed converting a JSON tuple to a Map class \n"
                         + " JSON tuple: " + jsonEvent, ex);
             }
-
+            if (event != null)
+                collector.emit(new Values(event));
         }
     }
 

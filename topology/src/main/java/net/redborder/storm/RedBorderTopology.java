@@ -117,8 +117,8 @@ public class RedBorderTopology {
         List<String> fieldsEvent = new ArrayList<>();
 
         /* States and Streams*/
-        TridentState locationState, mobileState, radiusState, trapState, darklistState, nmspState;
-        StateFactory locationStateFactory, mobileStateFactory, trapStateFactory, radiusStateFactory, nmspStateFactory;
+        TridentState locationState, mobileState, radiusState, trapState, darklistState, nmspState, nmspStateInfo;
+        StateFactory locationStateFactory, mobileStateFactory, trapStateFactory, radiusStateFactory, nmspStateFactory, nmspStateInfoFactory;
         Stream locationStream, radiusStream, flowStream = null, eventsStream = null, monitorStream = null, nmspStream;
 
         /* Partitions */
@@ -126,7 +126,7 @@ public class RedBorderTopology {
         int eventsPartition = _config.getKafkaPartitions("rb_event");
         int monitorPartition = _config.getKafkaPartitions("rb_monitor");
         int radiusPartition, trapPartition, locationPartition, mobilePartition, nmspPartition;
-        radiusPartition = trapPartition = locationPartition = mobilePartition = nmspPartition = 0;
+        radiusPartition = trapPartition = locationPartition = mobilePartition = 0;
 
         /* Flow */
         if (_config.contains("traffics")) {
@@ -158,8 +158,6 @@ public class RedBorderTopology {
 
         /* Monitor */
         if (_config.contains("monitor")) {
-            monitorPartition = _config.getKafkaPartitions("rb_monitor");
-
             monitorStream = topology.newStream("rb_monitor", new TridentKafkaSpout(_config, "monitor").builder())
                     .parallelismHint(monitorPartition).shuffle().name("Monitor")
                     .each(new Fields("str"), new MapperFunction("rb_monitor"), new Fields("monitorMap"))
@@ -233,26 +231,28 @@ public class RedBorderTopology {
             nmspStateFactory = RedBorderState.getStateFactory(_config, "nmsp");
             nmspState = topology.newStaticState(nmspStateFactory);
 
+            nmspStateInfoFactory = RedBorderState.getStateFactory(_config, "nmsp-info");
+            nmspStateInfo = topology.newStaticState(nmspStateInfoFactory);
+
             // Get msg
             nmspStream = topology.newStream("rb_nmsp", new TridentKafkaSpout(_config, "nmsp").builder())
                     .name("NMSP").parallelismHint(nmspPartition).shuffle()
                     .each(new Fields("str"), new MapperFunction("rb_nmsp"), new Fields("nsmp_map"))
                     .each(new Fields("nsmp_map"), new GetNMSPdata(), new Fields("nmsp_measure", "nmsp_info"));
 
-
-            Stream nmspMeasureStream = nmspStream.project(new Fields("nmsp_measure"))
-                    .stateQuery(nmspState, new Fields("nmsp_measure"), StateQuery.getStateNmspMeasureQuery(_config), new Fields("src_mac", "nmsp_measure_data", "nmsp_measure_data_druid"))
-                    .each(new Fields("nmsp_measure_data_druid"), new MacVendorFunction(), new Fields("nmspMeasureMacVendorMap"));
-
-            nmspMeasureStream.partitionPersist(nmspStateFactory, new Fields("src_mac", "nmsp_measure_data"),
-                    StateUpdater.getStateUpdater(_config, "src_mac", "nmsp_measure_data", "nmsp"));
-
             Stream nmspInfoStream = nmspStream.project(new Fields("nmsp_info"))
                     .each(new Fields("nmsp_info"), new GetNMSPInfoData(), new Fields("src_mac", "nmsp_info_data", "nmsp_info_data_druid"))
                     .each(new Fields("nmsp_info_data_druid"), new MacVendorFunction(), new Fields("nmspInfoMacVendorMap"));
 
-            nmspInfoStream.partitionPersist(nmspStateFactory, new Fields("src_mac", "nmsp_info_data"),
+            nmspInfoStream.partitionPersist(nmspStateInfoFactory, new Fields("src_mac", "nmsp_info_data"),
                     StateUpdater.getStateUpdater(_config, "src_mac", "nmsp_info_data", "nmsp"));
+
+            Stream nmspMeasureStream = nmspStream.project(new Fields("nmsp_measure"))
+                    .stateQuery(nmspStateInfo, new Fields("nmsp_measure"), StateQuery.getStateNmspMeasureQuery(_config), new Fields("src_mac", "nmsp_measure_data", "nmsp_measure_data_druid"))
+                    .each(new Fields("nmsp_measure_data_druid"), new MacVendorFunction(), new Fields("nmspMeasureMacVendorMap"));
+
+            nmspMeasureStream.partitionPersist(nmspStateFactory, new Fields("src_mac", "nmsp_measure_data"),
+                    StateUpdater.getStateUpdater(_config, "src_mac", "nmsp_measure_data", "nmsp"));
 
             if (_config.contains("traffics")) {
                 // Generate a flow msg
