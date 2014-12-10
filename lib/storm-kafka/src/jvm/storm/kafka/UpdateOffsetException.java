@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -17,13 +17,6 @@
  */
 package storm.kafka;
 
-public class FailedFetchException extends RuntimeException {
+public class UpdateOffsetException extends RuntimeException {
 
-    public FailedFetchException(String message) {
-        super(message);
-    }
-
-    public FailedFetchException(Exception e) {
-        super(e);
-    }
 }

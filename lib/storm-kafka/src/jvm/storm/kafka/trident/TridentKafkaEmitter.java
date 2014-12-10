@@ -22,7 +22,6 @@ import backtype.storm.metric.api.CombinedMetric;
 import backtype.storm.metric.api.MeanReducer;
 import backtype.storm.metric.api.ReducedMetric;
 import backtype.storm.task.TopologyContext;
-import backtype.storm.utils.Utils;
 import com.google.common.collect.ImmutableMap;
 import kafka.javaapi.consumer.SimpleConsumer;
 import kafka.javaapi.message.ByteBufferMessageSet;
@@ -30,7 +29,10 @@ import kafka.message.Message;
 import kafka.message.MessageAndOffset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import storm.kafka.*;
+import storm.kafka.DynamicPartitionConnections;
+import storm.kafka.FailedFetchException;
+import storm.kafka.KafkaUtils;
+import storm.kafka.Partition;
 import storm.trident.operation.TridentCollector;
 import storm.trident.spout.IOpaquePartitionedTridentSpout;
 import storm.trident.spout.IPartitionedTridentSpout;
@@ -76,20 +78,16 @@ public class TridentKafkaEmitter {
         try {
             return failFastEmitNewPartitionBatch(attempt, collector, partition, lastMeta);
         } catch (FailedFetchException e) {
-            LOG.warn("Failed to fetch from partition " + partition);
-            if (lastMeta == null) {
-                return null;
-            } else {
-                Map ret = new HashMap();
-                ret.put("offset", lastMeta.get("nextOffset"));
-                ret.put("nextOffset", lastMeta.get("nextOffset"));
-                ret.put("partition", partition.partition);
-                ret.put("broker", ImmutableMap.of("host", partition.host.host, "port", partition.host.port));
-                ret.put("topic", _config.topic);
-                ret.put("topology", ImmutableMap.of("name", _topologyName, "id", _topologyInstanceId));
-                return ret;
-            }
+            e.printStackTrace();
         }
+        Map ret = new HashMap();
+        ret.put("offset", lastMeta.get("nextOffset"));
+        ret.put("nextOffset", lastMeta.get("nextOffset"));
+        ret.put("partition", partition.partition);
+        ret.put("broker", ImmutableMap.of("host", partition.host.host, "port", partition.host.port));
+        ret.put("topic", _config.topic);
+        ret.put("topology", ImmutableMap.of("name", _topologyName, "id", _topologyInstanceId));
+        return ret;
     }
 
     private Map doEmitNewPartitionBatch(SimpleConsumer consumer, Partition partition, TridentCollector collector, Map lastMeta) {
@@ -126,26 +124,8 @@ public class TridentKafkaEmitter {
     }
 
     private ByteBufferMessageSet fetchMessages(SimpleConsumer consumer, Partition partition, long offset) {
-        ByteBufferMessageSet msgs = null;
         long start = System.nanoTime();
-        int tries = 0;
-        boolean done = false;
-
-        while (!done) {
-            try {
-                tries++;
-                msgs = KafkaUtils.fetchMessages(_config, consumer, partition, offset);
-                done = true;
-            } catch (FailedFetchException e) {
-                if(e.get_error().equals(KafkaError.NOT_LEADER_FOR_PARTITION)){
-                    LOG.warn("Not leader found -> restart topology, wait please!");
-                    break;
-                }
-                LOG.warn("Failed fetch exception on try #" + tries);
-                Utils.sleep(1000);
-            }
-        }
-
+        ByteBufferMessageSet msgs = KafkaUtils.fetchMessages(_config, consumer, partition, offset);
         long end = System.nanoTime();
         long millis = (end - start) / 1000000;
         _kafkaMeanFetchLatencyMetric.update(millis);

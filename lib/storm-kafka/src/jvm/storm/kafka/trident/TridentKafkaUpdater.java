@@ -15,15 +15,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package storm.kafka;
+package storm.kafka.trident;
 
-public class FailedFetchException extends RuntimeException {
+import storm.trident.operation.TridentCollector;
+import storm.trident.state.BaseStateUpdater;
+import storm.trident.tuple.TridentTuple;
 
-    public FailedFetchException(String message) {
-        super(message);
-    }
+import java.util.List;
 
-    public FailedFetchException(Exception e) {
-        super(e);
+public class TridentKafkaUpdater extends BaseStateUpdater<TridentKafkaState> {
+    @Override
+    public void updateState(TridentKafkaState state, List<TridentTuple> tuples, TridentCollector collector) {
+        state.updateState(tuples, collector);
     }
 }

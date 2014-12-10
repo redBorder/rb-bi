@@ -15,15 +15,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package storm.kafka;
+package storm.kafka.bolt.selector;
 
-public class FailedFetchException extends RuntimeException {
+import backtype.storm.tuple.Tuple;
 
-    public FailedFetchException(String message) {
-        super(message);
-    }
+import java.io.Serializable;
 
-    public FailedFetchException(Exception e) {
-        super(e);
-    }
+public interface KafkaTopicSelector extends Serializable {
+    String getTopic(Tuple tuple);
 }
