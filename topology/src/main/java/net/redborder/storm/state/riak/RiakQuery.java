@@ -51,7 +51,6 @@ public class RiakQuery extends BaseQueryFunction<MapState<Map<String, Object>>, 
     public List<Map<String, Object>> batchRetrieve(MapState<Map<String, Object>> state, List<TridentTuple> tuples) {
         List<Map<String, Object>> result = new ArrayList<>();
 
-        try {
             List<Map<String, Object>> memcachedData = null;
             List<Object> keysToRequest = new ArrayList<>();
             List<String> keysToAppend = new ArrayList<>();
@@ -108,11 +107,6 @@ public class RiakQuery extends BaseQueryFunction<MapState<Map<String, Object>>, 
                     result.add(null);
                 }
             }
-
-        }catch (Exception ex){
-            System.out.println("Exception!!!! : " + ex);
-            ex.printStackTrace();
-        }
         return result;
     }
 
