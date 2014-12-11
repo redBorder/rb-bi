@@ -79,9 +79,7 @@ public class KafkaConsumerMonitorMetrics implements IMetricsConsumer {
 
         if (metric.name.equals("kafkaOffset")) {
 
-            System.out.println("Metric: "  + metric.name);
             Map<String, Object> jsonInfo = (Map<String, Object>) value;
-            System.out.println("Values: " + jsonInfo.toString());
 
             /*
                     Owners
