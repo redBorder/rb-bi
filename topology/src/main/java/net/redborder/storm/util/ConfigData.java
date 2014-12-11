@@ -190,22 +190,28 @@ public class ConfigData {
         return _conf;
     }
 
+    public double getTranquilityBackup(){
+        Double percent = _configFile.getFromGeneral("tranquility_backup_percent");
+        return percent == null ? 0.75 : (1-percent);
+    }
+
     public void getTranquilityPartitions() {
-        int capacity = getMiddleManagerCapacity();
+        Double capacityd = getMiddleManagerCapacity()*getTranquilityBackup();
         int replication = tranquilityReplication();
         int divider = 0;
         int slot;
+        Integer capacity = capacityd.intValue();
 
         if (tranquilityEnabled("traffics")) divider = divider + 2;
         if (tranquilityEnabled("events")) divider = divider + 2;
-        if (tranquilityEnabled("monitor")) divider++;
+        if (tranquilityEnabled("monitor")) capacity = capacity - 4;
 
         if (divider > 0) {
             if (capacity >= divider * replication * 2) {
                 slot = (int) Math.floor(capacity / (replication * 2)) / divider;
                 _tranquilityPartitions.put("traffics", slot * 2);
                 _tranquilityPartitions.put("events", slot * 2);
-                _tranquilityPartitions.put("monitor", slot);
+                _tranquilityPartitions.put("monitor", 1);
             } else {
                 Logger.getLogger(ConfigData.class.getName()).log(Level.SEVERE,
                         "Not enough middle manager capacity");
@@ -213,8 +219,18 @@ public class ConfigData {
         }
     }
 
+    public Integer getTranquilityLimit(String section) {
+        return _configFile.get(section, "tranquility_limit");
+    }
+
     public int tranquilityPartitions(String section) {
-        Integer partitions = _tranquilityPartitions.get(section);
+        Integer partitions;
+        Integer partitionLimit = getTranquilityLimit(section);
+        if (partitionLimit != null) {
+            partitions = partitionLimit;
+        } else {
+            partitions = _tranquilityPartitions.get(section);
+        }
         return partitions == null ? 1 : partitions;
     }
 

@@ -92,6 +92,7 @@ public class BeamEvent implements BeamFactory<Map<String, Object>> {
                             )
                     )
                     .rollup(DruidRollup.create(DruidDimensions.specific(dimensions), aggregators, QueryGranularity.MINUTE))
+                    .druidTuning(DruidTuning.create(80000, new Period("PT10M"), 3))
                     .tuning(ClusteredBeamTuning.builder()
                             .partitions(partitions)
                             .replicants(replicas)
