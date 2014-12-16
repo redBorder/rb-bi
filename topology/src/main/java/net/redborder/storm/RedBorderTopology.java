@@ -134,7 +134,8 @@ public class RedBorderTopology {
                     .parallelismHint(flowPartition).shuffle().name("Flows")
                     .each(new Fields("str"), new MapperFunction("rb_flow"), new Fields("flows"))
                     .each(new Fields("flows"), new MacVendorFunction(), new Fields("macVendorMap"))
-                    .each(new Fields("flows"), new GeoIpFunction(), new Fields("geoIPMap"));
+                    .each(new Fields("flows"), new GeoIpFunction(), new Fields("geoIPMap"))
+                    .parallelismHint(flowPartition);
                     //.each(new Fields("flows"), new AnalizeHttpUrlFunction(), new Fields("httpUrlMap"));
 
             fieldsFlow.add("flows");
@@ -344,7 +345,7 @@ public class RedBorderTopology {
             flowStream = flowStream.parallelismHint(2);
             persist("traffics", flowStream
                     .project(new Fields("traffics"))
-                    .parallelismHint(_config.getWorkers())
+                    .parallelismHint(flowPartition)
                     .shuffle().name("Flow Producer"), "traffics");
 
             mainStream.add(flowStream);
@@ -363,7 +364,7 @@ public class RedBorderTopology {
             persist("events",
                     eventsStream
                             .project(new Fields("events"))
-                            .parallelismHint(_config.getWorkers())
+                            .parallelismHint(eventsPartition)
                             .shuffle().name("Event Producer"), "events");
 
             mainStream.add(eventsStream);
@@ -378,7 +379,7 @@ public class RedBorderTopology {
 
             persist("monitor",
                     monitorStream.project(new Fields("monitor"))
-                            .parallelismHint(_config.getWorkers())
+                            .parallelismHint(monitorPartition)
                             .shuffle().name("Monitor Producer"), "monitor");
 
             mainStream.add(monitorStream);
@@ -529,7 +530,7 @@ public class RedBorderTopology {
             }
 
             ret = s.partitionPersist(druidState, new Fields(field), new TridentBeamStateUpdater())
-                    .parallelismHint(partitions);
+                    .parallelismHint(_config.getKafkaPartitions(_config.getTopic(topic)));
         }
 
         return ret;
