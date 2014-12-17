@@ -82,14 +82,21 @@ public class ConfigData {
     }
 
     private void initWorkers() {
-        List<String> workersList;
 
-        try {
-            workersList = _curator.getChildren().forPath("/storm/supervisors");
-            _numWorkers = workersList.size();
-        } catch (Exception ex) {
-            Logger.getLogger(ConfigData.class.getName()).log(Level.SEVERE, "No supervisor found. Default: 1", ex);
-            _numWorkers = 1;
+        Integer workers = getNumWorkers();
+
+        if(workers==null) {
+            List<String> workersList;
+
+            try {
+                workersList = _curator.getChildren().forPath("/storm/supervisors");
+                _numWorkers = workersList.size();
+            } catch (Exception ex) {
+                Logger.getLogger(ConfigData.class.getName()).log(Level.SEVERE, "No supervisor found. Default: 1", ex);
+                _numWorkers = 1;
+            }
+        }else{
+            _numWorkers = workers;
         }
     }
 
@@ -194,6 +201,11 @@ public class ConfigData {
     public double getTranquilityBackup(){
         Double percent = _configFile.getFromGeneral("tranquility_backup_percent");
         return percent == null ? 0.75 : (1-percent);
+    }
+
+    public Integer getNumWorkers(){
+        Integer num = _configFile.getFromGeneral("tranquility_backup_percent");
+        return num;
     }
 
     public void getTranquilityPartitions() {
