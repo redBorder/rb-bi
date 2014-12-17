@@ -158,6 +158,7 @@ public class ConfigData {
         } else if (mode.equals("cluster")) {
             _conf.put(Config.TOPOLOGY_WORKERS, getWorkers());
             _conf.put(Config.TOPOLOGY_MAX_SPOUT_PENDING, 5);
+            _conf.put(Config.TOPOLOGY_TRIDENT_BATCH_EMIT_INTERVAL_MILLIS, 1000);
             _conf.put("rbDebug", debug);
             Boolean hash_mac = _configFile.getFromGeneral("hash_mac");
 
@@ -199,18 +200,17 @@ public class ConfigData {
         Double capacityd = getMiddleManagerCapacity()*getTranquilityBackup();
         int replication = tranquilityReplication();
         int divider = 0;
-        int slot;
-        Integer capacity = capacityd.intValue();
+        double slot;
 
         if (tranquilityEnabled("traffics")) divider = divider + 2;
         if (tranquilityEnabled("events")) divider = divider + 2;
-        if (tranquilityEnabled("monitor")) capacity = capacity - 4;
+        if (tranquilityEnabled("monitor")) capacityd = capacityd - 4;
 
         if (divider > 0) {
-            if (capacity >= divider * replication * 2) {
-                slot = (int) Math.floor(capacity / (replication * 2)) / divider;
-                _tranquilityPartitions.put("traffics", slot * 2);
-                _tranquilityPartitions.put("events", slot * 2);
+            if (capacityd >= divider * replication * 2) {
+                slot =  capacityd / (replication * 2)/ divider;
+                _tranquilityPartitions.put("traffics", (int)Math.floor(slot*2));
+                _tranquilityPartitions.put("events", (int)Math.floor(slot*2));
                 _tranquilityPartitions.put("monitor", 1);
             } else {
                 Logger.getLogger(ConfigData.class.getName()).log(Level.SEVERE,
