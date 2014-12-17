@@ -204,7 +204,7 @@ public class ConfigData {
     }
 
     public Integer getNumWorkers(){
-        Integer num = _configFile.getFromGeneral("tranquility_backup_percent");
+        Integer num = _configFile.getFromGeneral("num_workers");
         return num;
     }
 
