@@ -135,7 +135,7 @@ public class RedBorderTopology {
                     .each(new Fields("str"), new MapperFunction("rb_flow"), new Fields("flows"))
                     .each(new Fields("flows"), new MacVendorFunction(), new Fields("macVendorMap"))
                     .each(new Fields("flows"), new GeoIpFunction(), new Fields("geoIPMap"))
-                    .parallelismHint(flowPartition*2);
+                    .parallelismHint(_config.getWorkers()*_config.getParallelismFactor());
                     //.each(new Fields("flows"), new AnalizeHttpUrlFunction(), new Fields("httpUrlMap"));
 
             fieldsFlow.add("flows");
@@ -344,7 +344,7 @@ public class RedBorderTopology {
 
             persist("traffics", flowStream
                     .project(new Fields("traffics"))
-                    .parallelismHint(flowPartition*2)
+                    .parallelismHint(_config.getWorkers()*_config.getParallelismFactor())
                     .shuffle().name("Flow Producer"), "traffics");
 
             mainStream.add(flowStream);
