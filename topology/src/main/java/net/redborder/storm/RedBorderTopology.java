@@ -135,7 +135,7 @@ public class RedBorderTopology {
                     .each(new Fields("str"), new MapperFunction("rb_flow"), new Fields("flows"))
                     .each(new Fields("flows"), new MacVendorFunction(), new Fields("macVendorMap"))
                     .each(new Fields("flows"), new GeoIpFunction(), new Fields("geoIPMap"))
-                    .parallelismHint(flowPartition);
+                    .parallelismHint(flowPartition*2);
                     //.each(new Fields("flows"), new AnalizeHttpUrlFunction(), new Fields("httpUrlMap"));
 
             fieldsFlow.add("flows");
@@ -342,10 +342,9 @@ public class RedBorderTopology {
                         .project(new Fields("section", "traffics"));
             }
 
-            flowStream = flowStream.parallelismHint(2);
             persist("traffics", flowStream
                     .project(new Fields("traffics"))
-                    .parallelismHint(flowPartition)
+                    .parallelismHint(flowPartition*2)
                     .shuffle().name("Flow Producer"), "traffics");
 
             mainStream.add(flowStream);
@@ -530,7 +529,7 @@ public class RedBorderTopology {
             }
 
             ret = s.partitionPersist(druidState, new Fields(field), new TridentBeamStateUpdater())
-                    .parallelismHint(_config.getKafkaPartitions(_config.getTopic(topic)));
+                    .parallelismHint(partitions);
         }
 
         return ret;
