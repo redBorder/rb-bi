@@ -519,11 +519,11 @@ public class RedBorderTopology {
                     druidState = new TridentBeamStateFactory<BeamFlow>(bf);
                     break;
                 case "events":
-                    bf = new BeamEvent(partitions, replication, zkHost);
+                    bf = new BeamEvent(partitions, replication, zkHost, _config.getMaxRows());
                     druidState = new TridentBeamStateFactory<BeamEvent>(bf);
                     break;
                 default:
-                    bf = new BeamMonitor(partitions, replication, zkHost);
+                    bf = new BeamMonitor(partitions, replication, zkHost, _config.getMaxRows());
                     druidState = new TridentBeamStateFactory<BeamMonitor>(bf);
                     break;
             }

@@ -153,9 +153,18 @@ public class ConfigData {
     }
 
     public int getMaxRows() {
-        //Integer ret = _configFile.getFromGeneral("maxRows");
-        //return ret != null && ret;
-        return 100000;
+        Integer maxRows = _configFile.getFromGeneral("max_rows");
+        return maxRows != null ? maxRows : 120000;
+    }
+
+    public int getEmitBatchInterval(){
+        Integer emit = _configFile.getFromGeneral("emit_batch_interval");
+        return emit != null ? emit : 1000;
+    }
+
+    public int getMaxSpoutPending(){
+        Integer max_spout = _configFile.getFromGeneral("max_spout_pending");
+        return max_spout != null ? max_spout : 5;
     }
 
     public Config setConfig(String mode) {
@@ -164,8 +173,8 @@ public class ConfigData {
             _conf.setDebug(false);
         } else if (mode.equals("cluster")) {
             _conf.put(Config.TOPOLOGY_WORKERS, getWorkers());
-            _conf.put(Config.TOPOLOGY_MAX_SPOUT_PENDING, 5);
-            _conf.put(Config.TOPOLOGY_TRIDENT_BATCH_EMIT_INTERVAL_MILLIS, 1000);
+            _conf.put(Config.TOPOLOGY_MAX_SPOUT_PENDING, getMaxSpoutPending());
+            _conf.put(Config.TOPOLOGY_TRIDENT_BATCH_EMIT_INTERVAL_MILLIS, getEmitBatchInterval());
             _conf.put("rbDebug", debug);
             Boolean hash_mac = _configFile.getFromGeneral("hash_mac");
 
@@ -215,7 +224,7 @@ public class ConfigData {
 
     public Integer getFetchSizeKafka(){
         Integer fetchsize = _configFile.getFromGeneral("kafka_fetchsize");
-        return fetchsize != null ? fetchsize: 1024 * 1024 * 8;
+        return fetchsize != null ? fetchsize : 1024 * 1024 * 8;
     }
 
 

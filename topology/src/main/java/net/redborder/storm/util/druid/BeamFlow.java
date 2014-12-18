@@ -101,14 +101,14 @@ public class BeamFlow implements BeamFactory<Map<String, Object>> {
                             )
                     )
                     .rollup(DruidRollup.create(DruidDimensions.specific(dimesions), aggregators, QueryGranularity.MINUTE))
-                    .druidTuning(DruidTuning.create(120000, new Period("PT10M"), 3))
+                    .druidTuning(DruidTuning.create(maxRows, new Period("PT10M"), 3))
                     .tuning(ClusteredBeamTuning.builder()
-                                    .partitions(partitions)
-                                    .replicants(replicas)
-                                    .segmentGranularity(Granularity.HOUR)
-                                    .warmingPeriod(new Period("PT0M"))
-                                    .windowPeriod(new Period("PT15M"))
-                                    .build())
+                            .partitions(partitions)
+                            .replicants(replicas)
+                            .segmentGranularity(Granularity.HOUR)
+                            .warmingPeriod(new Period("PT0M"))
+                            .windowPeriod(new Period("PT15M"))
+                            .build())
                     .timestampSpec(new TimestampSpec("timestamp", "posix"));
 
 
