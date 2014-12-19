@@ -13,6 +13,8 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Created by andresgomez on 19/12/14.
@@ -25,30 +27,42 @@ public class PostgreSQLocation extends BaseFunction {
 
     @Override
     public void prepare(Map conf, TridentOperationContext context) {
-        _manager = PostgresqlManager.getInstance();
-        _manager.init();
-        _hash = _manager.getAPLocation();
-        System.out.println("AP LOCATION: " + _hash.toString());
-        _last_update = System.currentTimeMillis();
+        try {
+            _manager = PostgresqlManager.getInstance();
+            _manager.init();
+            _hash = _manager.getAPLocation();
+            System.out.println("AP LOCATION: " + _hash.toString());
+            _last_update = System.currentTimeMillis();
+        } catch (Exception ex) {
+            Logger.getLogger(PostgreSQLocation.class.getName()).log(Level.WARNING,
+                    "The postgreSQL query fail ... next try on 30 minutes!");
+            ex.printStackTrace();
+        }
     }
 
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
+        try {
+            if (_last_update + 1800000 < System.currentTimeMillis()) {
+                _hash = _manager.getAPLocation();
+                System.out.println("AP LOCATION: " + _hash.toString());
+                _last_update = System.currentTimeMillis();
 
-        if(_last_update+1800000<System.currentTimeMillis()){
-            _hash = _manager.getAPLocation();
-            System.out.println("AP LOCATION: " + _hash.toString());
-            _last_update=System.currentTimeMillis();
+            }
 
+            Map<String, Object> flow = (Map<String, Object>) tuple.getValue(0);
+            String wireless_station = (String) flow.get("wireless_station");
+
+            if (wireless_station != null)
+                collector.emit(new Values(_hash.get(wireless_station)));
+            else
+                collector.emit(new Values(new HashMap<String, Object>()));
+        } catch (Exception ex) {
+            _last_update = System.currentTimeMillis();
+            Logger.getLogger(PostgreSQLocation.class.getName()).log(Level.WARNING,
+                    "The postgreSQL query fail ... next try on 30 minutes!", ex.toString());
+            ex.printStackTrace();
         }
-
-        Map<String, Object> flow = (Map<String, Object>) tuple.getValue(0);
-        String wireless_station = (String) flow.get("wireless_station");
-
-        if (wireless_station != null)
-            collector.emit(new Values(_hash.get(wireless_station)));
-        else
-            collector.emit(new Values(new HashMap<String, Object>()));
     }
 
     @Override
