@@ -134,12 +134,15 @@ public class RedBorderTopology {
                     .parallelismHint(flowPartition).shuffle().name("Flows")
                     .each(new Fields("str"), new MapperFunction("rb_flow"), new Fields("flows"))
                     .each(new Fields("flows"), new MacVendorFunction(), new Fields("macVendorMap"))
-                    .each(new Fields("flows"), new GeoIpFunction(), new Fields("geoIPMap"));
-            //.each(new Fields("flows"), new AnalizeHttpUrlFunction(), new Fields("httpUrlMap"));
+                    .each(new Fields("flows"), new GeoIpFunction(), new Fields("geoIPMap"))
+                    .each(new Fields("flows"), new PostgreSQLocation(), new Fields("locationWLC"))
+                    .parallelismHint(_config.getWorkers());
+                    //.each(new Fields("flows"), new AnalizeHttpUrlFunction(), new Fields("httpUrlMap"));
 
             fieldsFlow.add("flows");
             fieldsFlow.add("geoIPMap");
             fieldsFlow.add("macVendorMap");
+            fieldsFlow.add("locationWLC");
             //fieldsFlow.add("httpUrlMap");
         }
 
