@@ -31,7 +31,6 @@ public class PostgreSQLocation extends BaseFunction {
             _manager = PostgresqlManager.getInstance();
             _manager.init();
             _hash = _manager.getAPLocation();
-            System.out.println("AP LOCATION: " + _hash.toString());
             _last_update = System.currentTimeMillis();
         } catch (Exception ex) {
             Logger.getLogger(PostgreSQLocation.class.getName()).log(Level.WARNING,
@@ -45,7 +44,9 @@ public class PostgreSQLocation extends BaseFunction {
         try {
             if (_last_update + 1800000 < System.currentTimeMillis()) {
                 _hash = _manager.getAPLocation();
-                System.out.println("AP LOCATION: " + _hash.toString());
+                Logger.getLogger(PostgreSQLocation.class.getName()).log(Level.INFO,
+                        "Update location with postgreSQL info. \n Location Entry: " + _hash.size()
+                + " \n   Keys: " + _hash.keySet());
                 _last_update = System.currentTimeMillis();
 
             }
