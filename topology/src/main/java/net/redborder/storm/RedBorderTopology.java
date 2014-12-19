@@ -142,7 +142,6 @@ public class RedBorderTopology {
             fieldsFlow.add("flows");
             fieldsFlow.add("geoIPMap");
             fieldsFlow.add("macVendorMap");
-            fieldsFlow.add("locationWLC");
             //fieldsFlow.add("httpUrlMap");
         }
 
@@ -226,6 +225,7 @@ public class RedBorderTopology {
                         StateQuery.getStateLocationQuery(_config), new Fields("mseMap"));
 
                 fieldsFlow.add("mseMap");
+                fieldsFlow.add("locationWLC");
             }
         }
 
