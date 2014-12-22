@@ -28,8 +28,8 @@ public class MergeMapsFunction extends BaseFunction {
         _fields = fields;
     }
 
-    public MergeMapsFunction(){
-        _fields=null;
+    public MergeMapsFunction() {
+        _fields = null;
     }
 
     @Override
@@ -42,6 +42,36 @@ public class MergeMapsFunction extends BaseFunction {
     public void execute(TridentTuple tuple, TridentCollector collector) {
         Map<String, Object> finalMap = new HashMap<>();
         Map<String, Object> flow = (Map<String, Object>) tuple.get(0);
+        Map<String, Object> location = new HashMap<>();
+        Map<String, Object> nmsp = null, trap = null, mse = null, locationPsql = null;
+
+        if (_fields != null) {
+            if (_fields.contains("mseMap"))
+                mse = (Map<String, Object>) tuple.getValueByField("mseMap");
+            if (_fields.contains("nmspMap"))
+                nmsp = (Map<String, Object>) tuple.getValueByField("nmspMap");
+            if (_fields.contains("rssiMap"))
+                trap = (Map<String, Object>) tuple.getValueByField("rssiMap");
+            if (_fields.contains("locationWLC"))
+                locationPsql = (Map<String, Object>) tuple.getValueByField("locationWLC");
+
+            if (trap != null) {
+                location.putAll(trap);
+                System.out.println("LOCATION TRAP:" + trap);
+            }
+            if (mse != null) {
+                location.putAll(mse);
+                System.out.println("LOCATION MSE:" + mse);
+            }
+            if (nmsp != null) {
+                location.putAll(nmsp);
+                System.out.println("LOCATION NMSP:" + nmsp);
+            }
+            if (locationPsql != null) {
+                location.putAll(locationPsql);
+                System.out.println("LOCATION PSQL:" + locationPsql);
+            }
+        }
 
         if (_fields == null) {
             List<Object> data = new LinkedList<>(tuple.getValues());
@@ -59,6 +89,13 @@ public class MergeMapsFunction extends BaseFunction {
                     finalMap.putAll(valueMap);
                 }
             }
+        }
+
+        if (_fields != null) {
+            System.out.println("FLOW 1 : " + finalMap);
+            System.out.println("FLOW LOC: " + location);
+            finalMap.putAll(location);
+            System.out.println("FLOW 2 : " + finalMap);
         }
 
         finalMap.putAll(flow);

@@ -135,7 +135,6 @@ public class RedBorderTopology {
                     .each(new Fields("str"), new MapperFunction("rb_flow"), new Fields("flows"))
                     .each(new Fields("flows"), new MacVendorFunction(), new Fields("macVendorMap"))
                     .each(new Fields("flows"), new GeoIpFunction(), new Fields("geoIPMap"))
-                    .each(new Fields("flows"), new PostgreSQLocation(), new Fields("locationWLC"))
                     .parallelismHint(_config.getWorkers());
                     //.each(new Fields("flows"), new AnalizeHttpUrlFunction(), new Fields("httpUrlMap"));
 
@@ -225,7 +224,6 @@ public class RedBorderTopology {
                         StateQuery.getStateLocationQuery(_config), new Fields("mseMap"));
 
                 fieldsFlow.add("mseMap");
-                fieldsFlow.add("locationWLC");
             }
         }
 
@@ -268,8 +266,10 @@ public class RedBorderTopology {
                                 new MergeMapsFunction(), new Fields("traffics")), "traffics");
 
                 flowStream = flowStream.stateQuery(nmspState, new Fields("flows"),
-                        StateQuery.getStateQuery(_config, "client_mac", "nmsp"), new Fields("nmspMap"));
+                        StateQuery.getStateQuery(_config, "client_mac", "nmsp"), new Fields("nmspMap"))
+                        .each(new Fields("nmspMap"), new PostgreSQLocation(), new Fields("locationWLC"));
 
+                fieldsFlow.add("locationWLC");
                 fieldsFlow.add("nmspMap");
             }
         }
