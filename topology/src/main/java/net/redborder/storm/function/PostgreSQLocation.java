@@ -1,6 +1,7 @@
 package net.redborder.storm.function;
 
 import backtype.storm.tuple.Values;
+import net.redborder.storm.util.ConfigData;
 import net.redborder.storm.util.PostgresqlManager;
 import storm.trident.operation.BaseFilter;
 import storm.trident.operation.BaseFunction;
@@ -24,10 +25,20 @@ public class PostgreSQLocation extends BaseFunction {
     PostgresqlManager _manager;
     Map<String, Map<String, Object>> _hash;
     long _last_update;
+    String user;
+    String uri;
+    String pass;
+
+    public PostgreSQLocation(String uri, String user, String pass){
+        this.uri=uri;
+        this.user=user;
+        this.pass=pass;
+    }
 
     @Override
     public void prepare(Map conf, TridentOperationContext context) {
         try {
+            PostgresqlManager.initConfig(uri, user, pass);
             _manager = PostgresqlManager.getInstance();
             _manager.init();
             _hash = _manager.getAPLocation();
@@ -42,7 +53,7 @@ public class PostgreSQLocation extends BaseFunction {
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
         try {
-            if (_last_update + 1800000 < System.currentTimeMillis()) {
+            if ((_last_update + 1800000) < System.currentTimeMillis()) {
                 _hash = _manager.getAPLocation();
                 Logger.getLogger(PostgreSQLocation.class.getName()).log(Level.INFO,
                         "Update location with postgreSQL info. \n Location Entry: " + _hash.size()

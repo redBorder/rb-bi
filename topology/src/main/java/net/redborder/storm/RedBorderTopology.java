@@ -267,7 +267,7 @@ public class RedBorderTopology {
 
                 flowStream = flowStream.stateQuery(nmspState, new Fields("flows"),
                         StateQuery.getStateQuery(_config, "client_mac", "nmsp"), new Fields("nmspMap"))
-                        .each(new Fields("nmspMap"), new PostgreSQLocation(), new Fields("locationWLC"));
+                        .each(new Fields("nmspMap"), new PostgreSQLocation(_config.getDbUri(), _config.getDbUser(), _config.getDbPass()), new Fields("locationWLC"));
 
                 fieldsFlow.add("locationWLC");
                 fieldsFlow.add("nmspMap");

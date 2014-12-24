@@ -11,8 +11,9 @@ public class PostgresqlManager {
 
     private static Connection conn = null;
     private static PostgresqlManager instance = null;
-    final String URL = "jdbc:postgresql://postgresql.redborder.cluster:5432/redborder";
-
+    private static String _user;
+    private static String _uri;
+    private static String _pass;
 
     private PostgresqlManager() {
         try {
@@ -22,16 +23,29 @@ public class PostgresqlManager {
         }
     }
 
+    public static void initConfig(String uri, String user, String pass) {
+        _uri=uri;
+        _user=user;
+        _pass=pass;
+    }
+
     public static PostgresqlManager getInstance() {
-        if (instance == null) {
-            instance = new PostgresqlManager();
+        if (_uri != null && _user != null) {
+            if (instance == null) {
+                instance = new PostgresqlManager();
+            }
+        } else {
+            System.out.println("You must call initConfig first!");
         }
         return instance;
     }
 
     private void initConnection() {
         try {
-            conn = DriverManager.getConnection(URL, "redborder", null);
+            if (_uri != null && _user != null)
+                conn = DriverManager.getConnection(_uri, _user, _pass);
+            else
+                System.out.println("You must initialize the db_uri and db_user at bi_config file.");
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -56,7 +70,7 @@ public class PostgresqlManager {
         closeConnection();
     }
 
-    public Map getAPLocation()  {
+    public Map getAPLocation() {
 
         Map<String, Map<String, Object>> map = new HashMap<>();
 
@@ -72,7 +86,7 @@ public class PostgresqlManager {
             while (rs.next()) {
                 Map<String, Object> location = new HashMap<>();
                 location.put("client_campus", rs.getString("campus_name"));
-                location.put("client_building",rs.getString("building_name"));
+                location.put("client_building", rs.getString("building_name"));
                 location.put("client_floor", rs.getString("floor_name"));
                 map.put(rs.getString("mac_address"), location);
             }

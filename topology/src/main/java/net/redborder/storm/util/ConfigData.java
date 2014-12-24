@@ -145,6 +145,18 @@ public class ConfigData {
         return _middleManagers;
     }
 
+    public String getDbUri(){
+        return _configFile.getFromGeneral("db_uri");
+    }
+
+    public String getDbUser(){
+        return _configFile.getFromGeneral("db_user");
+    }
+
+    public String getDbPass(){
+        return _configFile.getFromGeneral("db_pass");
+    }
+
     public int getMaxRows() {
         //Integer ret = _configFile.getFromGeneral("maxRows");
         //return ret != null && ret;
