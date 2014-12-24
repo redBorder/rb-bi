@@ -24,6 +24,7 @@ public class RiakNmspMeasureQuery extends RiakQuery {
 
         if (nmspEvent != null) {
             String client_mac = (String) nmspEvent.get("client_mac");
+            String sensor_name = (String) nmspEvent.get("sensor_name");
             List<String> apMacs = (List<String>) nmspEvent.get("ap_mac");
             List<Integer> clientRssis = (List<Integer>) nmspEvent.get("rssi");
             Integer rssi = Collections.max(clientRssis);
@@ -61,6 +62,7 @@ public class RiakNmspMeasureQuery extends RiakQuery {
             Map<String, Object> druid = new HashMap<>();
             druid.put("bytes", 0);
             druid.put("pkts", 0);
+            druid.put("sensor_name", sensor_name);
             druid.put("timestamp", System.currentTimeMillis() / 1000);
             druid.putAll(map);
             collector.emit(new Values(client_mac, map, druid));

@@ -16,6 +16,7 @@ public class GetNMSPInfoData extends BaseFunction {
     public void execute(TridentTuple tuple, TridentCollector collector) {
         Map<String, Object> map = (Map<String, Object>) tuple.get(0);
         if (map != null) {
+
             Map<String, Object> data = new HashMap<>();
             data.putAll(map);
             data.remove("client_mac");
@@ -25,6 +26,15 @@ public class GetNMSPInfoData extends BaseFunction {
             druid.put("pkts", 0);
             druid.put("timestamp", System.currentTimeMillis() / 1000);
             druid.putAll(map);
+
+            Object vlan = map.get("vlan_id");
+
+            if (vlan != null) {
+                druid.put("src_vlan", vlan);
+                data.put("src_vlan", vlan);
+                data.remove("vlan_id");
+                druid.remove("vlan_id");
+            }
 
             collector.emit(new Values(map.get("client_mac"), data, druid));
         }

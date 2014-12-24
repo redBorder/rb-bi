@@ -18,16 +18,19 @@ public class GetNMSPdata extends BaseFunction {
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
         Map<String, Object> nmspEvent = (Map<String, Object>) tuple.get(0);
+        String sensor_name = (String) nmspEvent.get("sensor_name");
         String nmspType = (String) nmspEvent.get("type");
 
         if (nmspType.toLowerCase().equals("measure")) {
             List<Map<String, Object>> datas = (List<Map<String, Object>>) nmspEvent.get("data");
             for (Map<String, Object> data : datas) {
+                data.put("sensor_name", sensor_name);
                 collector.emit(new Values(data, null));
             }
         } else if (nmspType.toLowerCase().equals("info")) {
             List<Map<String, Object>> datas = (List<Map<String, Object>>) nmspEvent.get("data");
             for (Map<String, Object> data : datas) {
+                data.put("sensor_name", sensor_name);
                 collector.emit(new Values(null, data));
             }
         } else {

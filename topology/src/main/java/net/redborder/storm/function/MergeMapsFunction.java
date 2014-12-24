@@ -57,19 +57,15 @@ public class MergeMapsFunction extends BaseFunction {
 
             if (trap != null) {
                 location.putAll(trap);
-                System.out.println("LOCATION TRAP:" + trap);
             }
             if (mse != null) {
                 location.putAll(mse);
-                System.out.println("LOCATION MSE:" + mse);
             }
             if (nmsp != null) {
                 location.putAll(nmsp);
-                System.out.println("LOCATION NMSP:" + nmsp);
             }
             if (locationPsql != null) {
                 location.putAll(locationPsql);
-                System.out.println("LOCATION PSQL:" + locationPsql);
             }
         }
 
@@ -92,10 +88,7 @@ public class MergeMapsFunction extends BaseFunction {
         }
 
         if (_fields != null) {
-            System.out.println("FLOW 1 : " + finalMap);
-            System.out.println("FLOW LOC: " + location);
             finalMap.putAll(location);
-            System.out.println("FLOW 2 : " + finalMap);
         }
 
         finalMap.putAll(flow);
@@ -105,6 +98,7 @@ public class MergeMapsFunction extends BaseFunction {
             if (mac != null)
                 finalMap.put("client_mac", mac.hashCode());
         }
+
         collector.emit(new Values(finalMap));
     }
 
