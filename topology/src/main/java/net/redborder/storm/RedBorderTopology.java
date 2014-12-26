@@ -441,7 +441,7 @@ public class RedBorderTopology {
         PrintWriter pw = null;
 
         try {
-            pw = new PrintWriter(new FileWriter("/opt/rb/var/redBorder-BI/app/topologyInfo"));
+            pw = new PrintWriter(new FileWriter("/opt/rb/var/rb-bi/app/topologyInfo"));
         } catch (IOException e) {
             System.out.println("Error writing info file:" + e);
         }

@@ -92,7 +92,7 @@ public class SiddhiManager {
                 Config hazelcastConf = new Config();
                 //hazelcastConf.setProperty("hazelcast.logging.type", "log4j");
 
-                hazelcastConf.setConfigurationFile(new File("/opt/rb/etc/redBorder-BI/siddhi-hazelcast.xml"));
+                hazelcastConf.setConfigurationFile(new File("/opt/rb/etc/rb-bi/siddhi-hazelcast.xml"));
                 //hazelcastConf.getGroupConfig().setName(siddhiConfiguration.getQueryPlanIdentifier());
                 //hazelcastConf.setInstanceName(siddhiConfiguration.getInstanceIdentifier());
                 hazelcastInstance = Hazelcast.newHazelcastInstance(hazelcastConf);

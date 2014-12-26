@@ -43,7 +43,7 @@ public class SiddhiState implements State {
     Map<String, List<StreamDefinition>> _inputStreams;
     String _zookeeper;
     CuratorFramework client = null;
-    private final String CONFIG_FILE_PATH = "/opt/rb/etc/redBorder-BI/queries.yml";
+    private final String CONFIG_FILE_PATH = "/opt/rb/etc/rb-bi/queries.yml";
     List<String> _streams;
     Map<String, String> _queries;
     static boolean _debug = false;
