@@ -136,7 +136,7 @@ public class RedBorderTopology {
                     .each(new Fields("flows"), new MacVendorFunction(), new Fields("macVendorMap"))
                     .each(new Fields("flows"), new GeoIpFunction(), new Fields("geoIPMap"))
                     .parallelismHint(_config.getWorkers());
-                    //.each(new Fields("flows"), new AnalizeHttpUrlFunction(), new Fields("httpUrlMap"));
+            //.each(new Fields("flows"), new AnalizeHttpUrlFunction(), new Fields("httpUrlMap"));
 
             fieldsFlow.add("flows");
             fieldsFlow.add("geoIPMap");
@@ -243,6 +243,7 @@ public class RedBorderTopology {
 
             Stream nmspInfoStream = nmspStream.project(new Fields("nmsp_info"))
                     .each(new Fields("nmsp_info"), new GetNMSPInfoData(), new Fields("src_mac", "nmsp_info_data", "nmsp_info_data_druid"))
+                    .each(new Fields("nmsp_info_data_druid"), new PostgreSQLocation(_config.getDbUri(), _config.getDbUser(), _config.getDbPass()), new Fields("infoLocation"))
                     .each(new Fields("nmsp_info_data_druid"), new MacVendorFunction(), new Fields("nmspInfoMacVendorMap"));
 
             nmspInfoStream.partitionPersist(nmspStateInfoFactory, new Fields("src_mac", "nmsp_info_data"),
@@ -250,6 +251,7 @@ public class RedBorderTopology {
 
             Stream nmspMeasureStream = nmspStream.project(new Fields("nmsp_measure"))
                     .stateQuery(nmspStateInfo, new Fields("nmsp_measure"), StateQuery.getStateNmspMeasureQuery(_config), new Fields("src_mac", "nmsp_measure_data", "nmsp_measure_data_druid"))
+                    .each(new Fields("nmsp_measure_data_druid"), new PostgreSQLocation(_config.getDbUri(), _config.getDbUser(), _config.getDbPass()), new Fields("measureLocation"))
                     .each(new Fields("nmsp_measure_data_druid"), new MacVendorFunction(), new Fields("nmspMeasureMacVendorMap"));
 
             nmspMeasureStream.partitionPersist(nmspStateFactory, new Fields("src_mac", "nmsp_measure_data"),
@@ -258,11 +260,11 @@ public class RedBorderTopology {
             if (_config.contains("traffics")) {
                 // Generate a flow msg
                 persist("traffics",
-                        nmspMeasureStream.each(new Fields("nmsp_measure_data_druid", "nmspMeasureMacVendorMap"),
+                        nmspMeasureStream.each(new Fields("nmsp_measure_data_druid", "nmspMeasureMacVendorMap", "measureLocation"),
                                 new MergeMapsFunction(), new Fields("traffics")), "traffics");
 
                 persist("traffics",
-                        nmspInfoStream.each(new Fields("nmsp_info_data_druid", "nmspInfoMacVendorMap"),
+                        nmspInfoStream.each(new Fields("nmsp_info_data_druid", "nmspInfoMacVendorMap", "infoLocation"),
                                 new MergeMapsFunction(), new Fields("traffics")), "traffics");
 
                 flowStream = flowStream.stateQuery(nmspState, new Fields("flows"),
