@@ -20,7 +20,7 @@ import java.util.logging.Logger;
  */
 public class ConfigFile {
 
-    private final String CONFIG_FILE_PATH = "/opt/rb/etc/redBorder-BI/config.yml";
+    private final String CONFIG_FILE_PATH = "/opt/rb/etc/rb-bi/config.yml";
     private Map<String, Object> _sections;
     private Map<String, Object> _general;
     private List<String> _availableTopics;
