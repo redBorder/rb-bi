@@ -37,11 +37,13 @@ public class BeamEvent implements BeamFactory<Map<String, Object>> {
     int partitions;
     int replicas;
     String zk;
+    int maxRows;
 
-    public BeamEvent(int partitions, int replicas, String zk) {
+    public BeamEvent(int partitions, int replicas, String zk, int maxRows){
         this.partitions = partitions;
         this.replicas = replicas;
         this.zk = zk;
+        this.maxRows=maxRows;
     }
 
     @Override
@@ -92,6 +94,7 @@ public class BeamEvent implements BeamFactory<Map<String, Object>> {
                             )
                     )
                     .rollup(DruidRollup.create(DruidDimensions.specific(dimensions), aggregators, QueryGranularity.MINUTE))
+                    .druidTuning(DruidTuning.create(maxRows, new Period("PT10M"), 3))
                     .tuning(ClusteredBeamTuning.builder()
                             .partitions(partitions)
                             .replicants(replicas)

@@ -15,15 +15,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package storm.kafka;
+package storm.kafka.bolt.mapper;
 
-public class FailedFetchException extends RuntimeException {
+import backtype.storm.tuple.Tuple;
 
-    public FailedFetchException(String message) {
-        super(message);
-    }
+import java.io.Serializable;
 
-    public FailedFetchException(Exception e) {
-        super(e);
-    }
+/**
+ * as the really verbose name suggests this interface mapps a storm tuple to kafka key and message.
+ * @param <K> type of key.
+ * @param <V> type of value.
+ */
+public interface TupleToKafkaMapper<K,V> extends Serializable {
+    K getKeyFromTuple(Tuple tuple);
+    V getMessageFromTuple(Tuple tuple);
 }

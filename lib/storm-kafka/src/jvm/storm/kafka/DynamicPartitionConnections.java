@@ -17,7 +17,6 @@
  */
 package storm.kafka;
 
-import backtype.storm.utils.Utils;
 import kafka.javaapi.consumer.SimpleConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,15 +52,6 @@ public class DynamicPartitionConnections {
 
     public SimpleConsumer register(Partition partition) {
         Broker broker = _reader.getCurrentBrokers().getBrokerFor(partition.partition);
-        int tries = 0;
-
-        while (broker == null) {
-            LOG.warn("Broker for partition " + partition.partition + " is not assigned. Try #" + tries);
-            broker = _reader.getCurrentBrokers().getBrokerFor(partition.partition);
-            Utils.sleep(1000);
-            tries++;
-        }
-
         return register(broker, partition.partition);
     }
 

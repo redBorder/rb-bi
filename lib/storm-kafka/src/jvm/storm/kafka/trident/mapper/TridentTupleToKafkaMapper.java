@@ -15,15 +15,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package storm.kafka;
+package storm.kafka.trident.mapper;
 
-public class FailedFetchException extends RuntimeException {
+import backtype.storm.tuple.Tuple;
+import storm.trident.tuple.TridentTuple;
 
-    public FailedFetchException(String message) {
-        super(message);
-    }
+import java.io.Serializable;
 
-    public FailedFetchException(Exception e) {
-        super(e);
-    }
+public interface TridentTupleToKafkaMapper<K,V>  extends Serializable {
+    K getKeyFromTuple(TridentTuple tuple);
+    V getMessageFromTuple(TridentTuple tuple);
 }

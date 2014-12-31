@@ -82,14 +82,21 @@ public class ConfigData {
     }
 
     private void initWorkers() {
-        List<String> workersList;
 
-        try {
-            workersList = _curator.getChildren().forPath("/storm/supervisors");
-            _numWorkers = workersList.size();
-        } catch (Exception ex) {
-            Logger.getLogger(ConfigData.class.getName()).log(Level.SEVERE, "No supervisor found. Default: 1", ex);
-            _numWorkers = 1;
+        Integer workers = getNumWorkers();
+
+        if(workers==null) {
+            List<String> workersList;
+
+            try {
+                workersList = _curator.getChildren().forPath("/storm/supervisors");
+                _numWorkers = workersList.size();
+            } catch (Exception ex) {
+                Logger.getLogger(ConfigData.class.getName()).log(Level.SEVERE, "No supervisor found. Default: 1", ex);
+                _numWorkers = 1;
+            }
+        }else{
+            _numWorkers = workers;
         }
     }
 
@@ -158,9 +165,18 @@ public class ConfigData {
     }
 
     public int getMaxRows() {
-        //Integer ret = _configFile.getFromGeneral("maxRows");
-        //return ret != null && ret;
-        return 100000;
+        Integer maxRows = _configFile.getFromGeneral("max_rows");
+        return maxRows != null ? maxRows : 120000;
+    }
+
+    public int getEmitBatchInterval(){
+        Integer emit = _configFile.getFromGeneral("emit_batch_interval");
+        return emit != null ? emit : 1000;
+    }
+
+    public int getMaxSpoutPending(){
+        Integer max_spout = _configFile.getFromGeneral("max_spout_pending");
+        return max_spout != null ? max_spout : 5;
     }
 
     public Config setConfig(String mode) {
@@ -169,7 +185,8 @@ public class ConfigData {
             _conf.setDebug(false);
         } else if (mode.equals("cluster")) {
             _conf.put(Config.TOPOLOGY_WORKERS, getWorkers());
-            _conf.put(Config.TOPOLOGY_MAX_SPOUT_PENDING, 5);
+            _conf.put(Config.TOPOLOGY_MAX_SPOUT_PENDING, getMaxSpoutPending());
+            _conf.put(Config.TOPOLOGY_TRIDENT_BATCH_EMIT_INTERVAL_MILLIS, getEmitBatchInterval());
             _conf.put("rbDebug", debug);
             Boolean hash_mac = _configFile.getFromGeneral("hash_mac");
 
@@ -202,22 +219,43 @@ public class ConfigData {
         return _conf;
     }
 
+    public double getTranquilityBackup(){
+        Double percent = _configFile.getFromGeneral("tranquility_backup_percent");
+        return percent == null ? 0.75 : (1-percent);
+    }
+
+    private Integer getNumWorkers(){
+        Integer num = _configFile.getFromGeneral("num_workers");
+        return num;
+    }
+
+    public Integer getParallelismFactor(){
+        Integer parallelismFactor = _configFile.getFromGeneral("parallelism_factor");
+        return parallelismFactor != null ? parallelismFactor: 2;
+    }
+
+    public Integer getFetchSizeKafka(){
+        Integer fetchsize = _configFile.getFromGeneral("kafka_fetchsize");
+        return fetchsize != null ? fetchsize : 1024 * 1024 * 8;
+    }
+
+
     public void getTranquilityPartitions() {
-        int capacity = getMiddleManagerCapacity();
+        Double capacityd = getMiddleManagerCapacity()*getTranquilityBackup();
         int replication = tranquilityReplication();
         int divider = 0;
-        int slot;
+        double slot;
 
         if (tranquilityEnabled("traffics")) divider = divider + 2;
         if (tranquilityEnabled("events")) divider = divider + 2;
-        if (tranquilityEnabled("monitor")) divider++;
+        if (tranquilityEnabled("monitor")) capacityd = capacityd - 4;
 
         if (divider > 0) {
-            if (capacity >= divider * replication * 2) {
-                slot = (int) Math.floor(capacity / (replication * 2)) / divider;
-                _tranquilityPartitions.put("traffics", slot * 2);
-                _tranquilityPartitions.put("events", slot * 2);
-                _tranquilityPartitions.put("monitor", slot);
+            if (capacityd >= divider * replication * 2) {
+                slot =  capacityd / (replication * 2)/ divider;
+                _tranquilityPartitions.put("traffics", (int)Math.floor(slot*2));
+                _tranquilityPartitions.put("events", (int)Math.floor(slot*2));
+                _tranquilityPartitions.put("monitor", 1);
             } else {
                 Logger.getLogger(ConfigData.class.getName()).log(Level.SEVERE,
                         "Not enough middle manager capacity");
@@ -225,8 +263,18 @@ public class ConfigData {
         }
     }
 
+    public Integer getTranquilityLimit(String section) {
+        return _configFile.get(section, "tranquility_limit");
+    }
+
     public int tranquilityPartitions(String section) {
-        Integer partitions = _tranquilityPartitions.get(section);
+        Integer partitions;
+        Integer partitionLimit = getTranquilityLimit(section);
+        if (partitionLimit != null) {
+            partitions = partitionLimit;
+        } else {
+            partitions = _tranquilityPartitions.get(section);
+        }
         return partitions == null ? 1 : partitions;
     }
 

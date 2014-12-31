@@ -81,7 +81,6 @@ public class KafkaConsumerMonitorMetrics implements IMetricsConsumer {
 
             Map<String, Object> jsonInfo = (Map<String, Object>) value;
 
-
             /*
                     Owners
              */

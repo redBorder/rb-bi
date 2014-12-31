@@ -155,7 +155,15 @@ public class PartitionManager {
             offset = _emittedToOffset;
         }
 
-        ByteBufferMessageSet msgs = KafkaUtils.fetchMessages(_spoutConfig, _consumer, _partition, offset);
+        ByteBufferMessageSet msgs = null;
+        try {
+            msgs = KafkaUtils.fetchMessages(_spoutConfig, _consumer, _partition, offset);
+        } catch (TopicOffsetOutOfRangeException e) {
+            _emittedToOffset = KafkaUtils.getOffset(_consumer, _spoutConfig.topic, _partition.partition, _spoutConfig);
+            LOG.warn("Using new offset: {}", _emittedToOffset);
+            // fetch failed, so don't update the metrics
+            return;
+        }
         long end = System.nanoTime();
         long millis = (end - start) / 1000000;
         _fetchAPILatencyMax.update(millis);
@@ -187,10 +195,9 @@ public class PartitionManager {
     public void ack(Long offset) {
         if (!_pending.isEmpty() && _pending.first() < offset - _spoutConfig.maxOffsetBehind) {
             // Too many things pending!
-            _pending.headSet(offset).clear();
-        } else {
-            _pending.remove(offset);
+            _pending.headSet(offset - _spoutConfig.maxOffsetBehind).clear();
         }
+        _pending.remove(offset);
         numberAcked++;
     }
 

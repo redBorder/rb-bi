@@ -135,8 +135,8 @@ public class RedBorderTopology {
                     .each(new Fields("str"), new MapperFunction("rb_flow"), new Fields("flows"))
                     .each(new Fields("flows"), new MacVendorFunction(), new Fields("macVendorMap"))
                     .each(new Fields("flows"), new GeoIpFunction(), new Fields("geoIPMap"))
-                    .parallelismHint(_config.getWorkers());
-            //.each(new Fields("flows"), new AnalizeHttpUrlFunction(), new Fields("httpUrlMap"));
+                    .parallelismHint(_config.getWorkers()*_config.getParallelismFactor());
+                    //.each(new Fields("flows"), new AnalizeHttpUrlFunction(), new Fields("httpUrlMap"));
 
             fieldsFlow.add("flows");
             fieldsFlow.add("geoIPMap");
@@ -389,10 +389,9 @@ public class RedBorderTopology {
                         .project(new Fields("section", "traffics"));
             }
 
-            flowStream = flowStream.parallelismHint(2);
             persist("traffics", flowStream
                     .project(new Fields("traffics"))
-                    .parallelismHint(_config.getWorkers())
+                    .parallelismHint(_config.getWorkers()*_config.getParallelismFactor())
                     .shuffle().name("Flow Producer"), "traffics");
 
             mainStream.add(flowStream);
@@ -411,7 +410,7 @@ public class RedBorderTopology {
             persist("events",
                     eventsStream
                             .project(new Fields("events"))
-                            .parallelismHint(_config.getWorkers())
+                            .parallelismHint(eventsPartition)
                             .shuffle().name("Event Producer"), "events");
 
             mainStream.add(eventsStream);
@@ -426,7 +425,7 @@ public class RedBorderTopology {
 
             persist("monitor",
                     monitorStream.project(new Fields("monitor"))
-                            .parallelismHint(_config.getWorkers())
+                            .parallelismHint(monitorPartition)
                             .shuffle().name("Monitor Producer"), "monitor");
 
             mainStream.add(monitorStream);
@@ -567,11 +566,11 @@ public class RedBorderTopology {
                     druidState = new TridentBeamStateFactory<BeamFlow>(bf);
                     break;
                 case "events":
-                    bf = new BeamEvent(partitions, replication, zkHost);
+                    bf = new BeamEvent(partitions, replication, zkHost, _config.getMaxRows());
                     druidState = new TridentBeamStateFactory<BeamEvent>(bf);
                     break;
                 default:
-                    bf = new BeamMonitor(partitions, replication, zkHost);
+                    bf = new BeamMonitor(partitions, replication, zkHost, _config.getMaxRows());
                     druidState = new TridentBeamStateFactory<BeamMonitor>(bf);
                     break;
             }

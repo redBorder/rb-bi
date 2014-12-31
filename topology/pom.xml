@@ -165,17 +165,17 @@
         </dependency>
 
         <!-- Storm Kafka -->
-        <!--dependency>
+        <dependency>
             <groupId>net.redborder</groupId>
             <artifactId>storm-kafka</artifactId>
-            <version>1.1</version>
-        </dependency-->
+            <version>2.0</version>
+        </dependency>
 
-        <dependency>
+        <!--<dependency>
             <groupId>org.apache.storm</groupId>
             <artifactId>storm-kafka</artifactId>
             <version>0.9.3</version>
-        </dependency>
+        </dependency>-->
 
         <!-- Siddhi Storm -->
         <dependency>
