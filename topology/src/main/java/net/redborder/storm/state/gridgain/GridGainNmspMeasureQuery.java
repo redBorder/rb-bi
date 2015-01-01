@@ -28,8 +28,12 @@ public class GridGainNmspMeasureQuery extends GridGainQuery {
         List<Integer> clientRssis = (List<Integer>) nmspEvent.get("rssi");
         Integer rssi = Collections.max(clientRssis);
         String apMac = apMacs.get(clientRssis.indexOf(rssi));
+        Map<String, Object> enrichment = (Map<String, Object>) nmspEvent.get("enrichment");
 
         Map<String, Object> map = new HashMap<>();
+
+        if (enrichment != null)
+            map.put("enrichment", enrichment);
 
         if (rssi == 0)
             map.put("client_rssi", "unknown");

@@ -19,18 +19,23 @@ public class GetNMSPdata extends BaseFunction {
     public void execute(TridentTuple tuple, TridentCollector collector) {
         Map<String, Object> nmspEvent = (Map<String, Object>) tuple.get(0);
         String sensor_name = (String) nmspEvent.get("sensor_name");
+        Map<String, Object> enrichment = (Map<String, Object>) nmspEvent.get("enrichment");
         String nmspType = (String) nmspEvent.get("type");
 
         if (nmspType.toLowerCase().equals("measure")) {
             List<Map<String, Object>> datas = (List<Map<String, Object>>) nmspEvent.get("data");
             for (Map<String, Object> data : datas) {
                 data.put("sensor_name", sensor_name);
+                if (enrichment != null)
+                    data.put("enrichment", enrichment);
                 collector.emit(new Values(data, null));
             }
         } else if (nmspType.toLowerCase().equals("info")) {
             List<Map<String, Object>> datas = (List<Map<String, Object>>) nmspEvent.get("data");
             for (Map<String, Object> data : datas) {
                 data.put("sensor_name", sensor_name);
+                if (enrichment != null)
+                    data.put("enrichment", enrichment);
                 collector.emit(new Values(null, data));
             }
         } else {
