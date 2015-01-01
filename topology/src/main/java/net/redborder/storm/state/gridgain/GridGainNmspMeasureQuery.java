@@ -32,9 +32,6 @@ public class GridGainNmspMeasureQuery extends GridGainQuery {
 
         Map<String, Object> map = new HashMap<>();
 
-        if (enrichment != null)
-            map.put("enrichment", enrichment);
-
         if (rssi == 0)
             map.put("client_rssi", "unknown");
         else if (rssi <= -85)
@@ -63,6 +60,10 @@ public class GridGainNmspMeasureQuery extends GridGainQuery {
             }
         }
         Map<String, Object> druid = new HashMap<>();
+
+        if (enrichment != null)
+            druid.putAll(enrichment);
+
         druid.put("bytes", 0);
         druid.put("pkts", 0);
         druid.put("sensor_name", sensor_name);

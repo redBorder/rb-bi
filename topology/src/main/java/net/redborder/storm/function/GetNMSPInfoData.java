@@ -15,6 +15,8 @@ public class GetNMSPInfoData extends BaseFunction {
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
         Map<String, Object> map = (Map<String, Object>) tuple.get(0);
+        Map<String, Object> enrichment = (Map<String, Object>) map.remove("enrichment");
+
         if (map != null) {
 
             Map<String, Object> data = new HashMap<>();
@@ -26,6 +28,9 @@ public class GetNMSPInfoData extends BaseFunction {
             druid.put("pkts", 0);
             druid.put("timestamp", System.currentTimeMillis() / 1000);
             druid.putAll(map);
+
+            if (enrichment != null)
+                druid.putAll(enrichment);
 
             Object vlan = map.get("vlan_id");
 
