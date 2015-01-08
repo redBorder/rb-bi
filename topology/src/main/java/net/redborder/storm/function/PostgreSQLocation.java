@@ -28,11 +28,13 @@ public class PostgreSQLocation extends BaseFunction {
     String user;
     String uri;
     String pass;
+    long _next_update;
 
     public PostgreSQLocation(String uri, String user, String pass){
         this.uri=uri;
         this.user=user;
         this.pass=pass;
+        this._next_update=1800000;
     }
 
     @Override
@@ -43,9 +45,11 @@ public class PostgreSQLocation extends BaseFunction {
             _manager.init();
             _hash = _manager.getAPLocation();
             _last_update = System.currentTimeMillis();
+            _next_update = 1800000;
         } catch (Exception ex) {
+            _next_update = 300000;
             Logger.getLogger(PostgreSQLocation.class.getName()).log(Level.WARNING,
-                    "The postgreSQL query fail ... next try on 30 minutes!");
+                    "The postgreSQL query fail ... next try on 5 minutes!");
             ex.printStackTrace();
         }
     }
@@ -53,13 +57,13 @@ public class PostgreSQLocation extends BaseFunction {
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
         try {
-            if ((_last_update + 1800000) < System.currentTimeMillis()) {
+            if ((_last_update + _next_update) < System.currentTimeMillis()) {
                 _hash = _manager.getAPLocation();
                 Logger.getLogger(PostgreSQLocation.class.getName()).log(Level.INFO,
                         "Update location with postgreSQL info. \n Location Entry: " + _hash.size()
-                + " \n   Keys: " + _hash.keySet());
+                + " \n   Updated data: \n " + _hash.toString());
                 _last_update = System.currentTimeMillis();
-
+                _next_update = 1800000;
             }
 
             Map<String, Object> flow = (Map<String, Object>) tuple.getValue(0);
@@ -71,8 +75,9 @@ public class PostgreSQLocation extends BaseFunction {
                 collector.emit(new Values(new HashMap<String, Object>()));
         } catch (Exception ex) {
             _last_update = System.currentTimeMillis();
+            _next_update = 300000;
             Logger.getLogger(PostgreSQLocation.class.getName()).log(Level.WARNING,
-                    "The postgreSQL query fail ... next try on 30 minutes!", ex.toString());
+                    "The postgreSQL query fail ... next try on 5 minutes!", ex.toString());
             ex.printStackTrace();
         }
     }
