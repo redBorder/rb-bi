@@ -11,6 +11,7 @@ import net.redborder.kafkastate.KafkaStateUpdater;
 import com.metamx.tranquility.storm.BeamFactory;
 import com.metamx.tranquility.storm.TridentBeamStateFactory;
 import com.metamx.tranquility.storm.TridentBeamStateUpdater;
+import net.redborder.storm.filters.MacLocallyAdministeredFilter;
 import net.redborder.storm.function.*;
 import net.redborder.storm.siddhi.SiddhiState;
 import net.redborder.storm.siddhi.SiddhiUpdater;
@@ -24,11 +25,14 @@ import net.redborder.storm.util.druid.BeamMonitor;
 import storm.trident.Stream;
 import storm.trident.TridentState;
 import storm.trident.TridentTopology;
+import storm.trident.operation.BaseFilter;
 import storm.trident.state.StateFactory;
+import storm.trident.tuple.TridentTuple;
 
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.math.BigInteger;
 import java.util.*;
 
 /**
@@ -135,8 +139,8 @@ public class RedBorderTopology {
                     .each(new Fields("str"), new MapperFunction("rb_flow"), new Fields("flows"))
                     .each(new Fields("flows"), new MacVendorFunction(), new Fields("macVendorMap"))
                     .each(new Fields("flows"), new GeoIpFunction(), new Fields("geoIPMap"))
-                    .parallelismHint(_config.getWorkers()*_config.getParallelismFactor());
-                    //.each(new Fields("flows"), new AnalizeHttpUrlFunction(), new Fields("httpUrlMap"));
+                    .parallelismHint(_config.getWorkers() * _config.getParallelismFactor());
+            //.each(new Fields("flows"), new AnalizeHttpUrlFunction(), new Fields("httpUrlMap"));
 
             fieldsFlow.add("flows");
             fieldsFlow.add("geoIPMap");
@@ -205,8 +209,12 @@ public class RedBorderTopology {
             locationStream = topology.newStream("rb_loc", new TridentKafkaSpout(_config, "location").builder())
                     .name("Location").parallelismHint(locationPartition).shuffle()
                     .each(new Fields("str"), new MapperFunction("rb_loc"), new Fields("mse_map"))
-                    .each(new Fields("mse_map"), new GetMSEdata(), new Fields("src_mac", "mse_data", "mse_data_druid"))
-                    .each(new Fields("mse_data_druid"), new MacVendorFunction(), new Fields("mseMacVendorMap"))
+                    .each(new Fields("mse_map"), new GetMSEdata(), new Fields("src_mac", "mse_data", "mse_data_druid"));
+
+            if (_config.getMacLocallyAdministeredEnable())
+                locationStream = locationStream.each(new Fields("src_mac"), new MacLocallyAdministeredFilter());
+
+            locationStream = locationStream.each(new Fields("mse_data_druid"), new MacVendorFunction(), new Fields("mseMacVendorMap"))
                     .each(new Fields("mse_data_druid"), new GeoIpFunction(), new Fields("mseGeoIPMap"));
 
             // Save it to enrich later on
@@ -242,16 +250,24 @@ public class RedBorderTopology {
                     .each(new Fields("nsmp_map"), new GetNMSPdata(), new Fields("nmsp_measure", "nmsp_info"));
 
             Stream nmspInfoStream = nmspStream.project(new Fields("nmsp_info"))
-                    .each(new Fields("nmsp_info"), new GetNMSPInfoData(), new Fields("src_mac", "nmsp_info_data", "nmsp_info_data_druid"))
-                    .each(new Fields("nmsp_info_data_druid"), new PostgreSQLocation(_config.getDbUri(), _config.getDbUser(), _config.getDbPass()), new Fields("infoLocation"))
+                    .each(new Fields("nmsp_info"), new GetNMSPInfoData(), new Fields("src_mac", "nmsp_info_data", "nmsp_info_data_druid"));
+
+            if (_config.getMacLocallyAdministeredEnable())
+                nmspInfoStream = nmspInfoStream.each(new Fields("src_mac"), new MacLocallyAdministeredFilter());
+
+            nmspInfoStream = nmspInfoStream.each(new Fields("nmsp_info_data_druid"), new PostgreSQLocation(_config.getDbUri(), _config.getDbUser(), _config.getDbPass()), new Fields("infoLocation"))
                     .each(new Fields("nmsp_info_data_druid"), new MacVendorFunction(), new Fields("nmspInfoMacVendorMap"));
 
             nmspInfoStream.partitionPersist(nmspStateInfoFactory, new Fields("src_mac", "nmsp_info_data"),
                     StateUpdater.getStateUpdater(_config, "src_mac", "nmsp_info_data", "nmsp"));
 
             Stream nmspMeasureStream = nmspStream.project(new Fields("nmsp_measure"))
-                    .stateQuery(nmspStateInfo, new Fields("nmsp_measure"), StateQuery.getStateNmspMeasureQuery(_config), new Fields("src_mac", "nmsp_measure_data", "nmsp_measure_data_druid"))
-                    .each(new Fields("nmsp_measure_data_druid"), new PostgreSQLocation(_config.getDbUri(), _config.getDbUser(), _config.getDbPass()), new Fields("measureLocation"))
+                    .stateQuery(nmspStateInfo, new Fields("nmsp_measure"), StateQuery.getStateNmspMeasureQuery(_config), new Fields("src_mac", "nmsp_measure_data", "nmsp_measure_data_druid"));
+
+            if (_config.getMacLocallyAdministeredEnable())
+                nmspMeasureStream = nmspMeasureStream.each(new Fields("src_mac"), new MacLocallyAdministeredFilter());
+
+            nmspMeasureStream = nmspMeasureStream.each(new Fields("nmsp_measure_data_druid"), new PostgreSQLocation(_config.getDbUri(), _config.getDbUser(), _config.getDbPass()), new Fields("measureLocation"))
                     .each(new Fields("nmsp_measure_data_druid"), new MacVendorFunction(), new Fields("nmspMeasureMacVendorMap"));
 
             nmspMeasureStream.partitionPersist(nmspStateFactory, new Fields("src_mac", "nmsp_measure_data"),
@@ -391,7 +407,7 @@ public class RedBorderTopology {
 
             persist("traffics", flowStream
                     .project(new Fields("traffics"))
-                    .parallelismHint(_config.getWorkers()*_config.getParallelismFactor())
+                    .parallelismHint(_config.getWorkers() * _config.getParallelismFactor())
                     .shuffle().name("Flow Producer"), "traffics");
 
             mainStream.add(flowStream);

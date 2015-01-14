@@ -317,6 +317,11 @@ public class ConfigData {
         return ret != null && ret;
     }
 
+    public Boolean getMacLocallyAdministeredEnable(){
+        Boolean enable = _configFile.getFromGeneral("filter_mac_locally_administered");
+        return enable != null ? enable : true;
+    }
+
     public Map<String, Object> getGridGainConfig() {
         Map<String, Object> ret = _configFile.getFromGeneral("gridgain");
         return ret;
