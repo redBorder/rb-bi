@@ -74,7 +74,7 @@ public class MergeMapsFunction extends BaseFunction {
             data.remove(flow);
             for (Object value : data) {
                 Map<String, Object> valueMap = (Map<String, Object>) value;
-                if(valueMap != null) {
+                if (valueMap != null) {
                     if (!valueMap.isEmpty()) {
                         finalMap.putAll(valueMap);
                     }
@@ -83,8 +83,10 @@ public class MergeMapsFunction extends BaseFunction {
         } else {
             for (String field : _fields) {
                 Map<String, Object> valueMap = (Map<String, Object>) tuple.getValueByField(field);
-                if (!valueMap.isEmpty()) {
-                    finalMap.putAll(valueMap);
+                if (valueMap != null) {
+                    if (!valueMap.isEmpty()) {
+                        finalMap.putAll(valueMap);
+                    }
                 }
             }
         }
