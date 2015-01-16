@@ -76,15 +76,20 @@ public class PostgresqlManager {
 
         try {
             Statement st = conn.createStatement();
-            ResultSet rs = st.executeQuery("SELECT access_points.ip_address, " +
-                    "access_points.mac_address, floor.name AS floor_name, " +
-                    "building.name AS building_name, campus.name AS campus_name " +
+            ResultSet rs = st.executeQuery("SELECT access_points.ip_address, access_points.mac_address," +
+                    " access_points.latitude AS latitude, access_points.longitude AS longitude, floor.name AS floor_name," +
+                    " building.name AS building_name, campus.name AS campus_name " +
                     "FROM access_points JOIN sensors AS floor ON floor.id = access_points.sensor_id " +
-                    "JOIN sensors AS building ON floor.parent_id = building.id JOIN sensors AS campus " +
-                    "ON building.parent_id = campus.id;");
+                    "JOIN sensors AS building ON floor.parent_id = building.id JOIN sensors " +
+                    "AS campus ON building.parent_id = campus.id;");
 
             while (rs.next()) {
+
+                Double longitude = (double) Math.round(Double.valueOf(rs.getString("longitude")) * 100000) / 100000;
+                Double latitude = (double) Math.round(Double.valueOf(rs.getString("latitude")) * 100000) / 100000;
+
                 Map<String, Object> location = new HashMap<>();
+                location.put("client_latlong", latitude+","+longitude);
                 location.put("client_campus", rs.getString("campus_name"));
                 location.put("client_building", rs.getString("building_name"));
                 location.put("client_floor", rs.getString("floor_name"));
