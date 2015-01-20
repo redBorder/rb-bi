@@ -67,6 +67,7 @@ public class GridGainNmspMeasureQuery extends GridGainQuery {
         druid.put("bytes", 0);
         druid.put("pkts", 0);
         druid.put("sensor_name", sensor_name);
+        druid.put("type", "nmsp");
         druid.put("timestamp", System.currentTimeMillis()/1000);
         druid.putAll(map);
         collector.emit(new Values(client_mac, map, druid));

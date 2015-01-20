@@ -118,6 +118,7 @@ public class GetMSEdata extends BaseFunction {
             mseDataDruid.put("client_snr_num", 0);
             mseDataDruid.put("bytes", 0);
             mseDataDruid.put("pkts", 0);
+            mseDataDruid.put("type", "mse");
 
             if (dateString != null && macAddress != null) {
                 mseDataDruid.put("timestamp", new DateTime(dateString).withZone(DateTimeZone.UTC).getMillis() / 1000);

@@ -26,6 +26,7 @@ public class GetNMSPInfoData extends BaseFunction {
             Map<String, Object> druid = new HashMap<>();
             druid.put("bytes", 0);
             druid.put("pkts", 0);
+            druid.put("type", "nmsp");
             druid.put("timestamp", System.currentTimeMillis() / 1000);
             druid.putAll(map);
 
