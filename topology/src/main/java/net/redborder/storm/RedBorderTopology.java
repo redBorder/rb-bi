@@ -491,7 +491,7 @@ public class RedBorderTopology {
         if (_config.contains("trap") && trapPartition > 0) print(pw, "   * rb_trap: " + trapPartition);
         if (_config.contains("traffics") && flowPartition > 0) print(pw, "   * rb_flow: " + flowPartition);
         if (_config.contains("radius") && radiusPartition > 0) print(pw, "   * rb_radius: " + radiusPartition);
-        if (_config.contains("radius") && nmspPartition > 0) print(pw, "   * rb_radius: " + nmspPartition);
+        if (_config.contains("radius") && nmspPartition > 0) print(pw, "   * rb_nmsp: " + nmspPartition);
 
 
 
