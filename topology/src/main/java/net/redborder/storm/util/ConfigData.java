@@ -317,6 +317,11 @@ public class ConfigData {
         return ret != null && ret;
     }
 
+    public boolean nmspLocationStatsEnabled() {
+        Boolean ret = _configFile.getFromGeneral("nmsp_location_stats");
+        return ret != null && ret;
+    }
+
     public Boolean getMacLocallyAdministeredEnable(){
         Boolean enable = _configFile.getFromGeneral("filter_mac_locally_administered");
         return enable != null ? enable : true;

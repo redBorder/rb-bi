@@ -121,8 +121,8 @@ public class RedBorderTopology {
         List<String> fieldsEvent = new ArrayList<>();
 
         /* States and Streams*/
-        TridentState locationState, mobileState, radiusState, trapState, darklistState, nmspState, nmspStateInfo;
-        StateFactory locationStateFactory, mobileStateFactory, trapStateFactory, radiusStateFactory, nmspStateFactory, nmspStateInfoFactory;
+        TridentState locationState, mobileState, radiusState, trapState, darklistState, nmspState, nmspStateInfo, nmspStateLocationState;
+        StateFactory locationStateFactory, mobileStateFactory, trapStateFactory, radiusStateFactory, nmspStateFactory, nmspStateInfoFactory, nmspStateLocationStateFactory;
         Stream locationStream, radiusStream, flowStream = null, eventsStream = null, monitorStream = null, nmspStream;
 
         /* Partitions */
@@ -130,7 +130,7 @@ public class RedBorderTopology {
         int eventsPartition = _config.getKafkaPartitions("rb_event");
         int monitorPartition = _config.getKafkaPartitions("rb_monitor");
         int radiusPartition, trapPartition, locationPartition, mobilePartition, nmspPartition;
-        radiusPartition = trapPartition = locationPartition = mobilePartition = 0;
+        radiusPartition = trapPartition = locationPartition = mobilePartition = nmspPartition = 0;
 
         /* Flow */
         if (_config.contains("traffics")) {
@@ -243,6 +243,9 @@ public class RedBorderTopology {
             nmspStateInfoFactory = RedBorderState.getStateFactory(_config, "nmsp-info");
             nmspStateInfo = topology.newStaticState(nmspStateInfoFactory);
 
+            nmspStateLocationStateFactory = RedBorderState.getStateFactory(_config, "nmsp-state");
+            nmspStateLocationState = topology.newStaticState(nmspStateLocationStateFactory);
+
             // Get msg
             nmspStream = topology.newStream("rb_nmsp", new TridentKafkaSpout(_config, "nmsp").builder())
                     .name("NMSP").parallelismHint(nmspPartition).shuffle()
@@ -259,7 +262,7 @@ public class RedBorderTopology {
                     .each(new Fields("nmsp_info_data_druid"), new MacVendorFunction(), new Fields("nmspInfoMacVendorMap"));
 
             nmspInfoStream.partitionPersist(nmspStateInfoFactory, new Fields("src_mac", "nmsp_info_data"),
-                    StateUpdater.getStateUpdater(_config, "src_mac", "nmsp_info_data", "nmsp"));
+                    StateUpdater.getStateUpdater(_config, "src_mac", "nmsp_info_data", "nmsp-info"));
 
             Stream nmspMeasureStream = nmspStream.project(new Fields("nmsp_measure"))
                     .stateQuery(nmspStateInfo, new Fields("nmsp_measure"), StateQuery.getStateNmspMeasureQuery(_config), new Fields("src_mac", "nmsp_measure_data", "nmsp_measure_data_druid"));
@@ -272,6 +275,20 @@ public class RedBorderTopology {
 
             nmspMeasureStream.partitionPersist(nmspStateFactory, new Fields("src_mac", "nmsp_measure_data"),
                     StateUpdater.getStateUpdater(_config, "src_mac", "nmsp_measure_data", "nmsp"));
+
+            if(_config.nmspLocationStatsEnabled()) {
+                Stream nmspLocationStateStream = nmspMeasureStream
+                        .each(new Fields("nmsp_measure_data_druid", "measureLocation"), new MergeMapsFunction(), new Fields("nmsp_location_state"))
+                        .stateQuery(nmspStateLocationState, new Fields("nmsp_location_state"), StateQuery.getStateQuery(_config, "client_mac", "nmsp-state"), new Fields("nmsp_location_state_cache"))
+                        .each(new Fields("nmsp_location_state", "nmsp_location_state_cache"), new LocationLogic(), new Fields("nmsp_location_state_update", "nmsp_location_state_druid"));
+
+                nmspLocationStateStream.partitionPersist(nmspStateLocationStateFactory, new Fields("src_mac", "nmsp_location_state_update"),
+                        StateUpdater.getStateUpdater(_config, "src_mac", "nmsp_location_state_update", "nmsp-state"));
+
+                persist("nmsp",
+                        nmspLocationStateStream.each(new Fields("nmsp_location_state_druid"),
+                                new MergeMapsFunction(), new Fields("traffics")), "nmsp_location_state_druid");
+            }
 
             if (_config.contains("traffics")) {
                 // Generate a flow msg
@@ -474,6 +491,8 @@ public class RedBorderTopology {
         if (_config.contains("trap") && trapPartition > 0) print(pw, "   * rb_trap: " + trapPartition);
         if (_config.contains("traffics") && flowPartition > 0) print(pw, "   * rb_flow: " + flowPartition);
         if (_config.contains("radius") && radiusPartition > 0) print(pw, "   * rb_radius: " + radiusPartition);
+        if (_config.contains("radius") && nmspPartition > 0) print(pw, "   * rb_radius: " + nmspPartition);
+
 
 
         print(pw, "- Zookeeper Servers: " + _config.getZkHost());
@@ -501,6 +520,7 @@ public class RedBorderTopology {
         if (_config.contains("traffics")) {
             print(pw, " - flow: ");
             print(pw, "   * location: " + getEnrichment(_config.contains("location")));
+            print(pw, "   * nmsp: " + getEnrichment(_config.contains("nmsp")) +  " (" + "location_stats: "+ getEnrichment(_config.nmspLocationStatsEnabled())+")");
             print(pw, "   * mobile: " + getEnrichment(_config.contains("mobile")));
             print(pw, "   * trap: " + getEnrichment(_config.contains("trap")));
             print(pw, "   * radius (overwrite_cache: " + _config.getOverwriteCache("radius") + ") : " + getEnrichment(_config.contains("radius")));

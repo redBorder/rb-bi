@@ -6,6 +6,7 @@
 package net.redborder.storm.state.riak;
 
 import backtype.storm.topology.ReportedFailedException;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -19,7 +20,6 @@ import storm.trident.state.map.MapState;
 import storm.trident.tuple.TridentTuple;
 
 /**
- *
  * @author andresgomez
  */
 public class RiakUpdater extends BaseStateUpdater<MapState<Map<String, Object>>> {
@@ -50,11 +50,12 @@ public class RiakUpdater extends BaseStateUpdater<MapState<Map<String, Object>>>
         List<Map<String, Object>> events = new ArrayList<>();
         List<List<Object>> keys = new ArrayList<>();
         for (TridentTuple t : tuples) {
-            if(t!=null) {
+            if (t != null) {
                 List<Object> l = new ArrayList<>();
                 l.add(_generalKey + t.getValueByField(_key));
                 keys.add(l);
-                events.add((Map<String, Object>) t.getValueByField(_value));
+                if (t.getValueByField(_value) != null)
+                    events.add((Map<String, Object>) t.getValueByField(_value));
 
                 if (_debug) {
                     System.out.println("SAVED TO RIAK KEY: " + _generalKey + t.getValueByField(_key)
@@ -64,7 +65,8 @@ public class RiakUpdater extends BaseStateUpdater<MapState<Map<String, Object>>>
         }
 
         try {
-            state.multiPut(keys, events);
+            if (!events.isEmpty())
+                state.multiPut(keys, events);
         } catch (ReportedFailedException e) {
             Logger.getLogger(RiakUpdater.class.getName()).log(Level.WARNING, null, e);
         }
