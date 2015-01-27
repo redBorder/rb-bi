@@ -286,8 +286,7 @@ public class RedBorderTopology {
                         StateUpdater.getStateUpdater(_config, "src_mac", "nmsp_location_state_update", "nmsp-state"));
 
                 persist("nmsp",
-                        nmspLocationStateStream.each(new Fields("nmsp_location_state_druid"),
-                                new MergeMapsFunction(), new Fields("traffics")), "nmsp_location_state_druid");
+                        nmspLocationStateStream, "nmsp_location_state_druid");
             }
 
             if (_config.contains("traffics")) {
