@@ -35,7 +35,7 @@ public class SeparateLongTimeFlowFunction extends BaseFunction {
     public void prepare(Map conf, TridentOperationContext context) {
         _debug = (boolean) conf.get("rbDebug");
         _metric = context.registerMetric("throughput_" + "rb_flow_output", new CountMetric(), 50);
-
+        logMark = System.currentTimeMillis();
     }
 
     public final int DELAYED_REALTIME_TIME = 15;
@@ -44,7 +44,6 @@ public class SeparateLongTimeFlowFunction extends BaseFunction {
     public void execute(TridentTuple tuple, TridentCollector collector) {
         Map<String, Object> event = (Map<String, Object>) tuple.getValue(0);
         List<Map<String, Object>> generatedPackets = new ArrayList<>();
-        logMark = System.currentTimeMillis();
 
         // last_switched is timestamp now
         if (event.containsKey("first_switched") && event.containsKey("timestamp")) {

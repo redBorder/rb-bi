@@ -1,17 +1,8 @@
 package net.redborder.storm.state;
 
-import net.redborder.storm.state.gridgain.GridGainLocationQuery;
-import net.redborder.storm.state.gridgain.GridGainNmspMeasureQuery;
-import net.redborder.storm.state.gridgain.GridGainQuery;
-import net.redborder.storm.state.gridgain.GridGainTrapQuery;
-import net.redborder.storm.state.memcached.MemcachedLocationQuery;
-import net.redborder.storm.state.memcached.MemcachedNmspMeasureQuery;
-import net.redborder.storm.state.memcached.MemcachedQuery;
-import net.redborder.storm.state.memcached.MemcachedTrapQuery;
-import net.redborder.storm.state.riak.RiakLocationQuery;
-import net.redborder.storm.state.riak.RiakNmspMeasureQuery;
-import net.redborder.storm.state.riak.RiakQuery;
-import net.redborder.storm.state.riak.RiakTrapQuery;
+import net.redborder.storm.state.gridgain.*;
+import net.redborder.storm.state.memcached.*;
+import net.redborder.storm.state.riak.*;
 import net.redborder.storm.util.ConfigData;
 import storm.trident.state.BaseQueryFunction;
 
@@ -63,6 +54,30 @@ public class StateQuery {
             return new RiakNmspMeasureQuery("client_mac");
         }else if(config.getCacheType().equals("memcached")){
             return new MemcachedNmspMeasureQuery("client_mac", "nmsp");
+        } else {
+            throw new CacheNotValidException("Not cache backend found: " + config.getCacheType());
+        }
+    }
+
+    public static BaseQueryFunction getStateEventsLocationNmspQuery(ConfigData config, String key, String bucket) throws CacheNotValidException {
+        if(config.getCacheType().equals("gridgain")){
+            return new GridGainEventsLocationNmspQuery(key);
+        }else if(config.getCacheType().equals("riak")){
+            return new RiakEventsLocationNmspQuery(key);
+        }else if(config.getCacheType().equals("memcached")){
+            return new MemcachedEventsLocationNmspQuery(key, bucket);
+        } else {
+            throw new CacheNotValidException("Not cache backend found: " + config.getCacheType());
+        }
+    }
+
+    public static BaseQueryFunction getStateEventsLocationMseQuery(ConfigData config, String key, String bucket) throws CacheNotValidException {
+        if(config.getCacheType().equals("gridgain")){
+            return new GridGainEventsLocationMseQuery(key);
+        }else if(config.getCacheType().equals("riak")){
+            return new RiakEventsLocationMseQuery(key);
+        }else if(config.getCacheType().equals("memcached")){
+            return new MemcachedEventsLocationMseQuery(key, bucket);
         } else {
             throw new CacheNotValidException("Not cache backend found: " + config.getCacheType());
         }

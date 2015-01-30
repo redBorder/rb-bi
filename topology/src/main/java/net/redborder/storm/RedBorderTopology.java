@@ -233,6 +233,17 @@ public class RedBorderTopology {
 
                 fieldsFlow.add("mseMap");
             }
+
+            if (_config.contains("events")) {
+                eventsStream = eventsStream
+                        .stateQuery(locationState, new Fields("event"),
+                                StateQuery.getStateEventsLocationMseQuery(_config, "ethsrc", "nmsp"), new Fields("mse_location_ethsrc"))
+                        .stateQuery(locationState, new Fields("event"),
+                                StateQuery.getStateEventsLocationMseQuery(_config, "ethdst", "nmsp"), new Fields("mse_location_ethdst"));
+
+                fieldsEvent.add("mse_location_ethdst");
+                fieldsEvent.add("mse_location_ethsrc");
+            }
         }
 
         if (_config.contains("nmsp")) {
@@ -305,6 +316,20 @@ public class RedBorderTopology {
 
                 fieldsFlow.add("locationWLC");
                 fieldsFlow.add("nmspMap");
+            }
+
+            if (_config.contains("events")) {
+                eventsStream = eventsStream.stateQuery(nmspState, new Fields("event"),
+                        StateQuery.getStateEventsLocationNmspQuery(_config, "ethsrc", "nmsp"), new Fields("nmsp_ap_mac_ethsrc"))
+                        .each(new Fields("nmsp_ap_mac_ethsrc"), new PostgreSQLocation(_config.getDbUri(), _config.getDbUser(), _config.getDbPass()), new Fields("locationWLC_ethsrc"))
+                        .stateQuery(nmspState, new Fields("event"),
+                                StateQuery.getStateEventsLocationNmspQuery(_config, "ethdst", "nmsp"), new Fields("nmsp_ap_mac_ethdst"))
+                        .each(new Fields("nmsp_ap_mac_ethdst"), new PostgreSQLocation(_config.getDbUri(), _config.getDbUser(), _config.getDbPass()), new Fields("locationWLC_ethdst"));
+
+                fieldsEvent.add("nmsp_ap_mac_ethdst");
+                fieldsEvent.add("locationWLC_ethdst");
+                fieldsEvent.add("nmsp_ap_mac_ethsrc");
+                fieldsEvent.add("locationWLC_ethsrc");
             }
         }
 
@@ -397,7 +422,7 @@ public class RedBorderTopology {
 
 
             // Enrich event stream with darklist fields
-            if (_config.contains("events")) {
+            if (_config.contains("event")) {
                 eventsStream = eventsStream
                         .stateQuery(darklistState, new Fields("event"), new DarkListQuery(),
                                 new Fields("darklistMap"));
