@@ -108,7 +108,7 @@ public class SeparateLongTimeFlowFunction extends BaseFunction {
 
             try {
                 if (event.containsKey("bytes"))
-                    bytes = Integer.parseInt(event.get("bytes").toString());
+                    bytes = Long.parseLong(event.get("bytes").toString());
             } catch (NumberFormatException e) {
                 Logger.getLogger(SeparateLongTimeFlowFunction.class.getName()).log(Level.WARNING,
                         "Invalid number of bytes in packet {0}.", event);
@@ -117,7 +117,7 @@ public class SeparateLongTimeFlowFunction extends BaseFunction {
 
             try {
                 if (event.containsKey("pkts"))
-                    pkts = Integer.parseInt(event.get("pkts").toString());
+                    pkts =  Long.parseLong(event.get("pkts").toString());
             } catch (NumberFormatException e) {
                 Logger.getLogger(SeparateLongTimeFlowFunction.class.getName()).log(Level.WARNING,
                         "Invalid number of packets in packet {0}.", event);
