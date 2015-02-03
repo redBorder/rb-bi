@@ -611,7 +611,7 @@ public class RedBorderTopology {
         if (outputTopic != null) {
             int flowPrePartitions = _config.getKafkaPartitions(outputTopic);
 
-            ret = s.each(new Fields(field), new MapToJSONFunction(topic), new Fields("jsonString"))
+            ret = s.each(new Fields(field), new MapToJSONFunction(), new Fields("jsonString"))
                     .partitionPersist(KafkaState.nonTransactional(_config.getZkHost()),
                             new Fields("jsonString"), new KafkaStateUpdater("jsonString", outputTopic))
                     .parallelismHint(flowPrePartitions);
