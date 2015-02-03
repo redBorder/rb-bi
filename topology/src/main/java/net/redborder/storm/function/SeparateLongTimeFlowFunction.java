@@ -27,14 +27,12 @@ import java.util.logging.Logger;
 public class SeparateLongTimeFlowFunction extends BaseFunction {
 
     boolean _debug;
-    CountMetric _metric;
     long logMark;
 
 
     @Override
     public void prepare(Map conf, TridentOperationContext context) {
         _debug = (boolean) conf.get("rbDebug");
-        _metric = context.registerMetric("throughput_" + "rb_flow_output", new CountMetric(), 50);
         logMark = System.currentTimeMillis();
     }
 
@@ -166,20 +164,17 @@ public class SeparateLongTimeFlowFunction extends BaseFunction {
 
             for (Map<String, Object> e : generatedPackets) {
                 e.remove("first_switched");
-                _metric.incrEvent();
                 collector.emit(new Values(e));
             }
         } else if (event.containsKey("timestamp")) {
             Long bytes = Long.parseLong(event.get("bytes").toString());
             event.put("bytes", bytes);
-            _metric.incrEvent();
             collector.emit(new Values(event));
         } else {
             Long bytes = Long.parseLong(event.get("bytes").toString());
             event.put("bytes", bytes);
             Logger.getLogger(SeparateLongTimeFlowFunction.class.getName()).log(Level.WARNING,
                     "Packet without timestamp -> {0}.", event);
-            _metric.incrEvent();
             collector.emit(new Values(event));
         }
     }

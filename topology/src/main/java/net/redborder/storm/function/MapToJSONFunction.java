@@ -6,6 +6,7 @@
 package net.redborder.storm.function;
 
 import backtype.storm.tuple.Values;
+import net.redborder.metrics.CountMetric;
 import org.codehaus.jackson.map.ObjectMapper;
 import storm.trident.operation.BaseFunction;
 import storm.trident.operation.TridentCollector;
@@ -28,6 +29,15 @@ public class MapToJSONFunction extends BaseFunction {
      */
     ObjectMapper _mapper;
 
+    CountMetric _metric;
+
+    String _topic;
+
+    public MapToJSONFunction(String topic){
+        _topic=topic;
+    }
+
+
     /**
      * <p>This function converts a JAVA Map to JSON events.</p>
      */
@@ -39,6 +49,8 @@ public class MapToJSONFunction extends BaseFunction {
         } catch (IOException ex) {
             Logger.getLogger(MapToJSONFunction.class.getName()).log(Level.SEVERE, null, ex);
         }
+        _metric.incrEvent();
+
         collector.emit(new Values(eventJSON));
     }
 
@@ -48,6 +60,7 @@ public class MapToJSONFunction extends BaseFunction {
     @Override
     public void prepare(Map conf, TridentOperationContext context) {
         _mapper = new ObjectMapper();
+        _metric = context.registerMetric("throughput_" + _topic+"_post", new CountMetric(), 50);
     }
 
 }
