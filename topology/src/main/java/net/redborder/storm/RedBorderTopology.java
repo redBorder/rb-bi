@@ -254,7 +254,7 @@ public class RedBorderTopology {
             nmspStateInfoFactory = RedBorderState.getStateFactory(_config, "nmsp-info");
             nmspStateInfo = topology.newStaticState(nmspStateInfoFactory);
 
-            nmspStateLocationStateFactory = RedBorderState.getStateFactory(_config, "nmsp-state");
+            nmspStateLocationStateFactory = RedBorderState.getStateFactory(_config, "nmsp-location-state");
             nmspStateLocationState = topology.newStaticState(nmspStateLocationStateFactory);
 
             // Get msg

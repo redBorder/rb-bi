@@ -350,6 +350,7 @@ public class ConfigData {
         if (_configFile.contains("mobile")) enrichs.add("mobile");
         if (_configFile.contains("location")) enrichs.add("location");
         if (_configFile.contains("trap")) enrichs.add("trap");
+        if (_configFile.contains("nmsp")) enrichs.add("nmsp");
 
         return enrichs;
     }
