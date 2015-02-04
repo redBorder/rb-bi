@@ -98,7 +98,7 @@ public class GridGainQuery extends BaseQueryFunction<MapState<Map<String, Map<St
                         System.out.println("GridGainResponse: " + gridGainData.toString());
                     }
                 }
-            } catch (ReportedFailedException e) {
+            } catch (Exception e) {
                 Logger.getLogger(GridGainQuery.class.getName()).log(Level.WARNING, null, e);
             }
         }

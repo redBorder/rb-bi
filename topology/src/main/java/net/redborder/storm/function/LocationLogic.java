@@ -57,7 +57,7 @@ public class LocationLogic extends BaseFunction {
 
             // Dwell Time
 
-            oldTimestamp = Long.valueOf((Integer) locationCache.get("old_timestamp"));
+            oldTimestamp = Long.valueOf(locationCache.get("old_timestamp").toString());
 
             if (newTimestamp - oldTimestamp > MINUTE && newTimestamp - oldTimestamp <= CLIENT_LEAVE_TIME) {
          //       System.out.println("RECUPERANDO: " + (newTimestamp - oldTimestamp)/MINUTE);

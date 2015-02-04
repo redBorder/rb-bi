@@ -1,4 +1,4 @@
-import net.redborder.state.gridgain.GridGainState;
+import net.redborder.state.gridgain.GridGainStormState;
 import org.gridgain.grid.Grid;
 import org.gridgain.grid.GridConfiguration;
 import org.gridgain.grid.GridException;
@@ -33,7 +33,7 @@ public class GridGainStateTest {
 
         GridCache<String, Map<String, Object>> map = grid.cache("location");
 
-        GridGainState state = new GridGainState(map);
+        GridGainStormState state = new GridGainStormState("location");
 
         List<List<Object>> keysList = new ArrayList<>();
 

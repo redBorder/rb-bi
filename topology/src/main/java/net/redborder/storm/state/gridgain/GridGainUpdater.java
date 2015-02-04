@@ -72,6 +72,7 @@ public class GridGainUpdater extends BaseStateUpdater<MapState<Map<String, Map<S
             state.multiPut(keys, events);
         } catch (ReportedFailedException e) {
             Logger.getLogger(GridGainUpdater.class.getName()).log(Level.WARNING, null, e);
+            e.printStackTrace();
         }
     }
 
