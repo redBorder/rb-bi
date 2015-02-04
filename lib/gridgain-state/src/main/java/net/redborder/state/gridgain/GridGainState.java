@@ -22,7 +22,7 @@ public class GridGainState implements IBackingMap<Map<String, Map<String, Object
 
     @Override
     public List<Map<String, Map<String, Object>>> multiGet(List<List<Object>> lists){
-        List<String> keys = new ArrayList<String>();
+        List<String> keys = new ArrayList<>();
 
         for(List key : lists){
             keys.add((String) key.get(0));

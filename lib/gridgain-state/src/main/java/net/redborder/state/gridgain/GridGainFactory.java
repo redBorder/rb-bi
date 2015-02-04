@@ -11,6 +11,8 @@ import org.gridgain.grid.cache.GridCache;
 import org.gridgain.grid.cache.GridCacheConfiguration;
 import org.gridgain.grid.cache.GridCacheDistributionMode;
 import org.gridgain.grid.cache.GridCacheMode;
+import org.gridgain.grid.cache.eviction.GridCacheEvictionPolicy;
+import org.gridgain.grid.cache.eviction.lru.GridCacheLruEvictionPolicy;
 import org.gridgain.grid.spi.discovery.tcp.GridTcpDiscoverySpi;
 import org.gridgain.grid.spi.discovery.tcp.ipfinder.s3.GridTcpDiscoveryS3IpFinder;
 import org.gridgain.grid.spi.discovery.tcp.ipfinder.vm.GridTcpDiscoveryVmIpFinder;
@@ -31,11 +33,14 @@ import java.util.*;
  */
 public class GridGainFactory implements StateFactory {
 
+    public static final Long TIME_TO_LIVE = 60*1000L;
+
     String _cacheName;
     List<String> _topics;
     List<String> _gridGainServers;
     String _multicastGroup;
     Map<String, Object> _s3Config = null;
+    Long _timeToLive;
 
     private final static String CONFIG_FILE_PATH = "/opt/rb/etc/darklist_config.yml";
 
@@ -43,6 +48,7 @@ public class GridGainFactory implements StateFactory {
     public GridGainFactory(String cacheName, List<String> topics, Map<String, Object> gridGainConfig) {
         _cacheName = cacheName;
         _topics = topics;
+        _timeToLive = gridGainConfig.get("time_to_live") == null ? TIME_TO_LIVE : (Long.valueOf(gridGainConfig.get("time_to_live").toString()));
         if(!gridGainConfig.containsKey("s3")) {
             _gridGainServers = (List<String>) gridGainConfig.get("servers");
             _multicastGroup = (String) gridGainConfig.get("multicast");
@@ -127,7 +133,7 @@ public class GridGainFactory implements StateFactory {
             cacheDarkList.setName("darklist");
             cacheDarkList.setCacheMode(GridCacheMode.PARTITIONED);
             cacheDarkList.setBackups(backups);
-            cacheDarkList.setDistributionMode(GridCacheDistributionMode.NEAR_ONLY);
+            cacheDarkList.setDistributionMode(GridCacheDistributionMode.CLIENT_ONLY);
             cacheDarkList.setStartSize(2 * 1024 * 1024);
             cacheDarkList.setOffHeapMaxMemory(0);
             cacheDarkList.setPreloadBatchSize(1024 * 1024);
@@ -138,7 +144,8 @@ public class GridGainFactory implements StateFactory {
         if (_topics.contains("mobile")) {
             GridCacheConfiguration cacheMobile = new GridCacheConfiguration();
             cacheMobile.setName("mobile");
-            cacheMobile.setDistributionMode(GridCacheDistributionMode.NEAR_ONLY);
+            cacheMobile.setDistributionMode(GridCacheDistributionMode.CLIENT_ONLY);
+            cacheMobile.setDefaultTimeToLive(_timeToLive);
             cacheMobile.setCacheMode(GridCacheMode.PARTITIONED);
             caches.add(cacheMobile);
         }
@@ -146,7 +153,8 @@ public class GridGainFactory implements StateFactory {
         if (_topics.contains("radius")) {
             GridCacheConfiguration cacheRadius = new GridCacheConfiguration();
             cacheRadius.setName("radius");
-            cacheRadius.setDistributionMode(GridCacheDistributionMode.NEAR_ONLY);
+            cacheRadius.setDistributionMode(GridCacheDistributionMode.CLIENT_ONLY);
+            cacheRadius.setDefaultTimeToLive(_timeToLive);
             cacheRadius.setCacheMode(GridCacheMode.PARTITIONED);
             caches.add(cacheRadius);
         }
@@ -154,7 +162,8 @@ public class GridGainFactory implements StateFactory {
         if (_topics.contains("location")) {
             GridCacheConfiguration cacheLocation = new GridCacheConfiguration();
             cacheLocation.setName("location");
-            cacheLocation.setDistributionMode(GridCacheDistributionMode.NEAR_ONLY);
+            cacheLocation.setDistributionMode(GridCacheDistributionMode.CLIENT_ONLY);
+            cacheLocation.setDefaultTimeToLive(_timeToLive);
             cacheLocation.setCacheMode(GridCacheMode.PARTITIONED);
             caches.add(cacheLocation);
         }
@@ -162,19 +171,22 @@ public class GridGainFactory implements StateFactory {
         if (_topics.contains("nmsp")) {
             GridCacheConfiguration cacheNmsp = new GridCacheConfiguration();
             cacheNmsp.setName("nmsp");
-            cacheNmsp.setDistributionMode(GridCacheDistributionMode.NEAR_ONLY);
+            cacheNmsp.setDistributionMode(GridCacheDistributionMode.CLIENT_ONLY);
+            cacheNmsp.setDefaultTimeToLive(_timeToLive);
             cacheNmsp.setCacheMode(GridCacheMode.PARTITIONED);
             caches.add(cacheNmsp);
 
             GridCacheConfiguration cacheNmspInfo = new GridCacheConfiguration();
             cacheNmspInfo.setName("nmsp-info");
-            cacheNmspInfo.setDistributionMode(GridCacheDistributionMode.NEAR_ONLY);
+            cacheNmspInfo.setDistributionMode(GridCacheDistributionMode.CLIENT_ONLY);
+            cacheNmspInfo.setDefaultTimeToLive(_timeToLive);
             cacheNmspInfo.setCacheMode(GridCacheMode.PARTITIONED);
             caches.add(cacheNmspInfo);
 
             GridCacheConfiguration cacheNmspLocationState = new GridCacheConfiguration();
             cacheNmspLocationState.setName("nmsp-location-state");
-            cacheNmspLocationState.setDistributionMode(GridCacheDistributionMode.NEAR_ONLY);
+            cacheNmspLocationState.setDistributionMode(GridCacheDistributionMode.CLIENT_ONLY);
+            cacheNmspLocationState.setDefaultTimeToLive(_timeToLive);
             cacheNmspLocationState.setCacheMode(GridCacheMode.PARTITIONED);
             caches.add(cacheNmspLocationState);
         }
@@ -182,7 +194,8 @@ public class GridGainFactory implements StateFactory {
         if (_topics.contains("trap")) {
             GridCacheConfiguration cacheTrap = new GridCacheConfiguration();
             cacheTrap.setName("trap");
-            cacheTrap.setDistributionMode(GridCacheDistributionMode.NEAR_ONLY);
+            cacheTrap.setDistributionMode(GridCacheDistributionMode.CLIENT_ONLY);
+            cacheTrap.setDefaultTimeToLive(_timeToLive);
             cacheTrap.setCacheMode(GridCacheMode.PARTITIONED);
             caches.add(cacheTrap);
         }
