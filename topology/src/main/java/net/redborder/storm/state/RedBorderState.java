@@ -5,6 +5,8 @@ import net.redborder.storm.state.memcached.MemcachedState;
 import net.redborder.storm.state.riak.RiakState;
 import net.redborder.storm.util.ConfigData;
 import storm.trident.state.StateFactory;
+import storm.trident.testing.MemoryMapState;
+
 import java.util.Map;
 
 /**
@@ -21,6 +23,8 @@ public class RedBorderState {
             MemcachedState.Options memcachedOpts = new MemcachedState.Options();
             memcachedOpts.expiration = 0;
             return MemcachedState.transactional(config.getMemcachedServers(), memcachedOpts);
+        } else if (config.getCacheType().equals("memory")) {
+            return new MemoryMapState.Factory();
         }else {
             throw new CacheNotValidException("Not cache backend found: " + config.getCacheType());
         }

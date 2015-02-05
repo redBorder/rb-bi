@@ -16,7 +16,7 @@ public class StateQuery {
             return new GridGainQuery(key);
         }else if(config.getCacheType().equals("riak")){
             return new RiakQuery(key);
-        } else if(config.getCacheType().equals("memcached")){
+        } else if(config.getCacheType().equals("memcached") || config.getCacheType().equals("memory")){
             return new MemcachedQuery(key, bucket);
         }else{
             throw new CacheNotValidException("Not cache backend found: " + config.getCacheType());
@@ -28,7 +28,7 @@ public class StateQuery {
             return new GridGainLocationQuery("client_mac");
         }else if(config.getCacheType().equals("riak")){
             return new RiakLocationQuery("client_mac");
-        }else if(config.getCacheType().equals("memcached")){
+        }else if(config.getCacheType().equals("memcached") || config.getCacheType().equals("memory")){
             return new MemcachedLocationQuery("client_mac", "location");
         } else {
             throw new CacheNotValidException("Not cache backend found: " + config.getCacheType());
@@ -40,7 +40,7 @@ public class StateQuery {
             return new GridGainTrapQuery("client_mac");
         }else if(config.getCacheType().equals("riak")){
             return new RiakTrapQuery("client_mac");
-        }else if(config.getCacheType().equals("memcached")){
+        }else if(config.getCacheType().equals("memcached") || config.getCacheType().equals("memory")){
             return new MemcachedTrapQuery("client_mac", "trap");
         } else {
             throw new CacheNotValidException("Not cache backend found: " + config.getCacheType());
@@ -52,7 +52,7 @@ public class StateQuery {
             return new GridGainNmspMeasureQuery("client_mac");
         }else if(config.getCacheType().equals("riak")){
             return new RiakNmspMeasureQuery("client_mac");
-        }else if(config.getCacheType().equals("memcached")){
+        }else if(config.getCacheType().equals("memcached") || config.getCacheType().equals("memory")){
             return new MemcachedNmspMeasureQuery("client_mac", "nmsp");
         } else {
             throw new CacheNotValidException("Not cache backend found: " + config.getCacheType());
@@ -64,7 +64,7 @@ public class StateQuery {
             return new GridGainEventsLocationNmspQuery(key);
         }else if(config.getCacheType().equals("riak")){
             return new RiakEventsLocationNmspQuery(key);
-        }else if(config.getCacheType().equals("memcached")){
+        }else if(config.getCacheType().equals("memcached") || config.getCacheType().equals("memory")){
             return new MemcachedEventsLocationNmspQuery(key, bucket);
         } else {
             throw new CacheNotValidException("Not cache backend found: " + config.getCacheType());
@@ -76,7 +76,7 @@ public class StateQuery {
             return new GridGainEventsLocationMseQuery(key);
         }else if(config.getCacheType().equals("riak")){
             return new RiakEventsLocationMseQuery(key);
-        }else if(config.getCacheType().equals("memcached")){
+        }else if(config.getCacheType().equals("memcached") || config.getCacheType().equals("memory")){
             return new MemcachedEventsLocationMseQuery(key, bucket);
         } else {
             throw new CacheNotValidException("Not cache backend found: " + config.getCacheType());

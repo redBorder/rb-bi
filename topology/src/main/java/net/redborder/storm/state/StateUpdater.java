@@ -16,7 +16,7 @@ public class StateUpdater {
             return new GridGainUpdater(key, value);
         } else if (config.getCacheType().equals("riak")) {
             return new RiakUpdater(key, value);
-        } else if (config.getCacheType().equals("memcached")) {
+        } else if (config.getCacheType().equals("memcached") || config.getCacheType().equals("memory")) {
             return new MemcachedUpdater(key, value, bucket);
         } else {
             throw new CacheNotValidException("Not cache backend found: " + config.getCacheType());
