@@ -38,6 +38,7 @@ public class GetMSEdata extends BaseFunction {
         Double lattitude, longitude;
         String[] zone;
 
+
         try {
             mseEventContent = (Map<String, Object>) mseEvent.get("StreamingNotification");
             location = (Map<String, Object>) mseEventContent.get("location");
@@ -97,8 +98,6 @@ public class GetMSEdata extends BaseFunction {
 
                 locationFormat = lattitude.toString() + "," + longitude.toString();
 
-                //mseData.put("client_lat", lattitude.toString());
-                //mseData.put("client_long", longitude.toString());
                 mseData.put("client_latlong", locationFormat);
             }
 

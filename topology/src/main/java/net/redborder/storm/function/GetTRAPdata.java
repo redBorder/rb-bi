@@ -35,6 +35,7 @@ public class GetTRAPdata extends BaseFunction {
         Object macAP = rssi.get(".1.3.6.1.4.1.9.9.599.1.3.1.1.8.0");
         Object snr = rssi.get(".1.3.6.1.4.1.9.9.599.1.2.2.0");
         Object location = rssi.get(".1.3.6.1.4.1.9.9.513.1.1.1.1.49.0");
+        Object channel = rssi.get(".1.3.6.1.4.1.9.9.513.3.3.0");
         Object sensorName = rssi.get("host");
         Object timestamp = rssi.get("timestamp");
 
@@ -125,6 +126,25 @@ public class GetTRAPdata extends BaseFunction {
                 rssiDataDruid.put("sensor_name", "trap:" + sensor);
                 rssiDataDruid.put("sensor_ip", sensor);
 
+            }
+
+            if(snr != null && clientRssiObject != null){
+                Integer snrInt = (Integer) snr;
+                Integer rssiInt = (Integer) clientRssiObject;
+
+                if(snrInt!=0 && snrInt!=0) {
+                    if (rssiInt > -50) rssiInt = -50;
+                    if (rssiInt < -85) rssiInt = -85;
+                    if (snrInt > 40) snrInt = 40;
+                    if (snrInt < 10) snrInt = 10;
+
+                    double rssiPorcent = (rssiInt + 85) / 35.00;
+                    double snrPorcent = (snrInt - 10) / 30.00;
+
+                    Double quality = ((double) Math.round((rssiPorcent + snrPorcent) / 2.00 * 100) / 100);
+                    quality=quality*100.00;
+                    rssiData.put("quality", quality.intValue());
+                }
             }
 
             if (macAddress != null && !rssiData.isEmpty()) {

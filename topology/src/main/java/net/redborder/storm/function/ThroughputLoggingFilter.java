@@ -18,6 +18,11 @@ public class ThroughputLoggingFilter extends BaseFilter {
     double _mean;
     double _totalMean;
     int _sec_count;
+    String _position;
+
+    public ThroughputLoggingFilter(String position){
+        this._position=position;
+    }
 
     @Override
     public void prepare(Map conf, TridentOperationContext context) {
@@ -25,6 +30,7 @@ public class ThroughputLoggingFilter extends BaseFilter {
         _sec_count = 0;
         _mean = 0;
         _totalMean = 0;
+        System.out.println("Starting throughput metrics [ " + _position + " ]");
     }
 
     @Override
@@ -37,7 +43,7 @@ public class ThroughputLoggingFilter extends BaseFilter {
         } else {
             if (_count.containsKey(timestamp - 1)) {
                 int msgs = _count.get(timestamp - 1);
-                System.out.println(msgs);
+                //System.out.println(msgs);
 
                 if (_sec_count <= 60) {
                     _mean += msgs;
@@ -50,8 +56,8 @@ public class ThroughputLoggingFilter extends BaseFilter {
                         _totalMean = (_totalMean + _mean) / 2;
                     }
 
-                    System.out.println("STATS THROUGHPUT - MINUTE MEAN " + _mean);
-                    System.out.println("STATS THROUGHPUT - TOTAL MEAN " + _totalMean);
+                    System.out.println("STATS THROUGHPUT [ "+ _position +" ] - MINUTE MEAN " + _mean);
+                    System.out.println("STATS THROUGHPUT [ "+ _position +" ] - TOTAL MEAN " + _totalMean);
 
                     _sec_count = 0;
                     _mean = 0;

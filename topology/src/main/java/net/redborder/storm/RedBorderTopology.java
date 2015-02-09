@@ -25,14 +25,11 @@ import net.redborder.storm.util.druid.BeamMonitor;
 import storm.trident.Stream;
 import storm.trident.TridentState;
 import storm.trident.TridentTopology;
-import storm.trident.operation.BaseFilter;
 import storm.trident.state.StateFactory;
-import storm.trident.tuple.TridentTuple;
 
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.math.BigInteger;
 import java.util.*;
 
 /**
@@ -215,11 +212,20 @@ public class RedBorderTopology {
                 locationStream = locationStream.each(new Fields("src_mac"), new MacLocallyAdministeredFilter());
 
             locationStream = locationStream.each(new Fields("mse_data_druid"), new MacVendorFunction(), new Fields("mseMacVendorMap"))
+
                     .each(new Fields("mse_data_druid"), new GeoIpFunction(), new Fields("mseGeoIPMap"));
 
             // Save it to enrich later on
             locationStream.partitionPersist(locationStateFactory, new Fields("src_mac", "mse_data"),
                     StateUpdater.getStateUpdater(_config, "src_mac", "mse_data", "location"));
+
+            if (_config.mseLocationStatsEnabled()) {
+                Stream stateData = locationStream.each(new Fields("mse_map"), new GetLocationClient(), new Fields("client"))
+                        .stateQuery(locationState, new Fields("client"), StateQuery.getStateLocationQuery(_config), new Fields("mseMap"))
+                        .each(new Fields("mse_map", "mseMap"), new LocationLogicMse(), new Fields("locationState"));
+                persist("location",
+                        stateData, "locationState");
+            }
 
             if (_config.contains("traffics")) {
                 // Generate a flow msg
@@ -287,11 +293,11 @@ public class RedBorderTopology {
             nmspMeasureStream.partitionPersist(nmspStateFactory, new Fields("src_mac", "nmsp_measure_data"),
                     StateUpdater.getStateUpdater(_config, "src_mac", "nmsp_measure_data", "nmsp"));
 
-            if(_config.nmspLocationStatsEnabled()) {
+            if (_config.nmspLocationStatsEnabled()) {
                 Stream nmspLocationStateStream = nmspMeasureStream
                         .each(new Fields("nmsp_measure_data_druid", "measureLocation"), new MergeMapsFunction(), new Fields("nmsp_location_state"))
                         .stateQuery(nmspStateLocationState, new Fields("nmsp_location_state"), StateQuery.getStateQuery(_config, "client_mac", "nmsp-state"), new Fields("nmsp_location_state_cache"))
-                        .each(new Fields("nmsp_location_state", "nmsp_location_state_cache"), new LocationLogic(), new Fields("nmsp_location_state_update", "nmsp_location_state_druid"));
+                        .each(new Fields("nmsp_location_state", "nmsp_location_state_cache"), new LocationLogicNmsp(), new Fields("nmsp_location_state_update", "nmsp_location_state_druid"));
 
                 nmspLocationStateStream.partitionPersist(nmspStateLocationStateFactory, new Fields("src_mac", "nmsp_location_state_update"),
                         StateUpdater.getStateUpdater(_config, "src_mac", "nmsp_location_state_update", "nmsp-state"));
@@ -518,7 +524,6 @@ public class RedBorderTopology {
         if (_config.contains("radius") && nmspPartition > 0) print(pw, "   * rb_nmsp: " + nmspPartition);
 
 
-
         print(pw, "- Zookeeper Servers: " + _config.getZkHost());
 
         print(pw, "- Cache Backend: " + _config.getCacheType());
@@ -543,8 +548,8 @@ public class RedBorderTopology {
 
         if (_config.contains("traffics")) {
             print(pw, " - flow: ");
-            print(pw, "   * location: " + getEnrichment(_config.contains("location")));
-            print(pw, "   * nmsp: " + getEnrichment(_config.contains("nmsp")) +  " (" + "location_stats: "+ getEnrichment(_config.nmspLocationStatsEnabled())+")");
+            print(pw, "   * nmsp: " + getEnrichment(_config.contains("nmsp")) + " (" + "location_stats: " + getEnrichment(_config.nmspLocationStatsEnabled()) + ")");
+            print(pw, "   * location: " + getEnrichment(_config.contains("location")) + "   (location state: " + _config.mseLocationStatsEnabled() + ")");
             print(pw, "   * mobile: " + getEnrichment(_config.contains("mobile")));
             print(pw, "   * trap: " + getEnrichment(_config.contains("trap")));
             print(pw, "   * radius (overwrite_cache: " + _config.getOverwriteCache("radius") + ") : " + getEnrichment(_config.contains("radius")));
@@ -557,6 +562,10 @@ public class RedBorderTopology {
             } else {
                 String output = _config.getOutputTopic("traffics");
                 print(pw, "   * output topic: " + output + " (partitions: " + _config.getKafkaPartitions(output) + ")");
+                if (_config.mseLocationStatsEnabled()) {
+                    output = _config.getOutputTopic("location");
+                    print(pw, "   * output topic: " + output + " (partitions: " + _config.getKafkaPartitions(output) + ")");
+                }
             }
         }
 
@@ -617,21 +626,25 @@ public class RedBorderTopology {
                     .parallelismHint(flowPrePartitions);
         } else {
             BeamFactory bf;
-            TridentBeamStateFactory druidState;
+            TridentBeamStateFactory druidState = null;
             String zkHost = _config.getZkHost();
 
             switch (topic) {
                 case "traffics":
                     bf = new BeamFlow(partitions, replication, zkHost, _config.getMaxRows());
-                    druidState = new TridentBeamStateFactory<BeamFlow>(bf);
+                    druidState = new TridentBeamStateFactory<>(bf);
                     break;
                 case "events":
                     bf = new BeamEvent(partitions, replication, zkHost, _config.getMaxRows());
-                    druidState = new TridentBeamStateFactory<BeamEvent>(bf);
+                    druidState = new TridentBeamStateFactory<>(bf);
+                    break;
+                case "monitor":
+
+                    bf = new BeamMonitor(partitions, replication, zkHost, _config.getMaxRows());
+                    druidState = new TridentBeamStateFactory<>(bf);
                     break;
                 default:
-                    bf = new BeamMonitor(partitions, replication, zkHost, _config.getMaxRows());
-                    druidState = new TridentBeamStateFactory<BeamMonitor>(bf);
+                    System.out.println("Tranquility beams not defined!");
                     break;
             }
 

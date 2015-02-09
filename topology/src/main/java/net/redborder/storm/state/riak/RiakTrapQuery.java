@@ -24,6 +24,7 @@ public class RiakTrapQuery extends RiakQuery {
             empty.put("client_rssi_num", 0);
             empty.put("client_snr", "unknown");
             empty.put("client_snr_num", 0);
+            //empty.put("quality", 0);
             collector.emit(new Values(empty));
         } else {
             collector.emit(new Values(result));

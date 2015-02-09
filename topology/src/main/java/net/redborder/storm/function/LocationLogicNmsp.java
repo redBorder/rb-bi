@@ -11,7 +11,7 @@ import java.util.Map;
 /**
  * Created by andresgomez on 22/1/15.
  */
-public class LocationLogic extends BaseFunction {
+public class LocationLogicNmsp extends BaseFunction {
 
     final Long MINUTE = 60L;
     final Long CLIENT_LEAVE_TIME = 30L * MINUTE;

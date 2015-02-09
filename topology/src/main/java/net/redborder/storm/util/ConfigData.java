@@ -61,6 +61,7 @@ public class ConfigData {
         _curator.close();
     }
 
+
     private void initKafkaPartitions() {
         List<String> partitionsList;
 
@@ -80,6 +81,7 @@ public class ConfigData {
         Integer ret = _kafkaPartitions.get(topic);
         return ret != null ? ret : 0;
     }
+
 
     private void initWorkers() {
 
@@ -319,6 +321,11 @@ public class ConfigData {
 
     public boolean nmspLocationStatsEnabled() {
         Boolean ret = _configFile.getFromGeneral("nmsp_location_stats");
+        return ret != null && ret;
+    }
+
+    public boolean mseLocationStatsEnabled(){
+        Boolean ret =  _configFile.getFromGeneral("mse_location_stats");
         return ret != null && ret;
     }
 
