@@ -103,7 +103,6 @@ public class LocationLogicMse extends BaseFunction {
                 state.put("sensor_name", mseEventContent.get("subscriptionName"));
                 state.put("timestamp", new DateTime(timestamp).withZone(DateTimeZone.UTC).getMillis() / 1000);
                 state.put("client_mac", macAddress);
-                state.put("state", 1);
                 tridentCollector.emit(new Values(state));
             }
         }
