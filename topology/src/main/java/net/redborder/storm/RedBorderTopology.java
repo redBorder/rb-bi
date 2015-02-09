@@ -215,17 +215,19 @@ public class RedBorderTopology {
 
                     .each(new Fields("mse_data_druid"), new GeoIpFunction(), new Fields("mseGeoIPMap"));
 
+            if (_config.mseLocationStatsEnabled()) {
+                locationStream = locationStream.each(new Fields("mse_map"), new GetLocationClient(), new Fields("client"))
+                        .stateQuery(locationState, new Fields("client"), StateQuery.getStateLocationQuery(_config), new Fields("mseMap"))
+                        .each(new Fields("mse_map", "mseMap"), new LocationLogicMse(), new Fields("locationState"));
+
+                persist("location",
+                        locationStream, "locationState");
+            }
+
             // Save it to enrich later on
             locationStream.partitionPersist(locationStateFactory, new Fields("src_mac", "mse_data"),
                     StateUpdater.getStateUpdater(_config, "src_mac", "mse_data", "location"));
 
-            if (_config.mseLocationStatsEnabled()) {
-                Stream stateData = locationStream.each(new Fields("mse_map"), new GetLocationClient(), new Fields("client"))
-                        .stateQuery(locationState, new Fields("client"), StateQuery.getStateLocationQuery(_config), new Fields("mseMap"))
-                        .each(new Fields("mse_map", "mseMap"), new LocationLogicMse(), new Fields("locationState"));
-                persist("location",
-                        stateData, "locationState");
-            }
 
             if (_config.contains("traffics")) {
                 // Generate a flow msg

@@ -15,7 +15,7 @@ import java.util.Map;
  */
 public class LocationLogicMse extends BaseFunction {
 
-    Map<String, Object> mseEventContent, location, statistics, mapInfo;
+    Map<String, Object> mseEventContent, location, mapInfo;
 
     @Override
     public void execute(TridentTuple tuple, TridentCollector tridentCollector) {
@@ -24,7 +24,7 @@ public class LocationLogicMse extends BaseFunction {
             Map<String, Object> cacheLocation = (Map<String, Object>) tuple.getValueByField("mseMap");
             mseEventContent = (Map<String, Object>) mseEvent.get("StreamingNotification");
             location = (Map<String, Object>) mseEventContent.get("location");
-            Map<String, Object> state = new HashMap<>();
+            Map<String, Object> druid = new HashMap<>();
 
             if (location != null) {
                 mapInfo = (Map<String, Object>) location.get("MapInfo");
@@ -35,75 +35,65 @@ public class LocationLogicMse extends BaseFunction {
                 String mapHierachy = (String) mapInfo.get("mapHierarchyString");
                 if (mapHierachy != null) {
                     String[] zone = mapHierachy.split(">");
+                    String wirelessStation = (String) location.get("apMacAddress");
 
+                    if(wirelessStation==null){
+                        wirelessStation = "unknown";
+                    }
+
+                    System.out.println("CACHE: " + cacheLocation);
                     if (!cacheLocation.isEmpty()) {
                         String oldFloor = (String) cacheLocation.get("client_floor");
                         String oldBuilding = (String) cacheLocation.get("client_building");
                         String oldCampus = (String) cacheLocation.get("client_campus");
+                        String oldwirelessStation = (String) cacheLocation.get("wireless_station");
 
                         if (oldFloor != null)
                             if (!oldFloor.equals(zone[2])) {
-                                state.put("client_floor_old", oldFloor);
-                                state.put("client_floor_new", zone[2]);
+                                druid.put("client_floor_old", oldFloor);
+                                druid.put("client_floor_new", zone[2]);
+                            } else {
+                                druid.put("client_floor", zone[2]);
+                            }
+
+                        if (oldwirelessStation != null)
+                            if (!oldwirelessStation.equals(wirelessStation)) {
+                                druid.put("wireless_station_old", oldwirelessStation);
+                                druid.put("wireless_station_new", wirelessStation);
+                            } else {
+                                druid.put("wireless_station", wirelessStation);
                             }
 
                         if (oldBuilding != null)
                             if (!oldBuilding.equals(zone[1])) {
-                                state.put("client_building_old", oldBuilding);
-                                state.put("client_building_new", zone[1]);
+                                druid.put("client_building_old", oldBuilding);
+                                druid.put("client_building_new", zone[1]);
+                            } else {
+                                druid.put("client_building", zone[1]);
                             }
 
                         if (oldCampus != null)
                             if (!oldCampus.equals(zone[0])) {
-                                state.put("client_campus_old", oldCampus);
-                                state.put("client_campus_new", zone[0]);
+                                druid.put("client_campus_old", oldCampus);
+                                druid.put("client_campus_new", zone[0]);
+                            } else {
+                                druid.put("client_campus", zone[0]);
                             }
 
-                    }else{
-                        state.put("client_floor_new", zone[2]);
-                        state.put("client_campus_new", zone[0]);
-                        state.put("client_building_new", zone[1]);
+                    } else {
+                        druid.put("client_floor_new", zone[2]);
+                        druid.put("client_campus_new", zone[0]);
+                        druid.put("client_building_new", zone[1]);
                     }
-                    state.put("client_floor", zone[2]);
-                    state.put("client_campus", zone[0]);
-                    state.put("client_building", zone[1]);
                 }
 
                 String macAddress = (String) location.get("macAddress");
-
-/*
-                statistics = (Map<String, Object>) location.get("Statistics");
-                if (statistics != null) {
-
-                    String firstLocatedTime = (String) statistics.get("firstLocatedTime");
-                    Long firstTime = new DateTime(firstLocatedTime).withZone(DateTimeZone.UTC).getMillis() / 60000;
-
-                    String lastLocatedTime = (String) statistics.get("lastLocatedTime");
-                    Long lastTime = new DateTime(lastLocatedTime).withZone(DateTimeZone.UTC).getMillis() / 60000;
-
-
-                    while (lastTime <= firstTime) {
-
-                        state.put("timestamp", lastTime * 60);
-                        state.put("client_mac", macAddress.hashCode());
-                        state.put("state", 1);
-                        lastTime++;
-                        tridentCollector.emit(new Values(state));
-
-                        if (state.containsKey("client_floor_new"))
-                            state.remove("client_floor_new");
-                        if (state.containsKey("client_floor_old"))
-                            state.remove("client_floor_old");
-                    }
-                }
-
-*/
                 String timestamp = (String) mseEvent.get("timestamp");
 
-                state.put("sensor_name", mseEventContent.get("subscriptionName"));
-                state.put("timestamp", new DateTime(timestamp).withZone(DateTimeZone.UTC).getMillis() / 1000);
-                state.put("client_mac", macAddress);
-                tridentCollector.emit(new Values(state));
+                druid.put("sensor_name", mseEventContent.get("subscriptionName"));
+                druid.put("timestamp", new DateTime(timestamp).withZone(DateTimeZone.UTC).getMillis() / 1000);
+                druid.put("client_mac", macAddress);
+                tridentCollector.emit(new Values(druid));
             }
         }
     }
