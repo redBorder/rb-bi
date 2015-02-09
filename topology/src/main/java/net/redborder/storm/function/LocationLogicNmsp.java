@@ -27,6 +27,7 @@ public class LocationLogicNmsp extends BaseFunction {
         String newFloor = (String) location.get("client_floor");
         String newBuilding = (String) location.get("client_building");
         String newCampus = (String) location.get("client_campus");
+        String newZone = (String) location.get("client_zone");
 
         if(newFloor == null)
            newFloor = "unknown";
@@ -36,6 +37,9 @@ public class LocationLogicNmsp extends BaseFunction {
 
         if(newCampus == null)
             newCampus = "unknown";
+
+        if(newZone == null)
+            newZone = "unknown";
 
         String sensorName = (String) location.get("sensor_name");
         String wirelessStation = (String) location.get("wireless_station");
@@ -54,6 +58,7 @@ public class LocationLogicNmsp extends BaseFunction {
             String oldBuilding = (String) locationCache.get("client_building");
             String oldCampus = (String) locationCache.get("client_campus");
             String oldwirelessStation = (String) locationCache.get("wireless_station");
+            String oldZone = (String) locationCache.get("client_zone");
 
             // Dwell Time
 
@@ -75,6 +80,8 @@ public class LocationLogicNmsp extends BaseFunction {
                         druid.put("client_campus", oldCampus);
                     if (oldBuilding != null)
                         druid.put("client_building", oldBuilding);
+                    if (oldZone != null)
+                        druid.put("client_building", oldZone);
 
                     druid.put("wireless_station", oldwirelessStation);
                     collector.emit(new Values(null, druid));
@@ -92,6 +99,15 @@ public class LocationLogicNmsp extends BaseFunction {
                     moved = true;
                 } else {
                     druid.put("client_floor", newFloor);
+                }
+
+            if (oldZone != null)
+                if (!oldZone.equals(newZone)) {
+                    druid.put("client_zone_old", oldZone);
+                    druid.put("client_zone_new", newZone);
+                    moved = true;
+                } else {
+                    druid.put("client_zone", newZone);
                 }
 
             if (oldwirelessStation != null)
@@ -128,6 +144,8 @@ public class LocationLogicNmsp extends BaseFunction {
                 druid.put("client_campus_new", newCampus);
             if (newBuilding != null)
                 druid.put("client_building_new", newBuilding);
+            if (newZone != null)
+                druid.put("client_zone_new", newZone);
         }
 
         // End
@@ -140,6 +158,8 @@ public class LocationLogicNmsp extends BaseFunction {
             state.put("client_campus", newCampus);
         if (newBuilding != null)
             state.put("client_building", newBuilding);
+        if (newZone != null)
+            state.put("client_zone", newZone);
 
         state.put("wireless_station", wirelessStation);
 

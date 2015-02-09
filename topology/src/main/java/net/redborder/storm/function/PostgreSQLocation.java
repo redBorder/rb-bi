@@ -46,6 +46,9 @@ public class PostgreSQLocation extends BaseFunction {
             _hash = _manager.getAPLocation();
             _last_update = System.currentTimeMillis();
             _next_update = 1800000;
+            Logger.getLogger(PostgreSQLocation.class.getName()).log(Level.INFO,
+                    "Initiate location with postgreSQL info. \n Location Entry: " + _hash.size()
+                            + " \n   Initial data: \n " + _hash.toString());
         } catch (Exception ex) {
             _next_update = 300000;
             Logger.getLogger(PostgreSQLocation.class.getName()).log(Level.WARNING,

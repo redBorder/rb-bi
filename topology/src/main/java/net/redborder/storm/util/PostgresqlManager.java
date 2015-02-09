@@ -24,9 +24,9 @@ public class PostgresqlManager {
     }
 
     public static void initConfig(String uri, String user, String pass) {
-        _uri=uri;
-        _user=user;
-        _pass=pass;
+        _uri = uri;
+        _user = user;
+        _pass = pass;
     }
 
     public static PostgresqlManager getInstance() {
@@ -76,12 +76,7 @@ public class PostgresqlManager {
 
         try {
             Statement st = conn.createStatement();
-            ResultSet rs = st.executeQuery("SELECT access_points.ip_address, access_points.mac_address," +
-                    " access_points.latitude AS latitude, access_points.longitude AS longitude, floor.name AS floor_name," +
-                    " building.name AS building_name, campus.name AS campus_name " +
-                    "FROM access_points JOIN sensors AS floor ON floor.id = access_points.sensor_id " +
-                    "JOIN sensors AS building ON floor.parent_id = building.id JOIN sensors " +
-                    "AS campus ON building.parent_id = campus.id;");
+            ResultSet rs = st.executeQuery("SELECT access_points.ip_address, access_points.mac_address, access_points.latitude AS latitude, access_points.longitude AS longitude, floor.name AS floor_name,building.name AS building_name, campus.name AS campus_name, zones.name AS zone_name FROM access_points FULL OUTER JOIN sensors AS floor ON floor.id = access_points.sensor_id FULL OUTER JOIN sensors AS building ON floor.parent_id = building.id FULL OUTER JOIN sensors AS campus ON building.parent_id = campus.id FULL OUTER JOIN (SELECT MIN(zone_id) AS zone_id, access_point_id FROM access_points_zones GROUP BY access_point_id) AS zones_ids ON access_points.id = zones_ids.access_point_id FULL OUTER JOIN zones ON zones_ids.zone_id = zones.id WHERE access_points.ip_address IS NOT NULL;");
 
             while (rs.next()) {
 
@@ -89,10 +84,17 @@ public class PostgresqlManager {
                 Double latitude = (double) Math.round(Double.valueOf(rs.getString("latitude")) * 100000) / 100000;
 
                 Map<String, Object> location = new HashMap<>();
-                location.put("client_latlong", latitude+","+longitude);
+                location.put("client_latlong", latitude + "," + longitude);
                 location.put("client_campus", rs.getString("campus_name"));
                 location.put("client_building", rs.getString("building_name"));
                 location.put("client_floor", rs.getString("floor_name"));
+
+                if (rs.getString("zone_name") != null) {
+                    location.put("client_zone", rs.getString("zone_name"));
+                } else {
+                    location.put("client_zone", "unknown");
+                }
+
                 map.put(rs.getString("mac_address"), location);
             }
         } catch (SQLException e) {
