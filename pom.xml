@@ -34,6 +34,12 @@
 
     <dependencies>
 
+        <dependency>
+            <groupId>org.apache.curator</groupId>
+            <artifactId>curator-framework</artifactId>
+            <version>2.4.0</version>
+        </dependency>
+
         <!-- Storm -->
         <dependency>
             <groupId>org.apache.storm</groupId>
