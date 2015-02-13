@@ -26,35 +26,34 @@ import java.util.Map;
  */
 public class GridGainManager {
 
-    public static final Long TIME_TO_LIVE = 60*1000L;
+    public static final Long TIME_TO_LIVE = 60 * 1000L;
     private final static String CONFIG_FILE_PATH = "/opt/rb/etc/darklist_config.yml";
 
-    static Long _timeToLive;
-    static List<String> _gridGainServers;
-    static String _multicastGroup;
-    static Map<String, Object> _s3Config = null;
-    static List<String> _topics;
-    static Grid grid = null;
-    static boolean isReconnecting = false;
+    private static Long _timeToLive;
+    private static List<String> _gridGainServers;
+    private static String _multicastGroup;
+    private static Map<String, Object> _s3Config = null;
+    private static List<String> _topics;
+    private static Grid grid = null;
+    private static boolean isReconnecting = false;
 
-    public static void init(List<String> topics, Map<String, Object> gridGainConfig){
+    public static void init(List<String> topics, Map<String, Object> gridGainConfig) {
         _topics = topics;
         _timeToLive = gridGainConfig.get("time_to_live") == null ? TIME_TO_LIVE : (Long.valueOf(gridGainConfig.get("time_to_live").toString()));
-        if(!gridGainConfig.containsKey("s3")) {
+        if (!gridGainConfig.containsKey("s3")) {
             _gridGainServers = (List<String>) gridGainConfig.get("servers");
             _multicastGroup = (String) gridGainConfig.get("multicast");
-        }
-        else{
+        } else {
             _s3Config = (Map<String, Object>) gridGainConfig.get("s3");
         }
     }
 
-    public static synchronized Grid getGrid(){
-        if(grid==null){
+    public static synchronized Grid getGrid() {
+        if (grid == null) {
             try {
-                if(GridGain.state().equals(GridGainState.STARTED)) {
+                if (GridGain.state().equals(GridGainState.STARTED)) {
                     grid = GridGain.grid();
-                }else{
+                } else {
                     grid = GridGain.start(makeConfig());
                 }
                 isReconnecting = false;
@@ -65,17 +64,28 @@ public class GridGainManager {
         return grid;
     }
 
-    public synchronized static void reconnect(){
-        if(!isReconnecting) {
-            isReconnecting = true;
+    public static boolean isReconnecting() {
+        return isReconnecting;
+    }
+
+    public synchronized static void reconnect() {
             close();
+    }
+
+    public synchronized static void startGridGainConnector() {
+        if (!isReconnecting) {
+            isReconnecting = true;
+            GridGainConnector connector = new GridGainConnector();
+            connector.start();
         }
     }
 
-    public static void close(){
+    public static void close() {
         try {
-            grid.close();
-            grid=null;
+            if(grid!=null) {
+                grid.close();
+                grid = null;
+            }
         } catch (GridException e) {
             e.printStackTrace();
         }
@@ -87,7 +97,7 @@ public class GridGainManager {
         GridTcpDiscoverySpi gridTcp = new GridTcpDiscoverySpi();
 
 
-        if(_s3Config==null) {
+        if (_s3Config == null) {
             GridTcpDiscoveryVmIpFinder gridIpFinder = new GridTcpDiscoveryVmIpFinder();
 
             Collection<InetSocketAddress> ips = new ArrayList<>();
