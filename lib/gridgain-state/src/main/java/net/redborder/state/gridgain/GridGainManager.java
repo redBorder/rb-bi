@@ -35,6 +35,7 @@ public class GridGainManager {
     static Map<String, Object> _s3Config = null;
     static List<String> _topics;
     static Grid grid = null;
+    static boolean isReconnecting = false;
 
     public static void init(List<String> topics, Map<String, Object> gridGainConfig){
         _topics = topics;
@@ -56,11 +57,19 @@ public class GridGainManager {
                 }else{
                     grid = GridGain.start(makeConfig());
                 }
+                isReconnecting = false;
             } catch (GridException e) {
                 e.printStackTrace();
             }
         }
         return grid;
+    }
+
+    public synchronized static void reconnect(){
+        if(!isReconnecting) {
+            isReconnecting = true;
+            close();
+        }
     }
 
     public static void close(){

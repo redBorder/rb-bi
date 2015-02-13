@@ -118,7 +118,7 @@ public class RedBorderTopology {
         List<String> fieldsEvent = new ArrayList<>();
 
         /* States and Streams*/
-        TridentState locationState, mobileState, radiusState, trapState, darklistState, nmspState, nmspStateInfo, nmspStateLocationState;
+        TridentState locationState, mobileState, radiusState, trapState, darklistState, nmspState, nmspStateInfo, nmspStateLocationState, locationStasts;
         StateFactory locationStateFactory, mobileStateFactory, trapStateFactory, radiusStateFactory, nmspStateFactory, nmspStateInfoFactory, nmspStateLocationStateFactory;
         Stream locationStream, radiusStream, flowStream = null, eventsStream = null, monitorStream = null, nmspStream;
 
@@ -216,8 +216,10 @@ public class RedBorderTopology {
                     .each(new Fields("mse_data_druid"), new GeoIpFunction(), new Fields("mseGeoIPMap"));
 
             if (_config.mseLocationStatsEnabled()) {
+                locationStasts  = topology.newStaticState(locationStateFactory);
+
                 locationStream = locationStream.each(new Fields("mse_map"), new GetLocationClient(), new Fields("client"))
-                        .stateQuery(locationState, new Fields("client"), StateQuery.getStateLocationQuery(_config), new Fields("mseMap"))
+                        .stateQuery(locationStasts, new Fields("client"), StateQuery.getStateLocationQuery(_config), new Fields("mseMap"))
                         .each(new Fields("mse_map", "mseMap"), new LocationLogicMse(), new Fields("locationState"));
 
                 persist("location",

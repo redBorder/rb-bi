@@ -41,7 +41,7 @@ public class LocationLogicMse extends BaseFunction {
                         wirelessStation = "unknown";
                     }
 
-                    System.out.println("CACHE: " + cacheLocation);
+                   // System.out.println("CACHE: " + cacheLocation);
                     if (!cacheLocation.isEmpty()) {
                         String oldFloor = (String) cacheLocation.get("client_floor");
                         String oldBuilding = (String) cacheLocation.get("client_building");

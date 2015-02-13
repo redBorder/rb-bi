@@ -4,9 +4,11 @@ import org.gridgain.grid.Grid;
 import org.gridgain.grid.GridException;
 import org.gridgain.grid.GridTopologyException;
 import org.gridgain.grid.cache.GridCache;
+import org.gridgain.grid.cache.GridCacheAtomicUpdateTimeoutException;
 import storm.trident.state.map.IBackingMap;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -27,6 +29,7 @@ public class GridGainStormState implements IBackingMap<Map<String, Map<String, O
 
     @Override
     public List<Map<String, Map<String, Object>>> multiGet(List<List<Object>> lists) {
+        List<Map<String, Map<String, Object>>> values = new ArrayList<>();
         List<String> keys = new ArrayList<>();
 
         for (List key : lists) {
@@ -35,22 +38,32 @@ public class GridGainStormState implements IBackingMap<Map<String, Map<String, O
 
         try {
 
-            List<Map<String, Map<String, Object>>> values = new ArrayList<>();
+            Map<String, Map<String, Object>> cache = _map.getAll(keys);
+            values.add(cache);
 
-            values.add(_map.getAll(keys));
-
-            return values;
         } catch (Exception e) {
             if(e instanceof GridTopologyException) {
                 Logger.getLogger(GridGainStormState.class.getName()).log(Level.SEVERE, "All gridgain nodes are shutdown!!!", e);
-            }else {
-                e.printStackTrace();
+                GridGainManager.reconnect();
+            }else if(e instanceof GridCacheAtomicUpdateTimeoutException) {
+                Logger.getLogger(GridGainStormState.class.getName()).log(Level.SEVERE, "Network timeout, storm will try reconnect to gridgain cluster ...", e);
+                GridGainManager.reconnect();
+            }else if(e instanceof  IllegalStateException) {
+                Logger.getLogger(GridGainStormState.class.getName()).log(Level.SEVERE, "Other storm state instance initiate gridgain client before, try to repare the connection ...", e);
+            } else {
+                Logger.getLogger(GridGainStormState.class.getName()).log(Level.SEVERE, "Storm will try reconnect to gridgain cluster ...", e);
+                GridGainManager.reconnect();
             }
-            // GridGainManager.close();
-           // _map = GridGainManager.getGrid().cache(_cacheName);
+
+            _map = GridGainManager.getGrid().cache(_cacheName);
+            Map<String, Map<String, Object>> errorCache = new HashMap<>();
+            values.add(errorCache);
+
+            System.out.println("VALUES ERROR: " + values);
+
         }
 
-        return null;
+        return values;
     }
 
     @Override
@@ -61,11 +74,17 @@ public class GridGainStormState implements IBackingMap<Map<String, Map<String, O
         } catch (Exception e) {
             if(e instanceof GridTopologyException) {
                 Logger.getLogger(GridGainStormState.class.getName()).log(Level.SEVERE, "All gridgain nodes are shutdown!!!", e);
-            }else {
-                e.printStackTrace();
+                GridGainManager.reconnect();
+            }else if(e instanceof GridCacheAtomicUpdateTimeoutException) {
+                Logger.getLogger(GridGainStormState.class.getName()).log(Level.SEVERE, "Network timeout, storm will try reconnect to gridgain cluster ...", e);
+                GridGainManager.reconnect();
+            }else if(e instanceof  IllegalStateException) {
+                Logger.getLogger(GridGainStormState.class.getName()).log(Level.SEVERE, "Other storm state instance initiate gridgain client before, try to repare the connection ...", e);
+            } else {
+                Logger.getLogger(GridGainStormState.class.getName()).log(Level.SEVERE, "Storm will try reconnect to gridgain cluster ...", e);
+                GridGainManager.reconnect();
             }
-           // GridGainManager.close();
-            //map = GridGainManager.getGrid().cache(_cacheName);
+            _map = GridGainManager.getGrid().cache(_cacheName);
         }
     }
 }
