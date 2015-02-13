@@ -25,6 +25,7 @@ import net.redborder.storm.util.druid.BeamMonitor;
 import storm.trident.Stream;
 import storm.trident.TridentState;
 import storm.trident.TridentTopology;
+import storm.trident.operation.builtin.FilterNull;
 import storm.trident.state.StateFactory;
 
 import java.io.FileWriter;
@@ -120,7 +121,7 @@ public class RedBorderTopology {
         /* States and Streams*/
         TridentState locationState, mobileState, radiusState, trapState, darklistState, nmspState, nmspStateInfo, nmspStateLocationState, locationStasts;
         StateFactory locationStateFactory, mobileStateFactory, trapStateFactory, radiusStateFactory, nmspStateFactory, nmspStateInfoFactory, nmspStateLocationStateFactory;
-        Stream locationStream, radiusStream, flowStream = null, eventsStream = null, monitorStream = null, nmspStream;
+        Stream locationStream, radiusStream, flowStream = null, eventsStream = null, monitorStream = null, nmspStream, locationStreamUnderV10, locationStreamV10;
 
         /* Partitions */
         int flowPartition = _config.getKafkaPartitions("rb_flow");
@@ -206,35 +207,50 @@ public class RedBorderTopology {
             locationStream = topology.newStream("rb_loc", new TridentKafkaSpout(_config, "location").builder())
                     .name("Location").parallelismHint(locationPartition).shuffle()
                     .each(new Fields("str"), new MapperFunction("rb_loc"), new Fields("mse_map"))
-                    .each(new Fields("mse_map"), new GetMSEdata(), new Fields("src_mac", "mse_data", "mse_data_druid"));
+                    .each(new Fields("mse_map"), new GetMSEdata(), new Fields("src_mac", "mse_data", "mse_data_druid", "mse_version_10"));
+
+            locationStreamUnderV10 = locationStream
+                    .each(new Fields("src_mac", "mse_data", "mse_data_druid"), new FilterNull());
+
+            locationStreamV10 = locationStream
+                    .each(new Fields("mse_version_10"), new FilterNull());
+
+            /*
+            TODO locationStreamV10
+
+
+
+
+            */
+
 
             if (_config.getMacLocallyAdministeredEnable())
-                locationStream = locationStream.each(new Fields("src_mac"), new MacLocallyAdministeredFilter());
+                locationStreamUnderV10 = locationStreamUnderV10.each(new Fields("src_mac"), new MacLocallyAdministeredFilter());
 
-            locationStream = locationStream.each(new Fields("mse_data_druid"), new MacVendorFunction(), new Fields("mseMacVendorMap"))
+            locationStreamUnderV10 = locationStreamUnderV10.each(new Fields("mse_data_druid"), new MacVendorFunction(), new Fields("mseMacVendorMap"))
 
                     .each(new Fields("mse_data_druid"), new GeoIpFunction(), new Fields("mseGeoIPMap"));
 
             if (_config.mseLocationStatsEnabled()) {
                 locationStasts  = topology.newStaticState(locationStateFactory);
 
-                locationStream = locationStream.each(new Fields("mse_map"), new GetLocationClient(), new Fields("client"))
+                locationStreamUnderV10 = locationStreamUnderV10.each(new Fields("mse_map"), new GetLocationClient(), new Fields("client"))
                         .stateQuery(locationStasts, new Fields("client"), StateQuery.getStateLocationQuery(_config), new Fields("mseMap"))
                         .each(new Fields("mse_map", "mseMap"), new LocationLogicMse(), new Fields("locationState"));
 
                 persist("location",
-                        locationStream, "locationState");
+                        locationStreamUnderV10, "locationState");
             }
 
             // Save it to enrich later on
-            locationStream.partitionPersist(locationStateFactory, new Fields("src_mac", "mse_data"),
+            locationStreamUnderV10.partitionPersist(locationStateFactory, new Fields("src_mac", "mse_data"),
                     StateUpdater.getStateUpdater(_config, "src_mac", "mse_data", "location"));
 
 
             if (_config.contains("traffics")) {
                 // Generate a flow msg
                 persist("traffics",
-                        locationStream.each(new Fields("mse_data_druid", "mseMacVendorMap", "mseGeoIPMap"),
+                        locationStreamUnderV10.each(new Fields("mse_data_druid", "mseMacVendorMap", "mseGeoIPMap"),
                                 new MergeMapsFunction(), new Fields("traffics")), "traffics");
 
                 // Enrich flow stream
