@@ -58,9 +58,6 @@ public class GridGainStormState implements IBackingMap<Map<String, Map<String, O
             _map = GridGainManager.getGrid().cache(_cacheName);
             Map<String, Map<String, Object>> errorCache = new HashMap<>();
             values.add(errorCache);
-
-            System.out.println("VALUES ERROR: " + values);
-
         }
 
         return values;
