@@ -84,8 +84,8 @@ public class GridGainStormState implements IBackingMap<Map<String, Map<String, O
             if (!GridGainManager.isReconnecting()) {
                 _map.putAll(values.get(0));
             } else {
-                Logger.getLogger(GridGainStormState.class.getName()).log(Level.SEVERE, "GridGainConnector is running ...");
-                Logger.getLogger(GridGainStormState.class.getName()).log(Level.SEVERE, "All gridgain nodes are shutdown!!! --> Enrichment disable.");
+                Logger.getLogger(GridGainStormState.class.getName()).log(Level.INFO, "GridGainConnector is running ...");
+                Logger.getLogger(GridGainStormState.class.getName()).log(Level.WARNING, "All gridgain nodes are shutdown!!! --> Enrichment disable.");
             }
 
         } catch (Exception e) {
