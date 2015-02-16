@@ -305,9 +305,6 @@ public class RedBorderTopology {
             nmspStateInfoFactory = RedBorderState.getStateFactory(_config, "nmsp-info");
             nmspStateInfo = topology.newStaticState(nmspStateInfoFactory);
 
-            nmspStateLocationStateFactory = RedBorderState.getStateFactory(_config, "nmsp-location-state");
-            nmspStateLocationState = topology.newStaticState(nmspStateLocationStateFactory);
-
             // Get msg
             nmspStream = topology.newStream("rb_nmsp", new TridentKafkaSpout(_config, "nmsp").builder())
                     .name("NMSP").parallelismHint(nmspPartition).shuffle()
@@ -339,6 +336,9 @@ public class RedBorderTopology {
                     StateUpdater.getStateUpdater(_config, "src_mac", "nmsp_measure_data", "nmsp"));
 
             if (_config.nmspLocationStatsEnabled()) {
+                nmspStateLocationStateFactory = RedBorderState.getStateFactory(_config, "nmsp-location-state");
+                nmspStateLocationState = topology.newStaticState(nmspStateLocationStateFactory);
+
                 Stream nmspLocationStateStream = nmspMeasureStream
                         .each(new Fields("nmsp_measure_data_druid", "measureLocation"), new MergeMapsFunction(), new Fields("nmsp_location_state"))
                         .stateQuery(nmspStateLocationState, new Fields("nmsp_location_state"), StateQuery.getStateQuery(_config, "client_mac", "nmsp-state"), new Fields("nmsp_location_state_cache"))
