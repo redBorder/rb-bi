@@ -119,8 +119,8 @@ public class RedBorderTopology {
         List<String> fieldsEvent = new ArrayList<>();
 
         /* States and Streams*/
-        TridentState locationState, mobileState, radiusState, trapState, darklistState, nmspState, nmspStateInfo, nmspStateLocationState, locationStasts;
-        StateFactory locationStateFactory, mobileStateFactory, trapStateFactory, radiusStateFactory, nmspStateFactory, nmspStateInfoFactory, nmspStateLocationStateFactory;
+        TridentState locationState, mobileState, radiusState, trapState, darklistState, nmspState, nmspStateInfo, nmspStateLocationState, locationStasts, locationInfoState;
+        StateFactory locationStateFactory, mobileStateFactory, trapStateFactory, radiusStateFactory, nmspStateFactory, nmspStateInfoFactory, nmspStateLocationStateFactory, locationInfoStateFactory;
         Stream locationStream, radiusStream, flowStream = null, eventsStream = null, monitorStream = null, nmspStream, locationStreamUnderV10, locationStreamV10;
 
         /* Partitions */
@@ -200,8 +200,12 @@ public class RedBorderTopology {
         /* Location */
         if (_config.contains("location")) {
             locationPartition = _config.getKafkaPartitions("rb_loc");
+
             locationStateFactory = RedBorderState.getStateFactory(_config, "location");
             locationState = topology.newStaticState(locationStateFactory);
+
+            locationInfoStateFactory = RedBorderState.getStateFactory(_config, "location-info");
+            locationInfoState = topology.newStaticState(locationInfoStateFactory);
 
             // Get msg
             locationStream = topology.newStream("rb_loc", new TridentKafkaSpout(_config, "location").builder())
@@ -215,13 +219,36 @@ public class RedBorderTopology {
             locationStreamV10 = locationStream
                     .each(new Fields("mse_version_10"), new FilterNull());
 
-            /*
-            TODO locationStreamV10
+            locationStreamV10 = locationStreamV10
+                    .each(new Fields("mse_version_10"), new SplitMSE10Data(), new Fields("mse10_association", "mse10_locationUpdate"));
 
 
+            // Association v10
 
 
-            */
+            Stream associationV10 = locationStreamV10
+                    .each(new Fields("mse10_association"), new FilterNull())
+                    .each(new Fields("mse10_association"), new ProcessMse10Association(), new Fields("src_mac", "mse10_association_data", "mse10_association_druid"));
+
+            associationV10.partitionPersist(locationInfoStateFactory, new Fields("src_mac", "mse10_association_data"),
+                    StateUpdater.getStateUpdater(_config, "src_mac", "mse10_association_data", "location-info"));
+
+            persist("traffics",
+                    associationV10, "mse10_association_druid");
+
+            // LocationUpdate v10
+
+            Stream locationUpdateV10 = locationStreamV10
+                    .each(new Fields("mse10_locationUpdate"), new FilterNull())
+                    .stateQuery(locationInfoState, new Fields("mse10_locationUpdate"), StateQuery.getStateLocationV10Query(_config), new Fields("mseInfoV10"))
+                    .each(new Fields("mse10_locationUpdate"), new ProcessMse10LocationUpdate(), new Fields("mse10_locationUpdate_data", "mse10_locationUpdate_druid"));
+
+            locationUpdateV10
+                    .each(new Fields("mse10_locationUpdate_data", "mseInfoV10"), new MergeMapsFunction(), new Fields("mse10_data"))
+                    .partitionPersist(locationStateFactory, new Fields("src_mac", "mse10_data"), StateUpdater.getStateUpdater(_config, "src_mac", "mse10_data", "location"));
+
+            persist("traffics",
+                    locationUpdateV10.each(new Fields("mse10_locationUpdate_druid", "mseInfoV10"), new MergeMapsFunction(), new Fields("mse10_druid")), "mse10_druid");
 
 
             if (_config.getMacLocallyAdministeredEnable())
@@ -232,7 +259,7 @@ public class RedBorderTopology {
                     .each(new Fields("mse_data_druid"), new GeoIpFunction(), new Fields("mseGeoIPMap"));
 
             if (_config.mseLocationStatsEnabled()) {
-                locationStasts  = topology.newStaticState(locationStateFactory);
+                locationStasts = topology.newStaticState(locationStateFactory);
 
                 locationStreamUnderV10 = locationStreamUnderV10.each(new Fields("mse_map"), new GetLocationClient(), new Fields("client"))
                         .stateQuery(locationStasts, new Fields("client"), StateQuery.getStateLocationQuery(_config), new Fields("mseMap"))
