@@ -35,6 +35,7 @@ public class GridGainManager {
     private static Map<String, Object> _s3Config = null;
     private static List<String> _topics;
     private static Grid grid = null;
+    private static Long _timeout;
     private static boolean isReconnecting = false;
 
     public static void init(List<String> topics, Map<String, Object> gridGainConfig) {
@@ -42,6 +43,7 @@ public class GridGainManager {
         _timeToLive = gridGainConfig.get("time_to_live") == null ? TIME_TO_LIVE : (Long.valueOf(gridGainConfig.get("time_to_live").toString()));
         if (!gridGainConfig.containsKey("s3")) {
             _gridGainServers = (List<String>) gridGainConfig.get("servers");
+            _timeout = (Long) gridGainConfig.get("timeout");
             _multicastGroup = (String) gridGainConfig.get("multicast");
         } else {
             _s3Config = (Map<String, Object>) gridGainConfig.get("s3");
@@ -69,7 +71,7 @@ public class GridGainManager {
     }
 
     public synchronized static void reconnect() {
-            close();
+        close();
     }
 
     public synchronized static void startGridGainConnector() {
@@ -82,7 +84,7 @@ public class GridGainManager {
 
     public static void close() {
         try {
-            if(grid!=null) {
+            if (grid != null) {
                 grid.close();
                 grid = null;
             }
@@ -125,6 +127,9 @@ public class GridGainManager {
             s3IpFinder.setAwsCredentials(new BasicAWSCredentials(_s3Config.get("access_key").toString(), _s3Config.get("secret_key").toString()));
             gridTcp.setIpFinder(s3IpFinder);
         }
+
+        if (_timeout != null)
+            gridTcp.setNetworkTimeout(500);
 
         conf.setDiscoverySpi(gridTcp);
 
