@@ -43,7 +43,8 @@ public class GridGainManager {
         _timeToLive = gridGainConfig.get("time_to_live") == null ? TIME_TO_LIVE : (Long.valueOf(gridGainConfig.get("time_to_live").toString()));
         if (!gridGainConfig.containsKey("s3")) {
             _gridGainServers = (List<String>) gridGainConfig.get("servers");
-            _timeout = Long.valueOf((Integer) gridGainConfig.get("timeout"));
+            Integer timeout = (Integer) gridGainConfig.get("timeout");
+            _timeout = (timeout != null) ? Long.valueOf(timeout) : 5000l;
             _multicastGroup = (String) gridGainConfig.get("multicast");
         } else {
             _s3Config = (Map<String, Object>) gridGainConfig.get("s3");
