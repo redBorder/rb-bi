@@ -190,6 +190,13 @@ public class GridGainManager {
             cacheLocation.setDefaultTimeToLive(_timeToLive);
             cacheLocation.setCacheMode(GridCacheMode.PARTITIONED);
             caches.add(cacheLocation);
+
+            GridCacheConfiguration cacheLocationInfp = new GridCacheConfiguration();
+            cacheLocationInfp.setName("location-info");
+            cacheLocationInfp.setDistributionMode(GridCacheDistributionMode.CLIENT_ONLY);
+            cacheLocationInfp.setDefaultTimeToLive(_timeToLive);
+            cacheLocationInfp.setCacheMode(GridCacheMode.PARTITIONED);
+            caches.add(cacheLocationInfp);
         }
 
         if (_topics.contains("nmsp")) {

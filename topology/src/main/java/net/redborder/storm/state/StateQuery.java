@@ -35,6 +35,18 @@ public class StateQuery {
         }
     }
 
+    public static BaseQueryFunction getStateLocationV10Query(ConfigData config) throws CacheNotValidException {
+        if(config.getCacheType().equals("gridgain")){
+            return new GridGainLocationV10Query("deviceId");
+        }else if(config.getCacheType().equals("riak")){
+            return new RiakLocationV10Query("deviceId");
+        }else if(config.getCacheType().equals("memcached") || config.getCacheType().equals("memory")){
+            return new MemcachedLocationV10Query("deviceId", "location-info");
+        } else {
+            throw new CacheNotValidException("Not cache backend found: " + config.getCacheType());
+        }
+    }
+
     public static BaseQueryFunction getStateTrapQuery(ConfigData config) throws CacheNotValidException {
         if(config.getCacheType().equals("gridgain")){
             return new GridGainTrapQuery("client_mac");
