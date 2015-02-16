@@ -217,14 +217,12 @@ public class RedBorderTopology {
                     .each(new Fields("src_mac", "mse_data", "mse_data_druid"), new FilterNull());
 
             locationStreamV10 = locationStream
-                    .each(new Fields("mse_version_10"), new FilterNull());
-
-            locationStreamV10 = locationStreamV10
+                    .project(new Fields("mse_version_10"))
+                    .each(new Fields("mse_version_10"), new FilterNull())
                     .each(new Fields("mse_version_10"), new SplitMSE10Data(), new Fields("mse10_association", "mse10_locationUpdate"));
 
 
             // Association v10
-
 
             Stream associationV10 = locationStreamV10
                     .each(new Fields("mse10_association"), new FilterNull())
@@ -241,7 +239,7 @@ public class RedBorderTopology {
             Stream locationUpdateV10 = locationStreamV10
                     .each(new Fields("mse10_locationUpdate"), new FilterNull())
                     .stateQuery(locationInfoState, new Fields("mse10_locationUpdate"), StateQuery.getStateLocationV10Query(_config), new Fields("mseInfoV10"))
-                    .each(new Fields("mse10_locationUpdate"), new ProcessMse10LocationUpdate(), new Fields("mse10_locationUpdate_data", "mse10_locationUpdate_druid"));
+                    .each(new Fields("mse10_locationUpdate"), new ProcessMse10LocationUpdate(), new Fields("src_mac", "mse10_locationUpdate_data", "mse10_locationUpdate_druid"));
 
             locationUpdateV10
                     .each(new Fields("mse10_locationUpdate_data", "mseInfoV10"), new MergeMapsFunction(), new Fields("mse10_data"))

@@ -18,6 +18,8 @@ public class ProcessMse10LocationUpdate extends BaseFunction {
         Map<String, Object> dataToSave = new HashMap<>();
         Map<String, Object> dataToDruid = new HashMap<>();
 
+        String client_mac = (String) locationUpdate.get("deviceId");
+
         String locationMapHierarchy = (String) locationUpdate.get("locationMapHierarchy");
 
         if (locationMapHierarchy != null) {
@@ -40,6 +42,6 @@ public class ProcessMse10LocationUpdate extends BaseFunction {
         dataToDruid.put("pkts", 0);
         dataToDruid.put("type", "mse10");
 
-        collector.emit(new Values(dataToSave, dataToDruid));
+        collector.emit(new Values(client_mac, dataToSave, dataToDruid));
     }
 }

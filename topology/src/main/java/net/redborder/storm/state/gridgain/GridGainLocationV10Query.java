@@ -20,7 +20,7 @@ public class GridGainLocationV10Query extends GridGainQuery {
     public void execute(TridentTuple tuple, Map<String, Object> result, TridentCollector collector) {
         if (result == null) {
             Map<String, Object> empty = new HashMap<>();
-            result.put("dot11_status", "PROBING");
+            empty.put("dot11_status", "PROBING");
             collector.emit(new Values(empty));
         } else {
             collector.emit(new Values(result));
