@@ -30,18 +30,18 @@ public class MacLocallyAdministeredFilter extends BaseFilter {
         String macSplit[] = mac.split(":");
         String macHex = macSplit[0];
 
-        if (_debug)
-            System.out.println("HEX: " + macHex);
+        // if (_debug)
+        //    System.out.println("HEX: " + macHex);
 
         String binary = hexToBin(macHex);
 
         if (binary.endsWith("10") || binary.endsWith("11"))
             status = false;
 
-        if (_debug) {
-            System.out.println("BIN: " + binary);
-            System.out.println("TRUE/FALSE: " + status);
-        }
+        // if (_debug) {
+        //     System.out.println("BIN: " + binary);
+        //     System.out.println("TRUE/FALSE: " + status);
+        // }
 
         return status;
     }
