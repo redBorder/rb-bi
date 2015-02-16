@@ -5,7 +5,6 @@
  */
 package net.redborder.storm.state.gridgain;
 
-import backtype.storm.topology.ReportedFailedException;
 import backtype.storm.tuple.Values;
 import storm.trident.operation.TridentCollector;
 import storm.trident.operation.TridentOperationContext;
@@ -28,10 +27,6 @@ public class GridGainQuery extends BaseQueryFunction<MapState<Map<String, Map<St
     String _key;
     String _generalkey;
     private boolean _debug;
-
-    public GridGainQuery() {
-
-    }
 
     public GridGainQuery(String key) {
         _key = key;
@@ -99,7 +94,8 @@ public class GridGainQuery extends BaseQueryFunction<MapState<Map<String, Map<St
                     }
                 }
             } catch (Exception e) {
-                Logger.getLogger(GridGainQuery.class.getName()).log(Level.WARNING, null, e);
+                Logger.getLogger(GridGainQuery.class.getName()).log(Level.SEVERE, null, e);
+                e.printStackTrace();
             }
         }
 

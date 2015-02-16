@@ -1,7 +1,5 @@
 package net.redborder.state.gridgain;
 
-import org.gridgain.grid.Grid;
-import org.gridgain.grid.GridException;
 import org.gridgain.grid.GridTopologyException;
 import org.gridgain.grid.cache.GridCache;
 import org.gridgain.grid.cache.GridCacheAtomicUpdateTimeoutException;
@@ -29,6 +27,7 @@ public class GridGainStormState implements IBackingMap<Map<String, Map<String, O
 
     @Override
     public List<Map<String, Map<String, Object>>> multiGet(List<List<Object>> lists) {
+
         List<Map<String, Map<String, Object>>> values = new ArrayList<>();
         List<String> keys = new ArrayList<>();
 
@@ -42,8 +41,8 @@ public class GridGainStormState implements IBackingMap<Map<String, Map<String, O
             if (!GridGainManager.isReconnecting()) {
                 cache = _map.getAll(keys);
             } else {
-                Logger.getLogger(GridGainStormState.class.getName()).log(Level.INFO, "GridGainConnector is running ...");
-                Logger.getLogger(GridGainStormState.class.getName()).log(Level.WARNING, "All gridgain nodes are shutdown!!! --> Enrichment disable.");
+                Logger.getLogger(GridGainStormState.class.getName()).log(Level.SEVERE, "GridGainConnector is running ...");
+                Logger.getLogger(GridGainStormState.class.getName()).log(Level.SEVERE, "All gridgain nodes are shutdown!!! --> Enrichment disable.");
                 cache = new HashMap<>();
             }
 
@@ -84,8 +83,9 @@ public class GridGainStormState implements IBackingMap<Map<String, Map<String, O
             if (!GridGainManager.isReconnecting()) {
                 _map.putAll(values.get(0));
             } else {
-                Logger.getLogger(GridGainStormState.class.getName()).log(Level.INFO, "GridGainConnector is running ...");
-                Logger.getLogger(GridGainStormState.class.getName()).log(Level.WARNING, "All gridgain nodes are shutdown!!! --> Enrichment disable.");
+                Logger.getLogger(GridGainStormState.class.getName()).log(Level.SEVERE, "GridGainConnector is running ...");
+                Logger.getLogger(GridGainStormState.class.getName()).log(Level.SEVERE
+                        , "All gridgain nodes are shutdown!!! --> Enrichment disable.");
             }
 
         } catch (Exception e) {

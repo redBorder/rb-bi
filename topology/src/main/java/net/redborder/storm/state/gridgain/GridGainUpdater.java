@@ -5,7 +5,6 @@
  */
 package net.redborder.storm.state.gridgain;
 
-import backtype.storm.topology.ReportedFailedException;
 import storm.trident.operation.TridentCollector;
 import storm.trident.operation.TridentOperationContext;
 import storm.trident.state.BaseStateUpdater;
@@ -29,7 +28,6 @@ public class GridGainUpdater extends BaseStateUpdater<MapState<Map<String, Map<S
     String _value;
     String _generalKey;
     private boolean _debug;
-    Map<String, Map<String, Object>> keyValue = new HashMap<>();
 
 
     public GridGainUpdater(String key, String value) {
@@ -50,8 +48,10 @@ public class GridGainUpdater extends BaseStateUpdater<MapState<Map<String, Map<S
 
     @Override
     public void updateState(MapState<Map<String, Map<String, Object>>> state, List<TridentTuple> tuples, TridentCollector collector) {
+        Map<String, Map<String, Object>> keyValue = new HashMap<>();
         List<Map<String, Map<String, Object>>> events = new ArrayList<>();
         List<List<Object>> keys = new ArrayList<>();
+
         for (TridentTuple t : tuples) {
             if (t != null) {
                 List<Object> l = new ArrayList<>();
@@ -70,8 +70,8 @@ public class GridGainUpdater extends BaseStateUpdater<MapState<Map<String, Map<S
 
         try {
             state.multiPut(keys, events);
-        } catch (ReportedFailedException e) {
-            Logger.getLogger(GridGainUpdater.class.getName()).log(Level.WARNING, null, e);
+        } catch (Exception e) {
+            Logger.getLogger(GridGainUpdater.class.getName()).log(Level.SEVERE, null, e);
             e.printStackTrace();
         }
     }
