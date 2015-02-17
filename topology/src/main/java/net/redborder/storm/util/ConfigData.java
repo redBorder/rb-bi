@@ -339,6 +339,11 @@ public class ConfigData {
         return ret;
     }
 
+    public boolean otxEnabled() {
+        Boolean ret = _configFile.getFromGeneral("darklist_otx");
+        return ret != null && ret;
+    }
+
     public List<String> getGridGainServers() {
         Map<String, Object> gridGainConfig = _configFile.getFromGeneral("gridgain");
         return (List<String>) gridGainConfig.get("servers");

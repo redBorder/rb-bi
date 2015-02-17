@@ -465,7 +465,7 @@ public class RedBorderTopology {
             // Enrich flow stream with darklist fields
             if (_config.contains("traffics")) {
                 flowStream = flowStream
-                        .stateQuery(darklistState, new Fields("flows"), new DarkListQuery(),
+                        .stateQuery(darklistState, new Fields("flows"), new DarkListQuery(_config.otxEnabled()),
                                 new Fields("darklistMap"));
 
                 fieldsFlow.add("darklistMap");
@@ -475,7 +475,7 @@ public class RedBorderTopology {
             // Enrich event stream with darklist fields
             if (_config.contains("event")) {
                 eventsStream = eventsStream
-                        .stateQuery(darklistState, new Fields("event"), new DarkListQuery(),
+                        .stateQuery(darklistState, new Fields("event"), new DarkListQuery(_config.otxEnabled()),
                                 new Fields("darklistMap"));
 
                 fieldsEvent.add("darklistMap");
