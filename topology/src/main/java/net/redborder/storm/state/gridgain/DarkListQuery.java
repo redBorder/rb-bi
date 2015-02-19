@@ -124,6 +124,13 @@ public class DarkListQuery extends BaseQueryFunction<MapState<Map<String, Map<St
                             mapToSave.put("darklist_category_dst", dstData.get("darklist_category"));
                             mapToSave.put("darklist_category", srcData.get("darklist_category").toString() + "/" + dstData.get("darklist_category"));
                             mapToSave.put("darklist_direction", "both");
+                            if (srcScore > dstScore) {
+                                mapToSave.put("darklist_score", srcScore);
+                                mapToSave.put("darklist_score_name", srcData.get("darklist_score_name"));
+                            } else {
+                                mapToSave.put("darklist_score", dstScore);
+                                mapToSave.put("darklist_score_name", dstData.get("darklist_score_name"));
+                            }
                         } else {
                             mapToSave.put("darklist_category_src", srcData.get("darklist_category"));
                             mapToSave.put("darklist_score_src", srcScore);
@@ -149,6 +156,10 @@ public class DarkListQuery extends BaseQueryFunction<MapState<Map<String, Map<St
                         if (type.equals("otx")) {
                             mapToSave.put("darklist_category", srcData.get("darklist_category"));
                             mapToSave.put("darklist_category_src", srcData.get("darklist_category"));
+                            mapToSave.put("darklist_score_name", srcData.get("darklist_score_name"));
+                            mapToSave.put("darklist_score_src", srcScore);
+                            mapToSave.put("darklist_score_dst", dstScore);
+                            mapToSave.put("darklist_score", srcScore);
                             mapToSave.put("darklist_category_dst", "clean");
                             mapToSave.put("darklist_direction", "source");
                         } else {
@@ -168,6 +179,10 @@ public class DarkListQuery extends BaseQueryFunction<MapState<Map<String, Map<St
                         if (type.equals("otx")) {
                             mapToSave.put("darklist_category_dst", dstData.get("darklist_category"));
                             mapToSave.put("darklist_category_src", "clean");
+                            mapToSave.put("darklist_score_src", srcScore);
+                            mapToSave.put("darklist_score_dst", dstScore);
+                            mapToSave.put("darklist_score", dstScore);
+                            mapToSave.put("darklist_score_name", dstData.get("darklist_score_name"));
                             mapToSave.put("darklist_category", dstData.get("darklist_category"));
                             mapToSave.put("darklist_direction", "destination");
                         } else {
@@ -188,6 +203,10 @@ public class DarkListQuery extends BaseQueryFunction<MapState<Map<String, Map<St
                             mapToSave.put("darklist_category_dst", "clean");
                             mapToSave.put("darklist_category_src", "clean");
                             mapToSave.put("darklist_direction", "clean");
+                            mapToSave.put("darklist_score_src", srcScore);
+                            mapToSave.put("darklist_score_dst", dstScore);
+                            mapToSave.put("darklist_score", 0);
+                            mapToSave.put("darklist_score_name", "clean");
                         } else {
                             mapToSave.put("darklist_score_src", srcScore);
                             mapToSave.put("darklist_score_dst", dstScore);
