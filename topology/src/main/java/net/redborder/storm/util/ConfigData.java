@@ -314,9 +314,31 @@ public class ConfigData {
         return _configFile.getFromGeneral("zk_connect");
     }
 
-    public boolean darklistIsEnabled() {
-        Boolean ret = _configFile.getFromGeneral("darklist");
-        return ret != null && ret;
+    private Map<String, Object> darklistConfig() {
+        Map<String, Object> ret = _configFile.getFromGeneral("darklist");
+        return ret;
+    }
+
+    public Boolean darklistIsEnabled(){
+        Map<String, Object> config = darklistConfig();
+        boolean enable;
+        if(config != null){
+            enable = (Boolean) config.get("enable");
+        } else {
+            enable = false;
+        }
+        return enable;
+    }
+
+    public String darklistType(){
+        Map<String, Object> config = darklistConfig();
+        String type;
+        if(config != null){
+            type = (String) config.get("type");
+        }else{
+            type="";
+        }
+        return type;
     }
 
     public boolean nmspLocationStatsEnabled() {
@@ -337,11 +359,6 @@ public class ConfigData {
     public Map<String, Object> getGridGainConfig() {
         Map<String, Object> ret = _configFile.getFromGeneral("gridgain");
         return ret;
-    }
-
-    public boolean otxEnabled() {
-        Boolean ret = _configFile.getFromGeneral("darklist_otx");
-        return ret != null && ret;
     }
 
     public List<String> getGridGainServers() {

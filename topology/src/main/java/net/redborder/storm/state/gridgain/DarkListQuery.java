@@ -20,10 +20,10 @@ import java.util.logging.Logger;
 public class DarkListQuery extends BaseQueryFunction<MapState<Map<String, Map<String, Object>>>, Map<String, Object>> {
 
     private boolean _debug;
-    private boolean otx = true;
+    private String type;
 
-    public DarkListQuery(boolean otx){
-        this.otx=otx;
+    public DarkListQuery(String type){
+        this.type=type;
     }
 
     @Override
@@ -119,7 +119,7 @@ public class DarkListQuery extends BaseQueryFunction<MapState<Map<String, Map<St
                     Integer dstScore = dstScoreDouble.intValue();
 
                     if (srcData != null && dstData != null) {
-                        if (otx) {
+                        if (type.equals("otx")) {
                             mapToSave.put("darklist_category_src", srcData.get("darklist_category"));
                             mapToSave.put("darklist_category_dst", dstData.get("darklist_category"));
                             mapToSave.put("darklist_category", srcData.get("darklist_category").toString() + "/" + dstData.get("darklist_category"));
@@ -146,7 +146,7 @@ public class DarkListQuery extends BaseQueryFunction<MapState<Map<String, Map<St
                             mapToSave.put("darklist_direction", "both");
                         }
                     } else if (srcData != null) {
-                        if (otx) {
+                        if (type.equals("otx")) {
                             mapToSave.put("darklist_category", srcData.get("darklist_category"));
                             mapToSave.put("darklist_category_src", srcData.get("darklist_category"));
                             mapToSave.put("darklist_category_dst", "clean");
@@ -165,7 +165,7 @@ public class DarkListQuery extends BaseQueryFunction<MapState<Map<String, Map<St
                             mapToSave.put("darklist_direction", "source");
                         }
                     } else if (dstData != null) {
-                        if (otx) {
+                        if (type.equals("otx")) {
                             mapToSave.put("darklist_category_dst", dstData.get("darklist_category"));
                             mapToSave.put("darklist_category_src", "clean");
                             mapToSave.put("darklist_category", dstData.get("darklist_category"));
@@ -184,7 +184,7 @@ public class DarkListQuery extends BaseQueryFunction<MapState<Map<String, Map<St
                             mapToSave.put("darklist_direction", "destination");
                         }
                     } else {
-                        if (otx) {
+                        if (type.equals("otx")) {
                             mapToSave.put("darklist_category_dst", "clean");
                             mapToSave.put("darklist_category_src", "clean");
                             mapToSave.put("darklist_direction", "clean");
@@ -208,7 +208,7 @@ public class DarkListQuery extends BaseQueryFunction<MapState<Map<String, Map<St
                 } else {
                     mapToSave = new HashMap<>();
 
-                    if (otx) {
+                    if (type.equals("otx")) {
                         mapToSave.put("darklist_category_dst", "clean");
                         mapToSave.put("darklist_category_src", "clean");
                         mapToSave.put("darklist_direction", "clean");
