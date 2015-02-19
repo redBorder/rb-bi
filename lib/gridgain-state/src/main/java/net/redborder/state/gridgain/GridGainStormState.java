@@ -17,17 +17,15 @@ import java.util.logging.Logger;
  */
 public class GridGainStormState implements IBackingMap<Map<String, Map<String, Object>>> {
 
-    GridCache<String, Map<String, Object>> _map;
     String _cacheName;
 
     public GridGainStormState(String cacheName) {
-        _map = GridGainManager.getGrid().cache(cacheName);
         _cacheName = cacheName;
     }
 
     @Override
     public List<Map<String, Map<String, Object>>> multiGet(List<List<Object>> lists) {
-
+        GridCache<String, Map<String, Object>> map = GridGainManager.cache(cacheName);
         List<Map<String, Map<String, Object>>> values = new ArrayList<>();
         List<String> keys = new ArrayList<>();
 
@@ -35,20 +33,20 @@ public class GridGainStormState implements IBackingMap<Map<String, Map<String, O
             keys.add((String) key.get(0));
         }
 
-        try {
+        // try {
             Map<String, Map<String, Object>> cache;
 
-            if (!GridGainManager.isReconnecting()) {
-                cache = _map.getAll(keys);
-            } else {
-                Logger.getLogger(GridGainStormState.class.getName()).log(Level.SEVERE, "GridGainConnector is running ...");
-                Logger.getLogger(GridGainStormState.class.getName()).log(Level.SEVERE, "All gridgain nodes are shutdown!!! --> Enrichment disable.");
-                cache = new HashMap<>();
-            }
+            // if (!GridGainManager.isReconnecting()) {
+                cache = map.getAll(keys);
+            // } else {
+            //     Logger.getLogger(GridGainStormState.class.getName()).log(Level.SEVERE, "GridGainConnector is running ...");
+            //    Logger.getLogger(GridGainStormState.class.getName()).log(Level.SEVERE, "All gridgain nodes are shutdown!!! --> Enrichment disable.");
+            //    cache = new HashMap<>();
+            //}
 
             values.add(cache);
 
-        } catch (Exception e) {
+        /* } catch (Exception e) {
             if (e instanceof GridTopologyException) {
                 Logger.getLogger(GridGainStormState.class.getName()).log(Level.SEVERE, "All gridgain nodes are shutdown!!!");
                 GridGainManager.startGridGainConnector();
@@ -70,25 +68,25 @@ public class GridGainStormState implements IBackingMap<Map<String, Map<String, O
 
             Map<String, Map<String, Object>> errorCache = new HashMap<>();
             values.add(errorCache);
-        }
+        } */
 
         return values;
     }
 
     @Override
     public void multiPut(List<List<Object>> keys, List<Map<String, Map<String, Object>>> values) {
+        GridStateCache<String, Map<String, Object>> map = GridGainManager.cache(cacheName);
 
-        try {
+        // try {
 
-            if (!GridGainManager.isReconnecting()) {
-                _map.putAll(values.get(0));
-            } else {
+            //if (!GridGainManager.isReconnecting()) {
+                map.putAll(values.get(0));
+            /* } else {
                 Logger.getLogger(GridGainStormState.class.getName()).log(Level.SEVERE, "GridGainConnector is running ...");
-                Logger.getLogger(GridGainStormState.class.getName()).log(Level.SEVERE
-                        , "All gridgain nodes are shutdown!!! --> Enrichment disable.");
-            }
+                Logger.getLogger(GridGainStormState.class.getName()).log(Level.SEVERE, "All gridgain nodes are shutdown!!! --> Enrichment disable.");
+            } */
 
-        } catch (Exception e) {
+        /* } catch (Exception e) {
             if (e instanceof GridTopologyException) {
                 Logger.getLogger(GridGainStormState.class.getName()).log(Level.SEVERE, "All gridgain nodes are shutdown!!! Storm state will try reconnect ...");
                 GridGainManager.startGridGainConnector();
@@ -107,6 +105,6 @@ public class GridGainStormState implements IBackingMap<Map<String, Map<String, O
             }else{
                 Logger.getLogger(GridGainStormState.class.getName()).log(Level.SEVERE, "GridGainConnector is running ...");
             }
-        }
+        } */
     }
 }
