@@ -11,7 +11,6 @@ import java.util.*;
  * Created by andresgomez on 30/06/14.
  */
 public class GridGainFactory implements StateFactory {
-
     String _cacheName;
     List<String> _topics;
     Map<String, Object> _gridGainConfig;
@@ -27,7 +26,4 @@ public class GridGainFactory implements StateFactory {
         GridGainManager.init(_topics, _gridGainConfig);
         return NonTransactionalMap.build(new GridGainStormState(_cacheName));
     }
-
-
-
 }
