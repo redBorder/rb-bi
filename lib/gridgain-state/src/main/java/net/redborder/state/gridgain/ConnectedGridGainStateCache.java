@@ -14,7 +14,7 @@ import java.util.logging.Logger;
  * Created by crodriguez on 19/02/15.
  */
 public class ConnectedGridGainStateCache<K, V> implements IGridGainStateCache<K, V> {
-    private static Logger logger = RbLogger.getLogger(GridGainStormState.class.getName());
+    private static Logger logger = RbLogger.getLogger(ConnectedGridGainStateCache.class.getName());
     GridCache<K, V> _gridMap = null;
 
     public ConnectedGridGainStateCache(GridCache<K, V> gridMap) {
