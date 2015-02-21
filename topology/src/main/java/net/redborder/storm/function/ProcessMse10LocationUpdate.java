@@ -23,7 +23,7 @@ public class ProcessMse10LocationUpdate extends BaseFunction {
         String locationMapHierarchy = (String) locationUpdate.get("locationMapHierarchy");
 
         if (locationMapHierarchy != null) {
-            String [] locations = locationMapHierarchy.split(">");
+            String[] locations = locationMapHierarchy.split(">");
 
             if (locations.length >= 1)
                 dataToSave.put("client_campus", locations[0]);
@@ -37,7 +37,15 @@ public class ProcessMse10LocationUpdate extends BaseFunction {
 
         dataToDruid.putAll(dataToSave);
         dataToDruid.put("sensor_name", locationUpdate.get("subscriptionName"));
-        dataToDruid.put("timestamp", ((Long) locationUpdate.get("timestamp")) / 1000L);
+
+        if (locationUpdate.get("timestamp") instanceof Integer)
+            dataToDruid.put("timestamp", ((Integer) locationUpdate.get("timestamp")) / 1000L);
+        else if (locationUpdate.get("timestamp") instanceof Long)
+            dataToDruid.put("timestamp", ((Long) locationUpdate.get("timestamp")) / 1000L);
+        else
+            dataToDruid.put("timestamp", System.currentTimeMillis() / 1000L);
+
+
         dataToDruid.put("bytes", 0);
         dataToDruid.put("pkts", 0);
         dataToDruid.put("type", "mse10");
