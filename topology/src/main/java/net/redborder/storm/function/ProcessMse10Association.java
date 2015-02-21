@@ -37,34 +37,40 @@ public class ProcessMse10Association extends BaseFunction {
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
         Map<String, Object> association = (Map<String, Object>) tuple.get(0);
-        Map<String, Object> dataToSave = new HashMap<>();
-        Map<String, Object> dataToDruid = new HashMap<>();
-        String client_mac = (String) association.get("deviceId");
+        try {
+            Map<String, Object> dataToSave = new HashMap<>();
+            Map<String, Object> dataToDruid = new HashMap<>();
+            String client_mac = (String) association.get("deviceId");
 
-        if (association.get("ssid") != null)
-            dataToSave.put("wireless_id", association.get("ssid"));
+            if (association.get("ssid") != null)
+                dataToSave.put("wireless_id", association.get("ssid"));
 
-        if (association.get("band") != null)
-            dataToSave.put("dot11_protocol", association.get("band"));
+            if (association.get("band") != null)
+                dataToSave.put("dot11_protocol", association.get("band"));
 
-        if (association.get("status") != null)
-            dataToSave.put("dot11_status", cache.get(association.get("status")));
+            if (association.get("status") != null)
+                dataToSave.put("dot11_status", cache.get(association.get("status")));
 
-        if (association.get("apMacAddress") != null)
-            dataToSave.put("wireless_station", association.get("apMacAddress"));
+            if (association.get("apMacAddress") != null)
+                dataToSave.put("wireless_station", association.get("apMacAddress"));
 
-        if (!association.get("username").equals(""))
-            dataToSave.put("client_id", association.get("username"));
+            if (!association.get("username").equals(""))
+                dataToSave.put("client_id", association.get("username"));
 
 
-        dataToDruid.putAll(dataToSave);
-        dataToDruid.put("sensor_name", association.get("subscriptionName"));
-        dataToDruid.put("client_mac", client_mac);
-        dataToDruid.put("timestamp", ((Long) association.get("timestamp")) / 1000L);
-        dataToDruid.put("bytes", 0);
-        dataToDruid.put("pkts", 0);
-        dataToDruid.put("type", "mse10");
+            dataToDruid.putAll(dataToSave);
+            dataToDruid.put("sensor_name", association.get("subscriptionName"));
+            dataToDruid.put("client_mac", client_mac);
+            dataToDruid.put("timestamp", ((Long) association.get("timestamp")) / 1000L);
+            dataToDruid.put("bytes", 0);
+            dataToDruid.put("pkts", 0);
+            dataToDruid.put("type", "mse10");
 
-        collector.emit(new Values(client_mac, dataToSave, dataToDruid));
+            collector.emit(new Values(client_mac, dataToSave, dataToDruid));
+        } catch (Exception ex) {
+            if (association != null)
+                System.out.println("MSE10 association event dropped: " + association.toString());
+            ex.printStackTrace();
+        }
     }
 }
