@@ -22,8 +22,8 @@ public class DarkListQuery extends BaseQueryFunction<MapState<Map<String, Map<St
     private boolean _debug;
     private String type;
 
-    public DarkListQuery(String type){
-        this.type=type;
+    public DarkListQuery(String type) {
+        this.type = type;
     }
 
     @Override
@@ -119,107 +119,74 @@ public class DarkListQuery extends BaseQueryFunction<MapState<Map<String, Map<St
                     Integer dstScore = dstScoreDouble.intValue();
 
                     if (srcData != null && dstData != null) {
-                        if (type.equals("otx")) {
-                            mapToSave.put("darklist_category_src", srcData.get("darklist_category"));
-                            mapToSave.put("darklist_category_dst", dstData.get("darklist_category"));
-                            mapToSave.put("darklist_category", srcData.get("darklist_category").toString() + "/" + dstData.get("darklist_category"));
-                            mapToSave.put("darklist_direction", "both");
-                            if (srcScore > dstScore) {
-                                mapToSave.put("darklist_score", srcScore);
-                                mapToSave.put("darklist_score_name", srcData.get("darklist_score_name"));
-                            } else {
-                                mapToSave.put("darklist_score", dstScore);
-                                mapToSave.put("darklist_score_name", dstData.get("darklist_score_name"));
-                            }
-                        } else {
-                            mapToSave.put("darklist_category_src", srcData.get("darklist_category"));
-                            mapToSave.put("darklist_score_src", srcScore);
-                            mapToSave.put("darklist_score_dst", dstScore);
-                            mapToSave.put("darklist_score_name_src", srcData.get("darklist_score_name"));
-                            mapToSave.put("darklist_protocol_src", srcData.get("darklist_protocol"));
-                            mapToSave.put("darklist_category_dst", dstData.get("darklist_category"));
+                        if (!type.equals("otx")) {
                             mapToSave.put("darklist_protocol_dst", dstData.get("darklist_protocol"));
-                            mapToSave.put("darklist_score_name_dst", dstData.get("darklist_score_name"));
-                            mapToSave.put("darklist_category", srcData.get("darklist_category").toString() + "/" + dstData.get("darklist_category"));
+                            mapToSave.put("darklist_protocol_src", srcData.get("darklist_protocol"));
                             mapToSave.put("darklist_protocol", srcData.get("darklist_protocol").toString() + "/" + dstData.get("darklist_protocol"));
 
-                            if (srcScore > dstScore) {
-                                mapToSave.put("darklist_score", srcScore);
-                                mapToSave.put("darklist_score_name", srcData.get("darklist_score_name"));
-                            } else {
-                                mapToSave.put("darklist_score", dstScore);
-                                mapToSave.put("darklist_score_name", dstData.get("darklist_score_name"));
-                            }
-                            mapToSave.put("darklist_direction", "both");
                         }
+                        mapToSave.put("darklist_category_src", srcData.get("darklist_category"));
+                        mapToSave.put("darklist_score_src", srcScore);
+                        mapToSave.put("darklist_score_dst", dstScore);
+                        mapToSave.put("darklist_score_name_src", srcData.get("darklist_score_name"));
+                        mapToSave.put("darklist_category_dst", dstData.get("darklist_category"));
+                        mapToSave.put("darklist_score_name_dst", dstData.get("darklist_score_name"));
+                        mapToSave.put("darklist_category", srcData.get("darklist_category").toString() + "/" + dstData.get("darklist_category"));
+
+                        if (srcScore > dstScore) {
+                            mapToSave.put("darklist_score", srcScore);
+                            mapToSave.put("darklist_score_name", srcData.get("darklist_score_name"));
+                        } else {
+                            mapToSave.put("darklist_score", dstScore);
+                            mapToSave.put("darklist_score_name", dstData.get("darklist_score_name"));
+                        }
+                        mapToSave.put("darklist_direction", "both");
+
                     } else if (srcData != null) {
-                        if (type.equals("otx")) {
-                            mapToSave.put("darklist_category", srcData.get("darklist_category"));
-                            mapToSave.put("darklist_category_src", srcData.get("darklist_category"));
-                            mapToSave.put("darklist_score_name", srcData.get("darklist_score_name"));
-                            mapToSave.put("darklist_score_src", srcScore);
-                            mapToSave.put("darklist_score_dst", dstScore);
-                            mapToSave.put("darklist_score", srcScore);
-                            mapToSave.put("darklist_category_dst", "clean");
-                            mapToSave.put("darklist_direction", "source");
-                        } else {
-                            mapToSave.put("darklist_score_src", srcScore);
-                            mapToSave.put("darklist_score_dst", dstScore);
-                            mapToSave.put("darklist_score", srcScore);
-                            mapToSave.put("darklist_category_src", srcData.get("darklist_category"));
-                            mapToSave.put("darklist_protocol_src", srcData.get("darklist_protocol"));
-                            mapToSave.put("darklist_category_dst", "clean");
+                        if (!type.equals("otx")) {
+                            mapToSave.put("darklist_protocol", srcData.get("darklist_protocol").toString() + "/" + dstData.get("darklist_protocol"));
                             mapToSave.put("darklist_protocol_dst", "clean");
-                            mapToSave.put("darklist_score_name", srcData.get("darklist_score_name"));
                             mapToSave.put("darklist_protocol", srcData.get("darklist_protocol"));
-                            mapToSave.put("darklist_category", srcData.get("darklist_category"));
-                            mapToSave.put("darklist_direction", "source");
                         }
+                        mapToSave.put("darklist_score_src", srcScore);
+                        mapToSave.put("darklist_score_dst", dstScore);
+                        mapToSave.put("darklist_score", srcScore);
+                        mapToSave.put("darklist_category_src", srcData.get("darklist_category"));
+                        ∑mapToSave.put("darklist_category_dst", "clean");
+                        mapToSave.put("darklist_score_name", srcData.get("darklist_score_name"));
+                        mapToSave.put("darklist_category", srcData.get("darklist_category"));
+                        mapToSave.put("darklist_direction", "source");
+
                     } else if (dstData != null) {
-                        if (type.equals("otx")) {
-                            mapToSave.put("darklist_category_dst", dstData.get("darklist_category"));
-                            mapToSave.put("darklist_category_src", "clean");
-                            mapToSave.put("darklist_score_src", srcScore);
-                            mapToSave.put("darklist_score_dst", dstScore);
-                            mapToSave.put("darklist_score", dstScore);
-                            mapToSave.put("darklist_score_name", dstData.get("darklist_score_name"));
-                            mapToSave.put("darklist_category", dstData.get("darklist_category"));
-                            mapToSave.put("darklist_direction", "destination");
-                        } else {
-                            mapToSave.put("darklist_score_src", srcScore);
-                            mapToSave.put("darklist_score_dst", dstScore);
-                            mapToSave.put("darklist_score", dstScore);
-                            mapToSave.put("darklist_score_name", dstData.get("darklist_score_name"));
-                            mapToSave.put("darklist_category_dst", dstData.get("darklist_category"));
+                        if (!type.equals("otx")) {
                             mapToSave.put("darklist_protocol_dst", dstData.get("darklist_protocol"));
-                            mapToSave.put("darklist_category_src", "clean");
-                            mapToSave.put("darklist_protocol_src", "clean");
                             mapToSave.put("darklist_protocol", dstData.get("darklist_protocol"));
+                            mapToSave.put("darklist_protocol_src", "clean");
+                        }
+                            mapToSave.put("darklist_score_src", srcScore);
+                            mapToSave.put("darklist_score_dst", dstScore);
+                            mapToSave.put("darklist_score", dstScore);
+                            mapToSave.put("darklist_score_name", dstData.get("darklist_score_name"));
+                            mapToSave.put("darklist_category_dst", dstData.get("darklist_category"));
+                            mapToSave.put("darklist_category_src", "clean");
                             mapToSave.put("darklist_category", dstData.get("darklist_category"));
                             mapToSave.put("darklist_direction", "destination");
-                        }
+
                     } else {
-                        if (type.equals("otx")) {
-                            mapToSave.put("darklist_category_dst", "clean");
-                            mapToSave.put("darklist_category_src", "clean");
-                            mapToSave.put("darklist_direction", "clean");
-                            mapToSave.put("darklist_score_src", srcScore);
-                            mapToSave.put("darklist_score_dst", dstScore);
-                            mapToSave.put("darklist_score", 0);
-                            mapToSave.put("darklist_score_name", "clean");
-                        } else {
-                            mapToSave.put("darklist_score_src", srcScore);
-                            mapToSave.put("darklist_score_dst", dstScore);
-                            mapToSave.put("darklist_score", 0);
-                            mapToSave.put("darklist_score_name", "clean");
-                            mapToSave.put("darklist_category_dst", "clean");
+                        if (!type.equals("otx")) {
                             mapToSave.put("darklist_protocol_dst", "clean");
-                            mapToSave.put("darklist_category_src", "clean");
-                            mapToSave.put("darklist_protocol_src", "clean");
                             mapToSave.put("darklist_protocol", "clean");
+                            mapToSave.put("darklist_protocol_src", "clean");
+                        }
+                            mapToSave.put("darklist_score_src", srcScore);
+                            mapToSave.put("darklist_score_dst", dstScore);
+                            mapToSave.put("darklist_score", 0);
+                            mapToSave.put("darklist_score_name", "clean");
+                            mapToSave.put("darklist_category_dst", "clean");
+                            mapToSave.put("darklist_category_src", "clean");
                             mapToSave.put("darklist_category", "clean");
                             mapToSave.put("darklist_direction", "clean");
-                        }
+
                     }
 
                     result.add(mapToSave);
@@ -227,25 +194,22 @@ public class DarkListQuery extends BaseQueryFunction<MapState<Map<String, Map<St
                 } else {
                     mapToSave = new HashMap<>();
 
-                    if (type.equals("otx")) {
-                        mapToSave.put("darklist_category_dst", "clean");
-                        mapToSave.put("darklist_category_src", "clean");
-                        mapToSave.put("darklist_direction", "clean");
-                    } else {
-                        mapToSave.put("darklist_score_name", "clean");
-                        mapToSave.put("darklist_category_dst", "clean");
-                        mapToSave.put("darklist_protocol_dst", "clean");
-                        mapToSave.put("darklist_category_src", "clean");
+                    if (!type.equals("otx")) {
                         mapToSave.put("darklist_protocol_src", "clean");
                         mapToSave.put("darklist_protocol", "clean");
+                        mapToSave.put("darklist_protocol_dst", "clean");
+                    }
+                        mapToSave.put("darklist_score_name", "clean");
+                        mapToSave.put("darklist_category_dst", "clean");
+                        mapToSave.put("darklist_category_src", "clean");
                         mapToSave.put("darklist_category", "clean");
                         mapToSave.put("darklist_direction", "clean");
-                    }
+
                     result.add(mapToSave);
                 }
             } catch (Exception ex) {
-                Logger.getLogger(DarkListQuery.class.getName()).log(Level.WARNING, null, "Exception on darklist query: " + ex.toString());
-                Logger.getLogger(DarkListQuery.class.getName()).log(Level.WARNING, null, "Event/Flow: " + flow.toString());
+                Logger.getLogger(DarkListQuery.class.getName()).log(Level.SEVERE, "Exception on darklist query: " + ex.toString());
+                Logger.getLogger(DarkListQuery.class.getName()).log(Level.SEVERE, "Event/Flow: " + flow.toString());
                 mapToSave = new HashMap<>();
                 result.add(mapToSave);
             }
