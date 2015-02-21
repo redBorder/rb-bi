@@ -152,7 +152,7 @@ public class DarkListQuery extends BaseQueryFunction<MapState<Map<String, Map<St
                         mapToSave.put("darklist_score_dst", dstScore);
                         mapToSave.put("darklist_score", srcScore);
                         mapToSave.put("darklist_category_src", srcData.get("darklist_category"));
-                        ∑mapToSave.put("darklist_category_dst", "clean");
+                        mapToSave.put("darklist_category_dst", "clean");
                         mapToSave.put("darklist_score_name", srcData.get("darklist_score_name"));
                         mapToSave.put("darklist_category", srcData.get("darklist_category"));
                         mapToSave.put("darklist_direction", "source");
