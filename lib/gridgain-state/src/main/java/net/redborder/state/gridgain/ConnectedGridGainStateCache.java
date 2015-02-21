@@ -35,7 +35,7 @@ public class ConnectedGridGainStateCache<K, V> implements IGridGainStateCache<K,
             try {
                 result = _gridMap.getAll(keys);
             } catch (GridException | RuntimeException e) {
-                logger.log(Level.SEVERE, e.getMessage());
+                logger.log(Level.SEVERE, "Error getting data from GridCache", e);
                 GridGainManager.notifyFail();
                 result = new HashMap<>();
             }
@@ -51,7 +51,7 @@ public class ConnectedGridGainStateCache<K, V> implements IGridGainStateCache<K,
         try {
             _gridMap.putAll(entries);
         } catch (GridException | RuntimeException e) {
-            logger.log(Level.SEVERE, e.getMessage());
+            logger.log(Level.SEVERE, "Error updating GridCache", e);
             GridGainManager.notifyFail();
         }
     }
