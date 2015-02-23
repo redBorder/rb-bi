@@ -286,10 +286,12 @@ public class RedBorderTopology {
             }
 
             if (_config.contains("events")) {
+                TridentState locationEventState = topology.newStaticState(locationStateFactory);
+
                 eventsStream = eventsStream
-                        .stateQuery(locationState, new Fields("event"),
+                        .stateQuery(locationEventState, new Fields("event"),
                                 StateQuery.getStateEventsLocationMseQuery(_config, "ethsrc", "nmsp"), new Fields("mse_location_ethsrc"))
-                        .stateQuery(locationState, new Fields("event"),
+                        .stateQuery(locationEventState, new Fields("event"),
                                 StateQuery.getStateEventsLocationMseQuery(_config, "ethdst", "nmsp"), new Fields("mse_location_ethdst"));
 
                 fieldsEvent.add("mse_location_ethdst");
