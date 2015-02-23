@@ -427,11 +427,13 @@ public class RedBorderTopology {
                                 new Fields("radiusKey", "radiusData", "radiusDruid"));
 
             } else {
+                TridentState radiusStateCache = topology.newStaticState(radiusStateFactory);
+
                 // Get the current radius data from that client and merge it with the data
                 // specified on the radius message
                 radiusStream = radiusStream
                         .each(new Fields("radius"), new GetRadiusClient(), new Fields("clientMap"))
-                        .stateQuery(radiusState, new Fields("clientMap"), StateQuery.getStateQuery(_config, "client_mac", "radius"),
+                        .stateQuery(radiusStateCache, new Fields("clientMap"), StateQuery.getStateQuery(_config, "client_mac", "radius"),
                                 new Fields("radiusCached"))
                         .each(new Fields("radius", "radiusCached"), new GetRadiusData(),
                                 new Fields("radiusKey", "radiusData", "radiusDruid"));
