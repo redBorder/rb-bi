@@ -78,13 +78,18 @@ public class TridentKafkaEmitter {
         } catch (FailedFetchException e) {
             e.printStackTrace();
         }
+
         Map ret = new HashMap();
-        ret.put("offset", lastMeta.get("nextOffset"));
-        ret.put("nextOffset", lastMeta.get("nextOffset"));
-        ret.put("partition", partition.partition);
-        ret.put("broker", ImmutableMap.of("host", partition.host.host, "port", partition.host.port));
-        ret.put("topic", _config.topic);
-        ret.put("topology", ImmutableMap.of("name", _topologyName, "id", _topologyInstanceId));
+
+        if (lastMeta != null && partition != null) {
+            ret.put("offset", lastMeta.get("nextOffset"));
+            ret.put("nextOffset", lastMeta.get("nextOffset"));
+            ret.put("partition", partition.partition);
+            ret.put("broker", ImmutableMap.of("host", partition.host.host, "port", partition.host.port));
+            ret.put("topic", _config.topic);
+            ret.put("topology", ImmutableMap.of("name", _topologyName, "id", _topologyInstanceId));
+        }
+
         return ret;
     }
 
@@ -165,7 +170,7 @@ public class TridentKafkaEmitter {
                         "Returning empty messages");
             }
 
-            if(msgs != null) {
+            if (msgs != null) {
                 for (MessageAndOffset msg : msgs) {
                     if (offset == nextOffset) {
                         break;
