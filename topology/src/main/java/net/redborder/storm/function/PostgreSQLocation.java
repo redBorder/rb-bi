@@ -3,6 +3,7 @@ package net.redborder.storm.function;
 import backtype.storm.tuple.Values;
 import net.redborder.storm.util.ConfigData;
 import net.redborder.storm.util.PostgresqlManager;
+import net.redborder.storm.util.logger.RbLogger;
 import storm.trident.operation.BaseFilter;
 import storm.trident.operation.BaseFunction;
 import storm.trident.operation.TridentCollector;
@@ -29,6 +30,8 @@ public class PostgreSQLocation extends BaseFunction {
     String uri;
     String pass;
     long _next_update;
+    Logger logger = RbLogger.getLogger(GetNMSPInfoData.class.getName());
+
 
     public PostgreSQLocation(String uri, String user, String pass){
         this.uri=uri;
@@ -46,12 +49,12 @@ public class PostgreSQLocation extends BaseFunction {
             _hash = _manager.getAPLocation();
             _last_update = System.currentTimeMillis();
             _next_update = 1800000;
-            Logger.getLogger(PostgreSQLocation.class.getName()).log(Level.INFO,
+            logger.info(
                     "Initiate location with postgreSQL info. \n Location Entry: " + _hash.size()
                             + " \n   Initial data: \n " + _hash.toString());
         } catch (Exception ex) {
             _next_update = 300000;
-            Logger.getLogger(PostgreSQLocation.class.getName()).log(Level.WARNING,
+            logger.info(
                     "The postgreSQL query fail ... next try on 5 minutes!");
             ex.printStackTrace();
         }
@@ -62,7 +65,7 @@ public class PostgreSQLocation extends BaseFunction {
         try {
             if ((_last_update + _next_update) < System.currentTimeMillis()) {
                 _hash = _manager.getAPLocation();
-                Logger.getLogger(PostgreSQLocation.class.getName()).log(Level.INFO,
+                logger.info(
                         "Update location with postgreSQL info. \n Location Entry: " + _hash.size()
                 + " \n   Updated data: \n " + _hash.toString());
                 _last_update = System.currentTimeMillis();
@@ -72,10 +75,15 @@ public class PostgreSQLocation extends BaseFunction {
             Map<String, Object> flow = (Map<String, Object>) tuple.getValue(0);
             String wireless_station = (String) flow.get("wireless_station");
 
-            if (wireless_station != null)
+
+            if (wireless_station != null) {
+                logger.fine("Emmiting PostgreSQLocation: [" + _hash.get(wireless_station).size() + "]");
                 collector.emit(new Values(_hash.get(wireless_station)));
-            else
+            }
+            else {
+                logger.fine("Emmiting PostgreSQLocation: [" + null + "]");
                 collector.emit(new Values(new HashMap<String, Object>()));
+            }
         } catch (Exception ex) {
             _last_update = System.currentTimeMillis();
             _next_update = 300000;

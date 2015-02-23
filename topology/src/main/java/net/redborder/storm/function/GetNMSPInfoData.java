@@ -1,17 +1,22 @@
 package net.redborder.storm.function;
 
 import backtype.storm.tuple.Values;
+import net.redborder.storm.util.logger.RbLogger;
 import storm.trident.operation.BaseFunction;
 import storm.trident.operation.TridentCollector;
 import storm.trident.tuple.TridentTuple;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 /**
  * Created by andresgomez on 4/12/14.
  */
 public class GetNMSPInfoData extends BaseFunction {
+
+    Logger logger = RbLogger.getLogger(GetNMSPInfoData.class.getName());
+
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
         Map<String, Object> map = (Map<String, Object>) tuple.get(0);
@@ -41,6 +46,8 @@ public class GetNMSPInfoData extends BaseFunction {
                 data.remove("vlan_id");
                 druid.remove("vlan_id");
             }
+
+            logger.fine("Processed NMSP data info, emitting  [" +map.get("client_mac") + ", " + data.size()  + ", " + druid.size() + "]");
 
             collector.emit(new Values(map.get("client_mac"), data, druid));
         }

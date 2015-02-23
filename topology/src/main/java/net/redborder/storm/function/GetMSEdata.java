@@ -6,6 +6,7 @@
 package net.redborder.storm.function;
 
 import backtype.storm.tuple.Values;
+import net.redborder.storm.util.logger.RbLogger;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import storm.trident.operation.BaseFunction;
@@ -24,6 +25,9 @@ import java.util.logging.Logger;
  * @author Andres Gomez
  */
 public class GetMSEdata extends BaseFunction {
+
+
+    Logger logger = RbLogger.getLogger(GetMSEdata.class.getName());
 
     /**
      * <p>This function analyzes the events of MSE and get interest fields.</p>
@@ -128,6 +132,7 @@ public class GetMSEdata extends BaseFunction {
                     collector.emit(new Values(macAddress, mseData, mseDataDruid, null));
                 }
             }else{
+                logger.fine("MSE event is a 10 version, emitting: [null, null, null, " + mseEvent.size()+"]");
                 collector.emit(new Values(null, null, null, mseEvent));
             }
         } catch (NullPointerException e) {

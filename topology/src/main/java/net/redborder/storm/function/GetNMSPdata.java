@@ -2,6 +2,7 @@ package net.redborder.storm.function;
 
 
 import backtype.storm.tuple.Values;
+import net.redborder.storm.util.logger.RbLogger;
 import storm.trident.operation.BaseFunction;
 import storm.trident.operation.TridentCollector;
 import storm.trident.tuple.TridentTuple;
@@ -10,11 +11,15 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 /**
  * Created by andresgomez on 4/12/14.
  */
 public class GetNMSPdata extends BaseFunction {
+
+    Logger logger = RbLogger.getLogger(GetNMSPdata.class.getName());
+
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
         Map<String, Object> nmspEvent = (Map<String, Object>) tuple.get(0);
@@ -24,6 +29,7 @@ public class GetNMSPdata extends BaseFunction {
 
         if (nmspType.toLowerCase().equals("measure")) {
             List<Map<String, Object>> datas = (List<Map<String, Object>>) nmspEvent.get("data");
+            logger.fine("Sending nmsp events [measure]: " + datas.size() );
             for (Map<String, Object> data : datas) {
                 data.put("sensor_name", sensor_name);
                 if (enrichment != null)
@@ -32,6 +38,7 @@ public class GetNMSPdata extends BaseFunction {
             }
         } else if (nmspType.toLowerCase().equals("info")) {
             List<Map<String, Object>> datas = (List<Map<String, Object>>) nmspEvent.get("data");
+            logger.fine("Sending nmsp events [info]: " + datas.size() );
             for (Map<String, Object> data : datas) {
                 data.put("sensor_name", sensor_name);
                 if (enrichment != null)
@@ -39,7 +46,7 @@ public class GetNMSPdata extends BaseFunction {
                 collector.emit(new Values(null, data));
             }
         } else {
-            System.out.println("NMSP TYPE NOT SUPPORTED: " + nmspType);
+            logger.warning("NMSP TYPE NOT SUPPORTED: " + nmspType);
         }
 
 
