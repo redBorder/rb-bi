@@ -6,17 +6,21 @@ import backtype.storm.StormSubmitter;
 import backtype.storm.generated.AlreadyAliveException;
 import backtype.storm.generated.InvalidTopologyException;
 import backtype.storm.tuple.Fields;
-import net.redborder.kafkastate.KafkaState;
-import net.redborder.kafkastate.KafkaStateUpdater;
 import com.metamx.tranquility.storm.BeamFactory;
 import com.metamx.tranquility.storm.TridentBeamStateFactory;
 import com.metamx.tranquility.storm.TridentBeamStateUpdater;
+import net.redborder.kafkastate.KafkaState;
+import net.redborder.kafkastate.KafkaStateUpdater;
 import net.redborder.storm.filters.MacLocallyAdministeredFilter;
 import net.redborder.storm.function.*;
 import net.redborder.storm.siddhi.SiddhiState;
 import net.redborder.storm.siddhi.SiddhiUpdater;
 import net.redborder.storm.spout.TridentKafkaSpout;
-import net.redborder.storm.state.*;
+import net.redborder.storm.spout.TridentKafkaSpoutNmsp;
+import net.redborder.storm.state.CacheNotValidException;
+import net.redborder.storm.state.RedBorderState;
+import net.redborder.storm.state.StateQuery;
+import net.redborder.storm.state.StateUpdater;
 import net.redborder.storm.state.gridgain.DarkListQuery;
 import net.redborder.storm.util.ConfigData;
 import net.redborder.storm.util.druid.BeamEvent;
@@ -31,7 +35,10 @@ import storm.trident.state.StateFactory;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Scanner;
 
 /**
  * <p> This is the main class on the project. </p>
@@ -308,7 +315,7 @@ public class RedBorderTopology {
             nmspStateInfo = topology.newStaticState(nmspStateInfoFactory);
 
             // Get msg
-            nmspStream = topology.newStream("rb_nmsp", new TridentKafkaSpout(_config, "nmsp").builder())
+            nmspStream = topology.newStream("rb_nmsp", new TridentKafkaSpoutNmsp(_config, "nmsp").builder())
                     .name("NMSP").parallelismHint(nmspPartition).shuffle()
                     .each(new Fields("str"), new MapperFunction("rb_nmsp"), new Fields("nsmp_map"))
                     .each(new Fields("nsmp_map"), new GetNMSPdata(), new Fields("nmsp_measure", "nmsp_info"));
@@ -355,13 +362,14 @@ public class RedBorderTopology {
 
             if (_config.contains("traffics")) {
                 // Generate a flow msg
+
                 persist("traffics",
                         nmspMeasureStream.each(new Fields("nmsp_measure_data_druid", "nmspMeasureMacVendorMap", "measureLocation"),
-                                new MergeMapsFunction(), new Fields("traffics")), "traffics");
+                                new MergeMapsFunction(), new Fields("traffics")).parallelismHint(_config.getWorkers() * _config.getParallelismFactorNmsp()), "traffics");
 
                 persist("traffics",
                         nmspInfoStream.each(new Fields("nmsp_info_data_druid", "nmspInfoMacVendorMap", "infoLocation"),
-                                new MergeMapsFunction(), new Fields("traffics")), "traffics");
+                                new MergeMapsFunction(), new Fields("traffics")).parallelismHint(_config.getWorkers() * _config.getParallelismFactorNmsp()), "traffics");
 
                 flowStream = flowStream.stateQuery(nmspState, new Fields("flows"),
                         StateQuery.getStateQuery(_config, "client_mac", "nmsp"), new Fields("nmspMap"))

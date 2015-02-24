@@ -1,18 +1,13 @@
 package net.redborder.storm.function;
 
 import backtype.storm.tuple.Values;
-import net.redborder.storm.util.ConfigData;
 import net.redborder.storm.util.PostgresqlManager;
 import net.redborder.storm.util.logger.RbLogger;
-import storm.trident.operation.BaseFilter;
 import storm.trident.operation.BaseFunction;
 import storm.trident.operation.TridentCollector;
 import storm.trident.operation.TridentOperationContext;
 import storm.trident.tuple.TridentTuple;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
@@ -30,7 +25,7 @@ public class PostgreSQLocation extends BaseFunction {
     String uri;
     String pass;
     long _next_update;
-    Logger logger = RbLogger.getLogger(GetNMSPInfoData.class.getName());
+    Logger logger;
 
 
     public PostgreSQLocation(String uri, String user, String pass){
@@ -42,6 +37,8 @@ public class PostgreSQLocation extends BaseFunction {
 
     @Override
     public void prepare(Map conf, TridentOperationContext context) {
+        logger = RbLogger.getLogger(PostgreSQLocation.class.getName());
+
         try {
             PostgresqlManager.initConfig(uri, user, pass);
             _manager = PostgresqlManager.getInstance();
@@ -77,11 +74,16 @@ public class PostgreSQLocation extends BaseFunction {
 
 
             if (wireless_station != null) {
-                logger.fine("Emmiting PostgreSQLocation: [" + _hash.get(wireless_station).size() + "]");
+                if (_hash.get(wireless_station) != null) {
+                    logger.severe("Emmiting PostgreSQLocation: [" + _hash.get(wireless_station).size() + "]");
+                } else {
+                    logger.severe("Emmiting PostgreSQLocation: hash get wireless_station gave null");
+                }
+
                 collector.emit(new Values(_hash.get(wireless_station)));
             }
             else {
-                logger.fine("Emmiting PostgreSQLocation: [" + null + "]");
+                logger.severe("Emmiting PostgreSQLocation: [" + null + "]");
                 collector.emit(new Values(new HashMap<String, Object>()));
             }
         } catch (Exception ex) {

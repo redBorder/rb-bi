@@ -4,6 +4,7 @@ import backtype.storm.tuple.Values;
 import net.redborder.storm.util.logger.RbLogger;
 import storm.trident.operation.BaseFunction;
 import storm.trident.operation.TridentCollector;
+import storm.trident.operation.TridentOperationContext;
 import storm.trident.tuple.TridentTuple;
 
 import java.util.HashMap;
@@ -14,13 +15,18 @@ import java.util.logging.Logger;
  * Created by andresgomez on 16/2/15.
  */
 public class ProcessMse10LocationUpdate extends BaseFunction {
-    Logger logger = RbLogger.getLogger(ProcessMse10LocationUpdate.class.getName());
+    Logger logger;
+
+    @Override
+    public void prepare(Map conf, TridentOperationContext context) {
+        logger = RbLogger.getLogger(ProcessMse10LocationUpdate.class.getName());
+    }
 
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
         Map<String, Object> locationUpdate = (Map<String, Object>) tuple.get(0);
         try {
-            logger.fine("Processing mse10LocationUpdate");
+            logger.severe("Processing mse10LocationUpdate");
 
             Map<String, Object> dataToSave = new HashMap<>();
             Map<String, Object> dataToDruid = new HashMap<>();
@@ -57,7 +63,7 @@ public class ProcessMse10LocationUpdate extends BaseFunction {
             dataToDruid.put("pkts", 0);
             dataToDruid.put("type", "mse10");
 
-            logger.fine("Emitting  ["  + client_mac + ", "+dataToSave.size() + ", " +dataToDruid.size());
+            logger.severe("Emitting  [" + client_mac + ", " + dataToSave.size() + ", " + dataToDruid.size());
 
             collector.emit(new Values(client_mac, dataToSave, dataToDruid));
         } catch (Exception ex) {

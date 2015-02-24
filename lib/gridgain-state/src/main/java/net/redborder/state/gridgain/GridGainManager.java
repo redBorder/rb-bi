@@ -1,7 +1,10 @@
 package net.redborder.state.gridgain;
 
 import net.redborder.state.gridgain.util.RbLogger;
-import org.gridgain.grid.*;
+import org.gridgain.grid.Grid;
+import org.gridgain.grid.GridConfiguration;
+import org.gridgain.grid.GridException;
+import org.gridgain.grid.GridGain;
 import org.gridgain.grid.cache.GridCache;
 
 import java.util.HashMap;
@@ -29,6 +32,8 @@ public class GridGainManager {
     private static ConnState state = ConnState.DISCONNECTED;
 
     public static synchronized void init(List<String> topics, Map<String, Object> gridGainConfig) {
+        logger.log(Level.FINE, "Initializing GridGainManager");
+
         if (!state.equals(ConnState.DISCONNECTED)) return;
 
         GridGainStateConfiguration.init(topics, gridGainConfig);
@@ -42,29 +47,37 @@ public class GridGainManager {
 
         // Connect asynchronously
         asyncReconnect();
+
+        logger.log(Level.FINE, "Initialized GridGainManager");
     }
 
     public static IGridGainStateCache cache(String name) {
         IGridGainStateCache result = emptyCache;
+        logger.severe("Asking for cache " + name);
 
         if (state.equals(ConnState.CONNECTED)) {
             if (!connectedCaches.containsKey(name)) {
+                logger.severe("Im connected but cache " + name + " is not in the cache list, soy lets try to create one");
                 GridCache cache = tryCache(name);
 
                 if (cache != null) {
                     ConnectedGridGainStateCache connectedCache = new ConnectedGridGainStateCache(cache);
                     connectedCaches.put(name, connectedCache);
                     result = connectedCache;
+                    logger.severe("Created connected cache for cache " + name);
                 }
             } else {
+                logger.severe("Im connected and the cache " + name + " is in the cache list so I return it");
                 result = connectedCaches.get(name);
             }
         } else if (state.equals(ConnState.DISCONNECTED)) {
+            logger.severe("Im disconnected so I will return an empty cache for the cache " + name + " and I will try to reconnect async");
             asyncReconnect();
         }
 
         // If im connecting, I do nothing, therefore
         // the client will use the empty cache
+        logger.severe("I returned " + result + " to the cache " + name);
 
         return result;
     }
@@ -73,12 +86,16 @@ public class GridGainManager {
         GridCache cache = null;
 
         if (state.equals(ConnState.CONNECTED)) {
+            logger.severe("Trying to get cache " + name + " from the grid cause im connected to it");
+
             try {
                 cache = grid.cache(name);
             } catch (RuntimeException e) {
                 logger.log(Level.SEVERE, "Runtime exception when calling cache: " + e.getMessage());
                 notifyFail();
             }
+        } else {
+            logger.severe("Tried to get cache " + name + " from the grid, but im not connected -> " + state);
         }
 
         return cache;
@@ -93,27 +110,40 @@ public class GridGainManager {
             asyncReconnect();
         } else if (state.equals(ConnState.CONNECTING)) {
             logger.log(Level.SEVERE, "Im currently trying to connect, relax... ");
+        } else {
+            logger.log(Level.SEVERE, "They notified a fail but I dont even know what Im doing");
         }
     }
 
     public static synchronized void connect() {
+        logger.severe("Gridgain connect start");
+
         if (grid == null) {
             state = ConnState.CONNECTING;
+            logger.severe("Connecting to gridgain grid");
 
             try {
+                logger.severe("Starting gridgain");
                 grid = GridGain.start(gridConfig);
                 state = ConnState.CONNECTED;
+                logger.severe("Gridgain started. Im connected!");
             } catch (GridException e) {
                 logger.log(Level.SEVERE, e.getMessage());
                 state = ConnState.DISCONNECTED;
             }
         }
+
+        logger.severe("Gridgain connect end");
     }
 
     public static synchronized void close() {
+        logger.severe("Gridgain close start");
+
         if (grid != null) {
             try {
+                logger.severe("Closing gridgain");
                 grid.close();
+                logger.severe("Closed gridgain");
             } catch (GridException e) {
                 logger.log(Level.SEVERE, e.getMessage());
             }
@@ -122,16 +152,22 @@ public class GridGainManager {
             connectedCaches.clear();
 
             if (!state.equals(ConnState.CONNECTING)) {
+                logger.severe("Im disconnected from gridgain now");
                 state = ConnState.DISCONNECTED;
             }
         }
+
+        logger.severe("Gridgain close end");
     }
 
     public static synchronized void asyncReconnect() {
+        logger.severe("Async reconnect to gridgain start");
         if (!state.equals(ConnState.CONNECTING)) {
             state = ConnState.CONNECTING;
             GridGainConnector connector = new GridGainConnector();
+            logger.severe("Starting gridgain connector");
             connector.start();
         }
+        logger.severe("Async reconnect to gridgain end");
     }
 }

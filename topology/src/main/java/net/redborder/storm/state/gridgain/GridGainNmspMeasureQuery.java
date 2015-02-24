@@ -3,6 +3,7 @@ package net.redborder.storm.state.gridgain;
 import backtype.storm.tuple.Values;
 import net.redborder.storm.util.logger.RbLogger;
 import storm.trident.operation.TridentCollector;
+import storm.trident.operation.TridentOperationContext;
 import storm.trident.tuple.TridentTuple;
 
 import java.util.Collections;
@@ -20,8 +21,13 @@ public class GridGainNmspMeasureQuery extends GridGainQuery {
         super(key);
     }
 
-    Logger logger = RbLogger.getLogger(GridGainNmspMeasureQuery.class.getName());
+    Logger logger;
 
+    @Override
+    public void prepare(Map conf, TridentOperationContext context) {
+        super.prepare(conf, context);
+        logger = RbLogger.getLogger(GridGainNmspMeasureQuery.class.getName());
+    }
 
     @Override
     public void execute(TridentTuple tuple, Map<String, Object> result, TridentCollector collector) {
@@ -30,9 +36,9 @@ public class GridGainNmspMeasureQuery extends GridGainQuery {
         if (nmspEvent != null) {
 
             if (result != null)
-                logger.fine("Resulting NmspGridGainQuery " + result.size());
+                logger.severe("Resulting NmspGridGainQuery " + result.size());
             else
-                logger.fine("Resulting NmspGridGainQuery " + null);
+                logger.severe("Resulting NmspGridGainQuery " + null);
 
 
             List<String> apMacs = (List<String>) nmspEvent.get("ap_mac");
@@ -42,7 +48,7 @@ public class GridGainNmspMeasureQuery extends GridGainQuery {
                 String client_mac = (String) nmspEvent.get("client_mac");
                 String sensor_name = (String) nmspEvent.get("sensor_name");
                 Integer rssi = Collections.max(clientRssis);
-                logger.fine("Max RSSI is: " + rssi);
+                logger.severe("Max RSSI is: " + rssi);
                 String apMac = apMacs.get(clientRssis.indexOf(rssi));
                 Map<String, Object> enrichment = (Map<String, Object>) nmspEvent.get("enrichment");
 
@@ -91,7 +97,7 @@ public class GridGainNmspMeasureQuery extends GridGainQuery {
                 druid.putAll(map);
 
 
-                logger.fine("Finished nmspGridGainQuery, emmiting ["+client_mac + ", " + map.size() + ", " + druid.size() + "]");
+                logger.severe("Finished nmspGridGainQuery, emmiting [" + client_mac + ", " + map.size() + ", " + druid.size() + "]");
                 collector.emit(new Values(client_mac, map, druid));
             }
         }

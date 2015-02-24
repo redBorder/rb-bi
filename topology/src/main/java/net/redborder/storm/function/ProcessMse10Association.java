@@ -18,11 +18,13 @@ public class ProcessMse10Association extends BaseFunction {
 
 
     Map<Integer, String> cache;
-    Logger logger = RbLogger.getLogger(ProcessMse10Association.class.getName());
+    Logger logger;
 
 
     @Override
     public void prepare(Map conf, TridentOperationContext context) {
+        logger = RbLogger.getLogger(ProcessMse10Association.class.getName());
+
         cache = new HashMap<>();
         cache.put(0, "IDLE");
         cache.put(1, "AAA_PENDING");
@@ -42,7 +44,7 @@ public class ProcessMse10Association extends BaseFunction {
     public void execute(TridentTuple tuple, TridentCollector collector) {
         Map<String, Object> association = (Map<String, Object>) tuple.get(0);
         try {
-            logger.fine("Processing mse10Association");
+            logger.severe("Processing mse10Association");
             Map<String, Object> dataToSave = new HashMap<>();
             Map<String, Object> dataToDruid = new HashMap<>();
             String client_mac = (String) association.get("deviceId");
@@ -71,7 +73,7 @@ public class ProcessMse10Association extends BaseFunction {
             dataToDruid.put("pkts", 0);
             dataToDruid.put("type", "mse10");
 
-            logger.fine("Emitting  ["  + client_mac + ", "+dataToSave.size() + ", " +dataToDruid.size());
+            logger.severe("Emitting  [" + client_mac + ", " + dataToSave.size() + ", " + dataToDruid.size());
 
             collector.emit(new Values(client_mac, dataToSave, dataToDruid));
         } catch (Exception ex) {
