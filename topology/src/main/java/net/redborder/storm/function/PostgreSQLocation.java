@@ -10,7 +10,6 @@ import storm.trident.tuple.TridentTuple;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -19,79 +18,37 @@ import java.util.logging.Logger;
 public class PostgreSQLocation extends BaseFunction {
 
     PostgresqlManager _manager;
-    Map<String, Map<String, Object>> _hash;
-    long _last_update;
     String user;
     String uri;
     String pass;
-    long _next_update;
+    long updateTime, failUpdateTime;
     Logger logger;
 
-
-    public PostgreSQLocation(String uri, String user, String pass){
-        this.uri=uri;
-        this.user=user;
-        this.pass=pass;
-        this._next_update=1800000;
+    public PostgreSQLocation(String uri, String user, String pass, long updateTime, long failUpdateTime){
+        this.uri = uri;
+        this.user = user;
+        this.pass = pass;
+        this.updateTime = updateTime;
+        this.failUpdateTime = failUpdateTime;
     }
 
     @Override
     public void prepare(Map conf, TridentOperationContext context) {
         logger = RbLogger.getLogger(PostgreSQLocation.class.getName());
-
-        try {
-            PostgresqlManager.initConfig(uri, user, pass);
-            _manager = PostgresqlManager.getInstance();
-            _manager.init();
-            _hash = _manager.getAPLocation();
-            _last_update = System.currentTimeMillis();
-            _next_update = 1800000;
-            logger.info(
-                    "Initiate location with postgreSQL info. \n Location Entry: " + _hash.size()
-                            + " \n   Initial data: \n " + _hash.toString());
-        } catch (Exception ex) {
-            _next_update = 300000;
-            logger.info(
-                    "The postgreSQL query fail ... next try on 5 minutes!");
-            ex.printStackTrace();
-        }
+        PostgresqlManager.initConfig(uri, user, pass, updateTime, failUpdateTime);
+        _manager = PostgresqlManager.getInstance();
+        _manager.init();
     }
 
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
-        try {
-            if ((_last_update + _next_update) < System.currentTimeMillis()) {
-                _hash = _manager.getAPLocation();
-                logger.info(
-                        "Update location with postgreSQL info. \n Location Entry: " + _hash.size()
-                + " \n   Updated data: \n " + _hash.toString());
-                _last_update = System.currentTimeMillis();
-                _next_update = 1800000;
-            }
+        Map<String, Object> flow = (Map<String, Object>) tuple.getValue(0);
+        String wireless_station = (String) flow.get("wireless_station");
 
-            Map<String, Object> flow = (Map<String, Object>) tuple.getValue(0);
-            String wireless_station = (String) flow.get("wireless_station");
-
-
-            if (wireless_station != null) {
-                if (_hash.get(wireless_station) != null) {
-                    logger.severe("Emmiting PostgreSQLocation: [" + _hash.get(wireless_station).size() + "]");
-                } else {
-                    logger.severe("Emmiting PostgreSQLocation: hash get wireless_station gave null");
-                }
-
-                collector.emit(new Values(_hash.get(wireless_station)));
-            }
-            else {
-                logger.severe("Emmiting PostgreSQLocation: [" + null + "]");
-                collector.emit(new Values(new HashMap<String, Object>()));
-            }
-        } catch (Exception ex) {
-            _last_update = System.currentTimeMillis();
-            _next_update = 300000;
-            Logger.getLogger(PostgreSQLocation.class.getName()).log(Level.WARNING,
-                    "The postgreSQL query fail ... next try on 5 minutes!", ex.toString());
-            ex.printStackTrace();
+        if (wireless_station != null) {
+             collector.emit(new Values(PostgresqlManager.get(wireless_station)));
+        } else {
+            collector.emit(new Values(new HashMap<String, Object>()));
         }
     }
 

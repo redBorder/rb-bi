@@ -326,7 +326,7 @@ public class RedBorderTopology {
             if (_config.getMacLocallyAdministeredEnable())
                 nmspInfoStream = nmspInfoStream.each(new Fields("src_mac"), new MacLocallyAdministeredFilter());
 
-            nmspInfoStream = nmspInfoStream.each(new Fields("nmsp_info_data_druid"), new PostgreSQLocation(_config.getDbUri(), _config.getDbUser(), _config.getDbPass()), new Fields("infoLocation"))
+            nmspInfoStream = nmspInfoStream.each(new Fields("nmsp_info_data_druid"), new PostgreSQLocation(_config.getDbUri(), _config.getDbUser(), _config.getDbPass(), _config.getPostgresqlUpdateTime(), _config.getPostgresqlFailUpdateTime()), new Fields("infoLocation"))
                     .each(new Fields("nmsp_info_data_druid"), new MacVendorFunction(), new Fields("nmspInfoMacVendorMap"));
 
             nmspInfoStream.partitionPersist(nmspStateInfoFactory, new Fields("src_mac", "nmsp_info_data"),
@@ -338,7 +338,7 @@ public class RedBorderTopology {
             if (_config.getMacLocallyAdministeredEnable())
                 nmspMeasureStream = nmspMeasureStream.each(new Fields("src_mac"), new MacLocallyAdministeredFilter());
 
-            nmspMeasureStream = nmspMeasureStream.each(new Fields("nmsp_measure_data_druid"), new PostgreSQLocation(_config.getDbUri(), _config.getDbUser(), _config.getDbPass()), new Fields("measureLocation"))
+            nmspMeasureStream = nmspMeasureStream.each(new Fields("nmsp_measure_data_druid"), new PostgreSQLocation(_config.getDbUri(), _config.getDbUser(), _config.getDbPass(), _config.getPostgresqlUpdateTime(), _config.getPostgresqlFailUpdateTime()), new Fields("measureLocation"))
                     .each(new Fields("nmsp_measure_data_druid"), new MacVendorFunction(), new Fields("nmspMeasureMacVendorMap"));
 
             nmspMeasureStream.partitionPersist(nmspStateFactory, new Fields("src_mac", "nmsp_measure_data"),
@@ -373,7 +373,7 @@ public class RedBorderTopology {
 
                 flowStream = flowStream.stateQuery(nmspState, new Fields("flows"),
                         StateQuery.getStateQuery(_config, "client_mac", "nmsp"), new Fields("nmspMap"))
-                        .each(new Fields("nmspMap"), new PostgreSQLocation(_config.getDbUri(), _config.getDbUser(), _config.getDbPass()), new Fields("locationWLC"));
+                        .each(new Fields("nmspMap"), new PostgreSQLocation(_config.getDbUri(), _config.getDbUser(), _config.getDbPass(), _config.getPostgresqlUpdateTime(), _config.getPostgresqlFailUpdateTime()), new Fields("locationWLC"));
 
                 fieldsFlow.add("locationWLC");
                 fieldsFlow.add("nmspMap");
@@ -382,10 +382,10 @@ public class RedBorderTopology {
             if (_config.contains("events")) {
                 eventsStream = eventsStream.stateQuery(nmspState, new Fields("event"),
                         StateQuery.getStateEventsLocationNmspQuery(_config, "ethsrc", "nmsp"), new Fields("nmsp_ap_mac_ethsrc"))
-                        .each(new Fields("nmsp_ap_mac_ethsrc"), new PostgreSQLocation(_config.getDbUri(), _config.getDbUser(), _config.getDbPass()), new Fields("locationWLC_ethsrc"))
+                        .each(new Fields("nmsp_ap_mac_ethsrc"), new PostgreSQLocation(_config.getDbUri(), _config.getDbUser(), _config.getDbPass(), _config.getPostgresqlUpdateTime(), _config.getPostgresqlFailUpdateTime()), new Fields("locationWLC_ethsrc"))
                         .stateQuery(nmspState, new Fields("event"),
                                 StateQuery.getStateEventsLocationNmspQuery(_config, "ethdst", "nmsp"), new Fields("nmsp_ap_mac_ethdst"))
-                        .each(new Fields("nmsp_ap_mac_ethdst"), new PostgreSQLocation(_config.getDbUri(), _config.getDbUser(), _config.getDbPass()), new Fields("locationWLC_ethdst"));
+                        .each(new Fields("nmsp_ap_mac_ethdst"), new PostgreSQLocation(_config.getDbUri(), _config.getDbUser(), _config.getDbPass(), _config.getPostgresqlUpdateTime(), _config.getPostgresqlFailUpdateTime()), new Fields("locationWLC_ethdst"));
 
                 fieldsEvent.add("nmsp_ap_mac_ethdst");
                 fieldsEvent.add("locationWLC_ethdst");
@@ -571,6 +571,7 @@ public class RedBorderTopology {
         print(pw, "- Debug: " + (_config.debug ? "ON" : "OFF"));
         print(pw, "- Date topology: " + new Date().toString());
         print(pw, "- Storm workers: " + _config.getWorkers());
+        print(pw, "- Postgresql update time: " + _config.getPostgresqlUpdateTime() + " Fail update time: " + _config.getPostgresqlFailUpdateTime());
         print(pw, "- Kafka partitions: ");
 
         if (_config.contains("location") && locationPartition > 0) print(pw, "   * rb_loc: " + locationPartition);

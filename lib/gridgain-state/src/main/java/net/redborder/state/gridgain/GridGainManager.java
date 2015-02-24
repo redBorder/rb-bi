@@ -51,7 +51,7 @@ public class GridGainManager {
         logger.log(Level.FINE, "Initialized GridGainManager");
     }
 
-    public static IGridGainStateCache cache(String name) {
+    public static synchronized IGridGainStateCache cache(String name) {
         IGridGainStateCache result = emptyCache;
         logger.severe("Asking for cache " + name);
 
@@ -82,7 +82,7 @@ public class GridGainManager {
         return result;
     }
 
-    private static GridCache tryCache(String name) {
+    private static synchronized GridCache tryCache(String name) {
         GridCache cache = null;
 
         if (state.equals(ConnState.CONNECTED)) {
@@ -118,7 +118,7 @@ public class GridGainManager {
     public static synchronized void connect() {
         logger.severe("Gridgain connect start");
 
-        if (grid == null) {
+        if (state.equals(ConnState.DISCONNECTED) || state.equals(ConnState.CONNECTING)) {
             state = ConnState.CONNECTING;
             logger.severe("Connecting to gridgain grid");
 
@@ -131,6 +131,8 @@ public class GridGainManager {
                 logger.log(Level.SEVERE, e.getMessage());
                 state = ConnState.DISCONNECTED;
             }
+        } else {
+            logger.severe("Connect was called but im not disconnected nor connecting!");
         }
 
         logger.severe("Gridgain connect end");
