@@ -108,12 +108,7 @@ public class GridGainStateConfiguration {
             GridCacheConfiguration cacheDarkList = new GridCacheConfiguration();
             cacheDarkList.setName("darklist");
             cacheDarkList.setCacheMode(GridCacheMode.PARTITIONED);
-            cacheDarkList.setBackups(backups);
             cacheDarkList.setDistributionMode(GridCacheDistributionMode.CLIENT_ONLY);
-            cacheDarkList.setStartSize(2 * 1024 * 1024);
-            cacheDarkList.setOffHeapMaxMemory(0);
-            cacheDarkList.setPreloadBatchSize(1024 * 1024);
-            cacheDarkList.setPreloadThreadPoolSize(4);
             caches.add(cacheDarkList);
         }
 
