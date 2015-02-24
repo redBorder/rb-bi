@@ -236,11 +236,20 @@ public class ConfigData {
         return parallelismFactor != null ? parallelismFactor: 2;
     }
 
+    public Integer getParallelismFactorNmsp(){
+        Integer parallelismFactor = _configFile.getFromGeneral("parallelism_factor_nmsp");
+        return parallelismFactor != null ? parallelismFactor: 2;
+    }
+
     public Integer getFetchSizeKafka(){
         Integer fetchsize = _configFile.getFromGeneral("kafka_fetchsize");
         return fetchsize != null ? fetchsize : 1024 * 1024 * 8;
     }
 
+    public Integer getFetchSizeKafkaNmsp(){
+        Integer fetchsize = _configFile.getFromGeneral("kafka_fetchsize_nmsp");
+        return fetchsize != null ? fetchsize : 1024 * 1024 * 8;
+    }
 
     public void getTranquilityPartitions() {
         Double capacityd = getMiddleManagerCapacity()*getTranquilityBackup();

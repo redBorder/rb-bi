@@ -2,7 +2,6 @@ package net.redborder.state.gridgain;
 
 import net.redborder.state.gridgain.util.RbLogger;
 
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -13,9 +12,9 @@ public class GridGainConnector extends Thread {
 
     @Override
     public void run() {
-        logger.log(Level.SEVERE, "GridGainConnector starting ...");
+        logger.severe("GridGainConnector starting");
         GridGainManager.close();
         GridGainManager.connect();
-        logger.log(Level.SEVERE, "GridGainConnector end!!");
+        logger.severe("GridGainConnector end");
     }
 }

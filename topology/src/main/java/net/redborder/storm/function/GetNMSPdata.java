@@ -5,10 +5,9 @@ import backtype.storm.tuple.Values;
 import net.redborder.storm.util.logger.RbLogger;
 import storm.trident.operation.BaseFunction;
 import storm.trident.operation.TridentCollector;
+import storm.trident.operation.TridentOperationContext;
 import storm.trident.tuple.TridentTuple;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -18,7 +17,12 @@ import java.util.logging.Logger;
  */
 public class GetNMSPdata extends BaseFunction {
 
-    Logger logger = RbLogger.getLogger(GetNMSPdata.class.getName());
+    Logger logger;
+
+    @Override
+    public void prepare(Map conf, TridentOperationContext context) {
+        logger = RbLogger.getLogger(GetNMSPdata.class.getName());
+    }
 
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector) {
@@ -29,7 +33,7 @@ public class GetNMSPdata extends BaseFunction {
 
         if (nmspType.toLowerCase().equals("measure")) {
             List<Map<String, Object>> datas = (List<Map<String, Object>>) nmspEvent.get("data");
-            logger.fine("Sending nmsp events [measure]: " + datas.size() );
+            logger.severe("Sending nmsp events [measure]: " + datas.size());
             for (Map<String, Object> data : datas) {
                 data.put("sensor_name", sensor_name);
                 if (enrichment != null)
@@ -38,7 +42,7 @@ public class GetNMSPdata extends BaseFunction {
             }
         } else if (nmspType.toLowerCase().equals("info")) {
             List<Map<String, Object>> datas = (List<Map<String, Object>>) nmspEvent.get("data");
-            logger.fine("Sending nmsp events [info]: " + datas.size() );
+            logger.severe("Sending nmsp events [info]: " + datas.size());
             for (Map<String, Object> data : datas) {
                 data.put("sensor_name", sensor_name);
                 if (enrichment != null)
