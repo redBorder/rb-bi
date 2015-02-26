@@ -11,11 +11,13 @@ import com.metamx.tranquility.storm.TridentBeamStateFactory;
 import com.metamx.tranquility.storm.TridentBeamStateUpdater;
 import net.redborder.kafkastate.KafkaState;
 import net.redborder.kafkastate.KafkaStateUpdater;
+import net.redborder.storm.filters.FieldFilter;
 import net.redborder.storm.filters.MacLocallyAdministeredFilter;
 import net.redborder.storm.function.*;
 import net.redborder.storm.siddhi.SiddhiState;
 import net.redborder.storm.siddhi.SiddhiUpdater;
 import net.redborder.storm.spout.TridentKafkaSpout;
+import net.redborder.storm.spout.TridentKafkaSpoutLocation;
 import net.redborder.storm.spout.TridentKafkaSpoutNmsp;
 import net.redborder.storm.state.CacheNotValidException;
 import net.redborder.storm.state.RedBorderState;
@@ -215,7 +217,7 @@ public class RedBorderTopology {
             locationInfoState = topology.newStaticState(locationInfoStateFactory);
 
             // Get msg
-            locationStream = topology.newStream("rb_loc", new TridentKafkaSpout(_config, "location").builder())
+            locationStream = topology.newStream("rb_loc", new TridentKafkaSpoutLocation(_config, "location").builder())
                     .name("Location").parallelismHint(locationPartition).shuffle()
                     .each(new Fields("str"), new MapperFunction("rb_loc"), new Fields("mse_map"))
                     .each(new Fields("mse_map"), new GetMSEdata(), new Fields("src_mac", "mse_data", "mse_data_druid", "mse_version_10"));
@@ -230,7 +232,6 @@ public class RedBorderTopology {
 
 
             // Association v10
-
             Stream associationV10 = locationStreamV10
                     .each(new Fields("mse10_association"), new FilterNull())
                     .each(new Fields("mse10_association"), new ProcessMse10Association(), new Fields("src_mac", "mse10_association_data", "mse10_association_druid"));
@@ -242,7 +243,6 @@ public class RedBorderTopology {
                     associationV10, "mse10_association_druid");
 
             // LocationUpdate v10
-
             Stream locationUpdateV10 = locationStreamV10
                     .each(new Fields("mse10_locationUpdate"), new FilterNull())
                     .stateQuery(locationInfoState, new Fields("mse10_locationUpdate"), StateQuery.getStateLocationV10Query(_config), new Fields("mseInfoV10"))
@@ -316,13 +316,13 @@ public class RedBorderTopology {
             nmspStateInfo = topology.newStaticState(nmspStateInfoFactory);
 
             // Get msg
-            nmspStream = topology.newStream("rb_nmsp", new TridentKafkaSpoutNmsp(_config, "nmsp").builder())
-                    .name("NMSP").parallelismHint(nmspPartition)
-                    .each(new Fields("str"), new MapperFunction("rb_nmsp"), new Fields("nsmp_map"))
-                    .each(new Fields("nsmp_map"), new GetNMSPdata(), new Fields("nmsp_measure", "nmsp_info")).shuffle();
+            nmspStream = topology.newStream("rb_nmsp", new TridentKafkaSpoutNmsp(_config, "nmsp").builder()).name("NMSP")
+                    .each(new Fields("str"), new MapperFunction("rb_nmsp"), new Fields("nmsp_map"))
+                    .parallelismHint(nmspPartition)
+                    .shuffle();
 
-            Stream nmspInfoStream = nmspStream.project(new Fields("nmsp_info"))
-                    .each(new Fields("nmsp_info"), new GetNMSPInfoData(), new Fields("src_mac", "nmsp_info_data", "nmsp_info_data_druid"));
+            Stream nmspInfoStream = nmspStream.each(new Fields("nmsp_map"), new FieldFilter("type", "info"))
+                    .each(new Fields("nmsp_map"), new GetNMSPInfoData(), new Fields("src_mac", "nmsp_info_data", "nmsp_info_data_druid"));
 
             if (_config.getMacLocallyAdministeredEnable())
                 nmspInfoStream = nmspInfoStream.each(new Fields("src_mac"), new MacLocallyAdministeredFilter());
@@ -333,9 +333,8 @@ public class RedBorderTopology {
             nmspInfoStream.partitionPersist(nmspStateInfoFactory, new Fields("src_mac", "nmsp_info_data"),
                     StateUpdater.getStateUpdater(_config, "src_mac", "nmsp_info_data", "nmsp-info"));
 
-            Stream nmspMeasureStream = nmspStream.project(new Fields("nmsp_measure"))
-                    .each(new Fields("nmsp_measure"), new FilterNull())
-                    .stateQuery(nmspStateInfo, new Fields("nmsp_measure"), StateQuery.getStateNmspMeasureQuery(_config), new Fields("src_mac", "nmsp_measure_data", "nmsp_measure_data_druid"));
+            Stream nmspMeasureStream = nmspStream.each(new Fields("nmsp_map"), new FieldFilter("type", "measure"))
+                    .stateQuery(nmspStateInfo, new Fields("nmsp_map"), StateQuery.getStateNmspMeasureQuery(_config), new Fields("src_mac", "nmsp_measure_data", "nmsp_measure_data_druid"));
 
             if (_config.getMacLocallyAdministeredEnable())
                 nmspMeasureStream = nmspMeasureStream.each(new Fields("src_mac"), new MacLocallyAdministeredFilter());

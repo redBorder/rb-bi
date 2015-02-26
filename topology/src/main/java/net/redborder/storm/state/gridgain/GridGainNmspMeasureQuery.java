@@ -72,8 +72,11 @@ public class GridGainNmspMeasureQuery extends GridGainQuery {
                     map.put("wireless_station", apMac);
                     map.put("dot11_status", "PROBING");
                 } else {
-                    if (apMacs.contains(result.get("wireless_station"))) {
-                        map.put("client_rssi_num", rssi);
+                    String apAssociated = (String) result.get("wireless_station");
+
+                    if (apMacs.contains(apAssociated)) {
+                        Integer rssiAssociated = clientRssis.get(apMacs.indexOf(apAssociated));
+                        map.put("client_rssi_num", rssiAssociated);
                         map.putAll(result);
                     } else {
                         map.put("client_rssi_num", rssi);

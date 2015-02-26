@@ -142,6 +142,7 @@ public class GridGainStateConfiguration {
             cacheLocation.setDistributionMode(_mode);
             cacheLocation.setDefaultTimeToLive(_timeToLive);
             cacheLocation.setCacheMode(GridCacheMode.PARTITIONED);
+            cacheLocation.setPreloadThrottle(0);
             caches.add(cacheLocation);
 
             GridCacheConfiguration cacheLocationInfp = new GridCacheConfiguration();
@@ -149,6 +150,7 @@ public class GridGainStateConfiguration {
             cacheLocationInfp.setDistributionMode(_mode);
             cacheLocationInfp.setDefaultTimeToLive(_timeToLive);
             cacheLocationInfp.setCacheMode(GridCacheMode.PARTITIONED);
+            cacheLocationInfp.setPreloadThrottle(0);
             caches.add(cacheLocationInfp);
         }
 
@@ -158,6 +160,7 @@ public class GridGainStateConfiguration {
             cacheNmsp.setDistributionMode(_mode);
             cacheNmsp.setDefaultTimeToLive(_timeToLive);
             cacheNmsp.setCacheMode(GridCacheMode.PARTITIONED);
+            cacheNmsp.setPreloadThrottle(0);
             caches.add(cacheNmsp);
 
             GridCacheConfiguration cacheNmspInfo = new GridCacheConfiguration();
@@ -165,6 +168,7 @@ public class GridGainStateConfiguration {
             cacheNmspInfo.setDistributionMode(_mode);
             cacheNmspInfo.setDefaultTimeToLive(_timeToLive);
             cacheNmspInfo.setCacheMode(GridCacheMode.PARTITIONED);
+            cacheNmspInfo.setPreloadThrottle(0);
             caches.add(cacheNmspInfo);
 
             GridCacheConfiguration cacheNmspLocationState = new GridCacheConfiguration();
@@ -172,6 +176,7 @@ public class GridGainStateConfiguration {
             cacheNmspLocationState.setDistributionMode(_mode);
             cacheNmspLocationState.setDefaultTimeToLive(_timeToLive);
             cacheNmspLocationState.setCacheMode(GridCacheMode.PARTITIONED);
+            cacheNmspLocationState.setPreloadThrottle(0);
             caches.add(cacheNmspLocationState);
         }
 

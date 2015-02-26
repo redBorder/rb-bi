@@ -56,9 +56,9 @@ public class ConnectedGridGainStateCache<K, V> implements IGridGainStateCache<K,
 
         try {
             logger.severe("Started gridgain put");
-            _gridMap.putAll(entries);
+            _gridMap.putAllAsync(entries);
             logger.severe("Finished gridgain put");
-        } catch (GridException | RuntimeException e) {
+        } catch (RuntimeException e) {
             logger.log(Level.SEVERE, "Error updating GridCache", e);
             GridGainManager.notifyFail();
         }

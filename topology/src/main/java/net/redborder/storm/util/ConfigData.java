@@ -251,6 +251,11 @@ public class ConfigData {
         return fetchsize != null ? fetchsize : 1024 * 1024 * 8;
     }
 
+    public Integer getFetchSizeKafkaLocation() {
+        Integer fetchsize = _configFile.getFromGeneral("kafka_fetchsize_location");
+        return fetchsize != null ? fetchsize : 1024 * 1024 * 8;
+    }
+
     public Long getPostgresqlUpdateTime() {
         Integer updateTime = _configFile.getFromGeneral("postgresql_update_time");
         return updateTime != null ? updateTime.longValue() : 1800000l;
