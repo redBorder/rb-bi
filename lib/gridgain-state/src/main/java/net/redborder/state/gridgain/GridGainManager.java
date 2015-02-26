@@ -14,7 +14,6 @@ import java.util.logging.Logger;
  * Created by andresgomez on 4/2/15.
  */
 public class GridGainManager {
-    private static final long GRIDGAIN_CONNECT_TIMEOUT = 60000l;
     private static Logger logger = RbLogger.getLogger(GridGainManager.class.getName());
 
     // Grid instances that we are currently using
@@ -26,14 +25,12 @@ public class GridGainManager {
     private static Map<String, ConnectedGridGainStateCache> connectedCaches;
 
     // State of the gridgain connection
-    private enum ConnState { CONNECTED, CONNECTING, DISCONNECTED }
+    private enum ConnState { CONNECTED, DISCONNECTED, TESTING }
     private static ConnState state = ConnState.DISCONNECTED;
 
     // Thread that connects to gridgain
-    private static GridGainConnector connector;
-
-    // Time where the connect method started in order to check timeouts
-    private static long startedConnectTime = 0;
+    // private static GridGainConnector connector;
+    // private static GridGainTester tester;
 
     public static synchronized void init(List<String> topics, Map<String, Object> gridGainConfig) {
         logger.log(Level.FINE, "Initializing GridGainManager");
@@ -50,7 +47,25 @@ public class GridGainManager {
         connectedCaches = new ConcurrentHashMap<>();
 
         // Connect asynchronously
-        asyncReconnect();
+        // asyncReconnect();
+        try {
+            logger.severe("[State " + state.name() + "] Starting gridgain");
+            grid = GridGain.start(gridConfig);
+
+            try {
+                logger.severe("[State " + state.name() + "] Waiting for gridgain to complete startup");
+                Thread.sleep(5000);
+                logger.severe("[State " + state.name() + "] Gridgain wait finished!");
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            state = ConnState.CONNECTED;
+            logger.severe("[State " + state.name() + "] Gridgain started. Im connected!");
+        } catch (GridException e) {
+            logger.log(Level.SEVERE, e.getMessage());
+            state = ConnState.DISCONNECTED;
+        }
 
         logger.log(Level.FINE, "Initialized GridGainManager");
     }
@@ -76,7 +91,6 @@ public class GridGainManager {
             }
         } else if (state.equals(ConnState.DISCONNECTED)) {
             logger.severe("[State " + state.name() + "] Im disconnected so I will return an empty cache for the cache " + name + " and I will try to reconnect async");
-            asyncReconnect();
         }
 
         // If im connecting, I do nothing, therefore
@@ -108,18 +122,17 @@ public class GridGainManager {
     public static void notifyFail() {
         if (state.equals(ConnState.CONNECTED)) {
             logger.severe("[State " + state.name() + "] Apparently im connected, but I received a fail notify. lets try to reconnect");
-            asyncReconnect();
+            // asyncTest();
         } else if (state.equals(ConnState.DISCONNECTED)) {
-            logger.severe("[State " + state.name() + "] Im currently disconnected, lets try to reconnect");
-            asyncReconnect();
-        } else if (state.equals(ConnState.CONNECTING)) {
-            logger.severe("[State " + state.name() + "] Im currently trying to connect, relax... ");
+            logger.severe("[State " + state.name() + "] Im currently disconnected, what did you expect");
+        } else if (state.equals(ConnState.TESTING)) {
+            logger.severe("[State " + state.name() + "] Im currently in testing, relax... ");
         } else {
             logger.severe("[State " + state.name() + "] They notified a fail but I dont even know what Im doing");
         }
     }
 
-    public static void connect() {
+    /* public static void connect() {
         logger.severe("[State " + state.name() + "] Gridgain connect start" );
 
         if (state.equals(ConnState.DISCONNECTED) || state.equals(ConnState.CONNECTING)) {
@@ -149,9 +162,9 @@ public class GridGainManager {
         }
 
         logger.severe("[State " + state.name() + "] Gridgain connect end");
-    }
+    } */
 
-    public static void close() {
+    /* public static void close() {
         logger.severe("[State " + state.name() + "] Gridgain close start");
 
         if (!GridGain.state().equals(org.gridgain.grid.GridGainState.STOPPED)) {
@@ -181,7 +194,15 @@ public class GridGainManager {
         logger.severe("[State " + state.name() + "] Gridgain close end");
     }
 
-    public static synchronized void asyncReconnect() {
+    public static void reconnect() {
+        logger.severe("[State " + state.name() + "] Gridgain close start");
+
+        GridGain.restart(true);
+
+        logger.severe("[State " + state.name() + "] Gridgain close end");
+    } */
+
+    /* public static synchronized void asyncReconnect() {
         logger.severe("[State " + state.name() + "] Async reconnect to gridgain start.");
         long actualTime = System.currentTimeMillis();
 
@@ -211,5 +232,26 @@ public class GridGainManager {
             logger.severe("[State " + state.name() + "] Didnt start gridgain connector cause im already connecting");
         }
         logger.severe("[State " + state.name() + "] Async reconnect to gridgain end");
-    }
+    } */
+
+    /* public static synchronized void asyncTest() {
+        logger.severe("[State " + state.name() + "] Async test to gridgain start.");
+
+        if (!state.equals(ConnState.TESTING)) {
+            state = ConnState.TESTING;
+            logger.severe("[State " + state.name() + "] Starting gridgain tester");
+
+            try {
+                tester = new GridGainTester();
+                tester.start();
+            } catch (RuntimeException e) {
+                logger.severe("[State " + state.name() + "] Error creating thread gridgain tester: " + e.getMessage());
+                state = ConnState.DISCONNECTED;
+            }
+        } else {
+            logger.severe("[State " + state.name() + "] Didnt start gridgain tester cause im already connecting");
+        }
+
+        logger.severe("[State " + state.name() + "] Async tester to gridgain end");
+    } */
 }
