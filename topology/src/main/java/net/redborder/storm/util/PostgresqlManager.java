@@ -5,7 +5,6 @@ import net.redborder.storm.util.logger.RbLogger;
 import java.sql.*;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -82,9 +81,9 @@ public class PostgresqlManager {
 
     public static Map<String, Object> get(String apName) {
         if ((_last_update + _next_update) < System.currentTimeMillis()) {
-            logger.severe("Updating PostgreSQL data");
+            // logger.severe("Updating PostgreSQL data");
             updateAPLocation();
-            logger.severe("Finished postgresql update. Last update: " + _last_update + " Next update: " + _next_update);
+            // logger.severe("Finished postgresql update. Last update: " + _last_update + " Next update: " + _next_update);
         }
 
         return _hash.get(apName);
@@ -96,10 +95,10 @@ public class PostgresqlManager {
         ResultSet rs = null;
 
         try {
-            logger.severe("Started postgresql query...");
+            // logger.severe("Started postgresql query...");
             st = conn.createStatement();
-            rs = st.executeQuery("SELECT access_points.ip_address, access_points.mac_address, access_points.latitude AS latitude, access_points.longitude AS longitude, floor.name AS floor_name,building.name AS building_name, campus.name AS campus_name, zones.name AS zone_name FROM access_points FULL OUTER JOIN sensors AS floor ON floor.id = access_points.sensor_id FULL OUTER JOIN sensors AS building ON floor.parent_id = building.id FULL OUTER JOIN sensors AS campus ON building.parent_id = campus.id FULL OUTER JOIN (SELECT MIN(zone_id) AS zone_id, access_point_id FROM access_points_zones GROUP BY access_point_id) AS zones_ids ON access_points.id = zones_ids.access_point_id FULL OUTER JOIN zones ON zones_ids.zone_id = zones.id WHERE access_points.ip_address IS NOT NULL;");
-            logger.severe("Finished postgresql query! Parsing information...");
+            rs = st.executeQuery("SELECT access_points.ip_address, access_points.mac_address, access_points.latitude AS latitude, access_points.longitude AS longitude, floor.name AS floor_name,building.name AS building_name, campus.name AS campus_name, zones.name AS zone_name FROM access_points FULL OUTER JOIN sensors AS floor ON floor.id = access_points.sensor_id FULL OUTER JOIN sensors AS building ON floor.parent_id = building.id FULL OUTER JOIN sensors AS campus ON building.parent_id = campus.id FULL OUTER JOIN (SELECT MIN(zone_id) AS zone_id, access_point_id FROM access_points_zones GROUP BY access_point_id) AS zones_ids ON access_points.id = zones_ids.access_point_id FULL OUTER JOIN zones ON zones_ids.zone_id = zones.id WHERE access_points.mac_address IS NOT NULL;");
+            // logger.severe("Finished postgresql query! Parsing information...");
 
             while (rs.next()) {
                 Map<String, Object> location = new HashMap<>();
@@ -138,12 +137,11 @@ public class PostgresqlManager {
             _last_update = System.currentTimeMillis();
             _next_update = _update_time;
             logger.info("Location Entry: " + _hash.size() + " \n   Updated data: \n " + _hash.toString());
-            logger.severe("Finished parsing postgresql query!");
+            // logger.severe("Finished parsing postgresql query!");
         } catch (SQLException e) {
-            e.printStackTrace();
             _last_update = System.currentTimeMillis();
             _next_update = _fail_update_time;
-            Logger.getLogger(PostgresqlManager.class.getName()).log(Level.WARNING, "The postgreSQL query failed!", e.toString());
+            logger.severe("The postgreSQL query failed! " + e.toString());
             e.printStackTrace();
         } finally {
             try { if (rs != null) rs.close(); } catch (Exception e) {}

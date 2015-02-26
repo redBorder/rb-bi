@@ -21,7 +21,10 @@ public class RedBorderState {
             return new RiakState.Factory<>("rbbi:" + cacheName, config.getRiakServers(), 8087, Map.class);
         } else if (config.getCacheType().equals("memcached")) {
             MemcachedState.Options memcachedOpts = new MemcachedState.Options();
-            memcachedOpts.expiration = 0;
+            memcachedOpts.expiration = 60 * 60 * 1000;
+            memcachedOpts.localCacheSize = 0;
+            memcachedOpts.requestTimeoutMillis = 250;
+            memcachedOpts.maxMultiGetBatchSize = 1000;
             return MemcachedState.transactional(config.getMemcachedServers(), memcachedOpts);
         } else if (config.getCacheType().equals("memory")) {
             return new MemoryMapState.Factory();

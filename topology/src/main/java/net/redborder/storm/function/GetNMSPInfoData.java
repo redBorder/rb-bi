@@ -52,7 +52,7 @@ public class GetNMSPInfoData extends BaseFunction {
                 druid.remove("vlan_id");
             }
 
-            logger.severe("Processed NMSP data info, emitting  [" + map.get("client_mac") + ", " + data.size() + ", " + druid.size() + "]");
+            // logger.severe("Processed NMSP data info, emitting  [" + map.get("client_mac") + ", " + data.size() + ", " + druid.size() + "]");
 
             collector.emit(new Values(map.get("client_mac"), data, druid));
         }

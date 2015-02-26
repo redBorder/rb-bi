@@ -33,7 +33,7 @@ public class GetNMSPdata extends BaseFunction {
 
         if (nmspType.toLowerCase().equals("measure")) {
             List<Map<String, Object>> datas = (List<Map<String, Object>>) nmspEvent.get("data");
-            logger.severe("Sending nmsp events [measure]: " + datas.size());
+            // logger.severe("Sending nmsp events [measure]: " + datas.size());
             for (Map<String, Object> data : datas) {
                 data.put("sensor_name", sensor_name);
                 if (enrichment != null)
@@ -42,7 +42,7 @@ public class GetNMSPdata extends BaseFunction {
             }
         } else if (nmspType.toLowerCase().equals("info")) {
             List<Map<String, Object>> datas = (List<Map<String, Object>>) nmspEvent.get("data");
-            logger.severe("Sending nmsp events [info]: " + datas.size());
+            // logger.severe("Sending nmsp events [info]: " + datas.size());
             for (Map<String, Object> data : datas) {
                 data.put("sensor_name", sensor_name);
                 if (enrichment != null)

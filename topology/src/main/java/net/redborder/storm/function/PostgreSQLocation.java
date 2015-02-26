@@ -2,7 +2,6 @@ package net.redborder.storm.function;
 
 import backtype.storm.tuple.Values;
 import net.redborder.storm.util.PostgresqlManager;
-import net.redborder.storm.util.logger.RbLogger;
 import storm.trident.operation.BaseFunction;
 import storm.trident.operation.TridentCollector;
 import storm.trident.operation.TridentOperationContext;
@@ -10,7 +9,6 @@ import storm.trident.tuple.TridentTuple;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Logger;
 
 /**
  * Created by andresgomez on 19/12/14.
@@ -22,7 +20,7 @@ public class PostgreSQLocation extends BaseFunction {
     String uri;
     String pass;
     long updateTime, failUpdateTime;
-    Logger logger;
+    // Logger logger;
 
     public PostgreSQLocation(String uri, String user, String pass, long updateTime, long failUpdateTime){
         this.uri = uri;
@@ -34,7 +32,7 @@ public class PostgreSQLocation extends BaseFunction {
 
     @Override
     public void prepare(Map conf, TridentOperationContext context) {
-        logger = RbLogger.getLogger(PostgreSQLocation.class.getName());
+        // logger = RbLogger.getLogger(PostgreSQLocation.class.getName());
         PostgresqlManager.initConfig(uri, user, pass, updateTime, failUpdateTime);
         _manager = PostgresqlManager.getInstance();
         _manager.init();

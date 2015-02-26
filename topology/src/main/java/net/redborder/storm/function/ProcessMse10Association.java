@@ -44,7 +44,7 @@ public class ProcessMse10Association extends BaseFunction {
     public void execute(TridentTuple tuple, TridentCollector collector) {
         Map<String, Object> association = (Map<String, Object>) tuple.get(0);
         try {
-            logger.severe("Processing mse10Association");
+            // logger.severe("Processing mse10Association");
             Map<String, Object> dataToSave = new HashMap<>();
             Map<String, Object> dataToDruid = new HashMap<>();
             String client_mac = (String) association.get("deviceId");
@@ -73,7 +73,7 @@ public class ProcessMse10Association extends BaseFunction {
             dataToDruid.put("pkts", 0);
             dataToDruid.put("type", "mse10");
 
-            logger.severe("Emitting  [" + client_mac + ", " + dataToSave.size() + ", " + dataToDruid.size());
+            // logger.severe("Emitting  [" + client_mac + ", " + dataToSave.size() + ", " + dataToDruid.size());
 
             collector.emit(new Values(client_mac, dataToSave, dataToDruid));
         } catch (Exception ex) {

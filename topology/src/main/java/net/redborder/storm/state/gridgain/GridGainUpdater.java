@@ -5,6 +5,7 @@
  */
 package net.redborder.storm.state.gridgain;
 
+import net.redborder.storm.util.logger.RbLogger;
 import storm.trident.operation.TridentCollector;
 import storm.trident.operation.TridentOperationContext;
 import storm.trident.state.BaseStateUpdater;
@@ -28,7 +29,7 @@ public class GridGainUpdater extends BaseStateUpdater<MapState<Map<String, Map<S
     String _value;
     String _generalKey;
     private boolean _debug;
-
+    Logger logger;
 
     public GridGainUpdater(String key, String value) {
         _key = key;
@@ -44,6 +45,7 @@ public class GridGainUpdater extends BaseStateUpdater<MapState<Map<String, Map<S
     @Override
     public void prepare(Map conf, TridentOperationContext context) {
         _debug = (boolean) conf.get("rbDebug");
+        logger = RbLogger.getLogger(GridGainUpdater.class.getName());
     }
 
     @Override
@@ -69,7 +71,9 @@ public class GridGainUpdater extends BaseStateUpdater<MapState<Map<String, Map<S
         events.add(keyValue);
 
         try {
+            logger.severe("Calling gridgain multiput");
             state.multiPut(keys, events);
+            logger.severe("Back from gridgain multiput");
         } catch (Exception e) {
             Logger.getLogger(GridGainUpdater.class.getName()).log(Level.SEVERE, null, e);
             e.printStackTrace();
