@@ -13,8 +13,8 @@ public class GridGainConnector extends Thread {
     @Override
     public void run() {
         logger.severe("GridGainConnector starting");
-        GridGainManager.close();
-        GridGainManager.connect();
+        // GridGainManager.close();
+        // GridGainManager.connect();
         logger.severe("GridGainConnector end");
     }
 }
