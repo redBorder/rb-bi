@@ -121,8 +121,9 @@ public class GridGainManager {
 
     public static void notifyFail() {
         if (state.equals(ConnState.CONNECTED)) {
-            logger.severe("[State " + state.name() + "] Apparently im connected, but I received a fail notify. lets try to reconnect");
+            logger.severe("[State " + state.name() + "] Apparently im connected, but I received a fail notify. Clear cache list");
             // asyncTest();
+            connectedCaches.clear();
         } else if (state.equals(ConnState.DISCONNECTED)) {
             logger.severe("[State " + state.name() + "] Im currently disconnected, what did you expect");
         } else if (state.equals(ConnState.TESTING)) {
