@@ -5,6 +5,7 @@ import org.gridgain.grid.GridConfiguration;
 import org.gridgain.grid.cache.GridCacheConfiguration;
 import org.gridgain.grid.cache.GridCacheDistributionMode;
 import org.gridgain.grid.cache.GridCacheMode;
+import org.gridgain.grid.spi.communication.tcp.GridTcpCommunicationSpi;
 import org.gridgain.grid.spi.discovery.tcp.GridTcpDiscoverySpi;
 import org.gridgain.grid.spi.discovery.tcp.ipfinder.s3.GridTcpDiscoveryS3IpFinder;
 import org.gridgain.grid.spi.discovery.tcp.ipfinder.vm.GridTcpDiscoveryVmIpFinder;
@@ -57,6 +58,9 @@ public class GridGainStateConfiguration {
         List<GridCacheConfiguration> caches = new ArrayList<GridCacheConfiguration>();
         GridTcpDiscoverySpi gridTcp = new GridTcpDiscoverySpi();
 
+        GridTcpCommunicationSpi tcpComm = new GridTcpCommunicationSpi();
+        tcpComm.setSocketWriteTimeout(20000);
+        conf.setCommunicationSpi(tcpComm);
 
         if (_s3Config == null) {
             GridTcpDiscoveryVmIpFinder gridIpFinder = new GridTcpDiscoveryVmIpFinder();
