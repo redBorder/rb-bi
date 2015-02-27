@@ -26,7 +26,7 @@ public class ProcessMse10LocationUpdate extends BaseFunction {
     public void execute(TridentTuple tuple, TridentCollector collector) {
         Map<String, Object> locationUpdate = (Map<String, Object>) tuple.get(0);
         try {
-            logger.severe("Processing mse10LocationUpdate");
+            // logger.severe("Processing mse10LocationUpdate");
 
             Map<String, Object> dataToSave = new HashMap<>();
             Map<String, Object> dataToDruid = new HashMap<>();
@@ -63,7 +63,7 @@ public class ProcessMse10LocationUpdate extends BaseFunction {
             dataToDruid.put("pkts", 0);
             dataToDruid.put("type", "mse10");
 
-            logger.severe("Emitting  [" + client_mac + ", " + dataToSave.size() + ", " + dataToDruid.size());
+            // logger.severe("Emitting  [" + client_mac + ", " + dataToSave.size() + ", " + dataToDruid.size());
 
             collector.emit(new Values(client_mac, dataToSave, dataToDruid));
         } catch (Exception ex) {

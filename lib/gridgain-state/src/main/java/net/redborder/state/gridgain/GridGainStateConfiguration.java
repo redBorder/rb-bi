@@ -5,6 +5,7 @@ import org.gridgain.grid.GridConfiguration;
 import org.gridgain.grid.cache.GridCacheConfiguration;
 import org.gridgain.grid.cache.GridCacheDistributionMode;
 import org.gridgain.grid.cache.GridCacheMode;
+import org.gridgain.grid.spi.communication.tcp.GridTcpCommunicationSpi;
 import org.gridgain.grid.spi.discovery.tcp.GridTcpDiscoverySpi;
 import org.gridgain.grid.spi.discovery.tcp.ipfinder.s3.GridTcpDiscoveryS3IpFinder;
 import org.gridgain.grid.spi.discovery.tcp.ipfinder.vm.GridTcpDiscoveryVmIpFinder;
@@ -27,6 +28,7 @@ public class GridGainStateConfiguration {
     public static final Long TIME_TO_LIVE = 60 * 60 * 1000L;
     private final static String CONFIG_FILE_PATH = "/opt/rb/etc/darklist_config.yml";
 
+    private static GridCacheDistributionMode _mode = GridCacheDistributionMode.CLIENT_ONLY;
     private static Long _timeToLive;
     private static List<String> _gridGainServers;
     private static Map<String, Object> _s3Config;
@@ -36,6 +38,11 @@ public class GridGainStateConfiguration {
     public static void init(List<String> topics, Map<String, Object> gridGainConfig) {
         _topics = topics;
         _timeToLive = gridGainConfig.get("time_to_live") == null ? TIME_TO_LIVE : (Long.valueOf(gridGainConfig.get("time_to_live").toString()));
+
+        String cacheType = (String) gridGainConfig.get("cache_type");
+        if (cacheType != null && cacheType.equals("partitioned")) {
+            _mode = GridCacheDistributionMode.PARTITIONED_ONLY;
+        }
 
         if (!gridGainConfig.containsKey("s3")) {
             _gridGainServers = (List<String>) gridGainConfig.get("servers");
@@ -51,6 +58,9 @@ public class GridGainStateConfiguration {
         List<GridCacheConfiguration> caches = new ArrayList<GridCacheConfiguration>();
         GridTcpDiscoverySpi gridTcp = new GridTcpDiscoverySpi();
 
+        GridTcpCommunicationSpi tcpComm = new GridTcpCommunicationSpi();
+        tcpComm.setSocketWriteTimeout(20000);
+        conf.setCommunicationSpi(tcpComm);
 
         if (_s3Config == null) {
             GridTcpDiscoveryVmIpFinder gridIpFinder = new GridTcpDiscoveryVmIpFinder();
@@ -108,14 +118,14 @@ public class GridGainStateConfiguration {
             GridCacheConfiguration cacheDarkList = new GridCacheConfiguration();
             cacheDarkList.setName("darklist");
             cacheDarkList.setCacheMode(GridCacheMode.PARTITIONED);
-            cacheDarkList.setDistributionMode(GridCacheDistributionMode.CLIENT_ONLY);
+            cacheDarkList.setDistributionMode(_mode);
             caches.add(cacheDarkList);
         }
 
         if (_topics.contains("mobile")) {
             GridCacheConfiguration cacheMobile = new GridCacheConfiguration();
             cacheMobile.setName("mobile");
-            cacheMobile.setDistributionMode(GridCacheDistributionMode.CLIENT_ONLY);
+            cacheMobile.setDistributionMode(_mode);
             cacheMobile.setDefaultTimeToLive(_timeToLive);
             cacheMobile.setCacheMode(GridCacheMode.PARTITIONED);
             caches.add(cacheMobile);
@@ -124,7 +134,7 @@ public class GridGainStateConfiguration {
         if (_topics.contains("radius")) {
             GridCacheConfiguration cacheRadius = new GridCacheConfiguration();
             cacheRadius.setName("radius");
-            cacheRadius.setDistributionMode(GridCacheDistributionMode.CLIENT_ONLY);
+            cacheRadius.setDistributionMode(_mode);
             cacheRadius.setDefaultTimeToLive(_timeToLive);
             cacheRadius.setCacheMode(GridCacheMode.PARTITIONED);
             caches.add(cacheRadius);
@@ -133,46 +143,51 @@ public class GridGainStateConfiguration {
         if (_topics.contains("location")) {
             GridCacheConfiguration cacheLocation = new GridCacheConfiguration();
             cacheLocation.setName("location");
-            cacheLocation.setDistributionMode(GridCacheDistributionMode.CLIENT_ONLY);
+            cacheLocation.setDistributionMode(_mode);
             cacheLocation.setDefaultTimeToLive(_timeToLive);
             cacheLocation.setCacheMode(GridCacheMode.PARTITIONED);
+            cacheLocation.setPreloadThrottle(0);
             caches.add(cacheLocation);
 
             GridCacheConfiguration cacheLocationInfp = new GridCacheConfiguration();
             cacheLocationInfp.setName("location-info");
-            cacheLocationInfp.setDistributionMode(GridCacheDistributionMode.CLIENT_ONLY);
+            cacheLocationInfp.setDistributionMode(_mode);
             cacheLocationInfp.setDefaultTimeToLive(_timeToLive);
             cacheLocationInfp.setCacheMode(GridCacheMode.PARTITIONED);
+            cacheLocationInfp.setPreloadThrottle(0);
             caches.add(cacheLocationInfp);
         }
 
         if (_topics.contains("nmsp")) {
             GridCacheConfiguration cacheNmsp = new GridCacheConfiguration();
             cacheNmsp.setName("nmsp");
-            cacheNmsp.setDistributionMode(GridCacheDistributionMode.CLIENT_ONLY);
+            cacheNmsp.setDistributionMode(_mode);
             cacheNmsp.setDefaultTimeToLive(_timeToLive);
             cacheNmsp.setCacheMode(GridCacheMode.PARTITIONED);
+            cacheNmsp.setPreloadThrottle(0);
             caches.add(cacheNmsp);
 
             GridCacheConfiguration cacheNmspInfo = new GridCacheConfiguration();
             cacheNmspInfo.setName("nmsp-info");
-            cacheNmspInfo.setDistributionMode(GridCacheDistributionMode.CLIENT_ONLY);
+            cacheNmspInfo.setDistributionMode(_mode);
             cacheNmspInfo.setDefaultTimeToLive(_timeToLive);
             cacheNmspInfo.setCacheMode(GridCacheMode.PARTITIONED);
+            cacheNmspInfo.setPreloadThrottle(0);
             caches.add(cacheNmspInfo);
 
             GridCacheConfiguration cacheNmspLocationState = new GridCacheConfiguration();
             cacheNmspLocationState.setName("nmsp-location-state");
-            cacheNmspLocationState.setDistributionMode(GridCacheDistributionMode.CLIENT_ONLY);
+            cacheNmspLocationState.setDistributionMode(_mode);
             cacheNmspLocationState.setDefaultTimeToLive(_timeToLive);
             cacheNmspLocationState.setCacheMode(GridCacheMode.PARTITIONED);
+            cacheNmspLocationState.setPreloadThrottle(0);
             caches.add(cacheNmspLocationState);
         }
 
         if (_topics.contains("trap")) {
             GridCacheConfiguration cacheTrap = new GridCacheConfiguration();
             cacheTrap.setName("trap");
-            cacheTrap.setDistributionMode(GridCacheDistributionMode.CLIENT_ONLY);
+            cacheTrap.setDistributionMode(_mode);
             cacheTrap.setDefaultTimeToLive(_timeToLive);
             cacheTrap.setCacheMode(GridCacheMode.PARTITIONED);
             caches.add(cacheTrap);

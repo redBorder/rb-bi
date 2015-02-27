@@ -35,10 +35,10 @@ public class GridGainNmspMeasureQuery extends GridGainQuery {
 
         if (nmspEvent != null) {
 
-            if (result != null)
-                logger.severe("Resulting NmspGridGainQuery " + result.size());
-            else
-                logger.severe("Resulting NmspGridGainQuery " + null);
+            // if (result != null)
+            //     logger.severe("Resulting NmspGridGainQuery " + result.size());
+            // else
+            //     logger.severe("Resulting NmspGridGainQuery " + null);
 
 
             List<String> apMacs = (List<String>) nmspEvent.get("ap_mac");
@@ -48,7 +48,7 @@ public class GridGainNmspMeasureQuery extends GridGainQuery {
                 String client_mac = (String) nmspEvent.get("client_mac");
                 String sensor_name = (String) nmspEvent.get("sensor_name");
                 Integer rssi = Collections.max(clientRssis);
-                logger.severe("Max RSSI is: " + rssi);
+                // logger.severe("Max RSSI is: " + rssi);
                 String apMac = apMacs.get(clientRssis.indexOf(rssi));
                 Map<String, Object> enrichment = (Map<String, Object>) nmspEvent.get("enrichment");
 
@@ -72,8 +72,11 @@ public class GridGainNmspMeasureQuery extends GridGainQuery {
                     map.put("wireless_station", apMac);
                     map.put("dot11_status", "PROBING");
                 } else {
-                    if (apMacs.contains(result.get("wireless_station"))) {
-                        map.put("client_rssi_num", rssi);
+                    String apAssociated = (String) result.get("wireless_station");
+
+                    if (apMacs.contains(apAssociated)) {
+                        Integer rssiAssociated = clientRssis.get(apMacs.indexOf(apAssociated));
+                        map.put("client_rssi_num", rssiAssociated);
                         map.putAll(result);
                     } else {
                         map.put("client_rssi_num", rssi);
@@ -96,8 +99,7 @@ public class GridGainNmspMeasureQuery extends GridGainQuery {
                 druid.put("timestamp", System.currentTimeMillis() / 1000);
                 druid.putAll(map);
 
-
-                logger.severe("Finished nmspGridGainQuery, emmiting [" + client_mac + ", " + map.size() + ", " + druid.size() + "]");
+                // logger.severe("Finished nmspGridGainQuery, emmiting [" + client_mac + ", " + map.size() + ", " + druid.size() + "]");
                 collector.emit(new Values(client_mac, map, druid));
             }
         }

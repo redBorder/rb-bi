@@ -221,34 +221,49 @@ public class ConfigData {
         return _conf;
     }
 
-    public double getTranquilityBackup(){
+    public double getTranquilityBackup() {
         Double percent = _configFile.getFromGeneral("tranquility_backup_percent");
         return percent == null ? 0.75 : (1-percent);
     }
 
-    private Integer getNumWorkers(){
+    private Integer getNumWorkers() {
         Integer num = _configFile.getFromGeneral("num_workers");
         return num;
     }
 
-    public Integer getParallelismFactor(){
+    public Integer getParallelismFactor() {
         Integer parallelismFactor = _configFile.getFromGeneral("parallelism_factor");
         return parallelismFactor != null ? parallelismFactor: 2;
     }
 
-    public Integer getParallelismFactorNmsp(){
+    public Integer getParallelismFactorNmsp() {
         Integer parallelismFactor = _configFile.getFromGeneral("parallelism_factor_nmsp");
         return parallelismFactor != null ? parallelismFactor: 2;
     }
 
-    public Integer getFetchSizeKafka(){
+    public Integer getFetchSizeKafka() {
         Integer fetchsize = _configFile.getFromGeneral("kafka_fetchsize");
         return fetchsize != null ? fetchsize : 1024 * 1024 * 8;
     }
 
-    public Integer getFetchSizeKafkaNmsp(){
+    public Integer getFetchSizeKafkaNmsp() {
         Integer fetchsize = _configFile.getFromGeneral("kafka_fetchsize_nmsp");
         return fetchsize != null ? fetchsize : 1024 * 1024 * 8;
+    }
+
+    public Integer getFetchSizeKafkaLocation() {
+        Integer fetchsize = _configFile.getFromGeneral("kafka_fetchsize_location");
+        return fetchsize != null ? fetchsize : 1024 * 1024 * 8;
+    }
+
+    public Long getPostgresqlUpdateTime() {
+        Integer updateTime = _configFile.getFromGeneral("postgresql_update_time");
+        return updateTime != null ? updateTime.longValue() : 1800000l;
+    }
+
+    public Long getPostgresqlFailUpdateTime() {
+        Integer updateTime = _configFile.getFromGeneral("postgresql_fail_update_time");
+        return updateTime != null ? updateTime.longValue() : 300000l;
     }
 
     public void getTranquilityPartitions() {

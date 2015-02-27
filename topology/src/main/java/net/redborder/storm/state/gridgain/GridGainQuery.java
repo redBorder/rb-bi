@@ -6,6 +6,7 @@
 package net.redborder.storm.state.gridgain;
 
 import backtype.storm.tuple.Values;
+import net.redborder.storm.util.logger.RbLogger;
 import storm.trident.operation.TridentCollector;
 import storm.trident.operation.TridentOperationContext;
 import storm.trident.state.BaseQueryFunction;
@@ -27,6 +28,7 @@ public class GridGainQuery extends BaseQueryFunction<MapState<Map<String, Map<St
     String _key;
     String _generalkey;
     private boolean _debug;
+    Logger logger;
 
     public GridGainQuery(String key) {
         _key = key;
@@ -40,6 +42,7 @@ public class GridGainQuery extends BaseQueryFunction<MapState<Map<String, Map<St
     @Override
     public void prepare(Map conf, TridentOperationContext context) {
         _debug = (boolean) conf.get("rbDebug");
+        logger = RbLogger.getLogger(GridGainQuery.class.getName());
     }
 
     @Override
@@ -85,7 +88,9 @@ public class GridGainQuery extends BaseQueryFunction<MapState<Map<String, Map<St
             }
 
             try {
+                logger.severe("Calling gridgain multiget");
                 gridGainData = state.multiGet(keysToGridGain);
+                logger.severe("Back from gridgain multiget");
                 if (gridGainData != null) {
                     queryData = gridGainData.get(0);
 

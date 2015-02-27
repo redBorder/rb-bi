@@ -36,9 +36,9 @@ public class GetNMSPInfoData extends BaseFunction {
             Map<String, Object> druid = new HashMap<>();
             druid.put("bytes", 0);
             druid.put("pkts", 0);
-            druid.put("type", "nmsp");
             druid.put("timestamp", System.currentTimeMillis() / 1000);
             druid.putAll(map);
+            druid.put("type", "nmsp");
 
             if (enrichment != null)
                 druid.putAll(enrichment);
@@ -52,7 +52,7 @@ public class GetNMSPInfoData extends BaseFunction {
                 druid.remove("vlan_id");
             }
 
-            logger.severe("Processed NMSP data info, emitting  [" + map.get("client_mac") + ", " + data.size() + ", " + druid.size() + "]");
+            // logger.severe("Processed NMSP data info, emitting  [" + map.get("client_mac") + ", " + data.size() + ", " + druid.size() + "]");
 
             collector.emit(new Values(map.get("client_mac"), data, druid));
         }

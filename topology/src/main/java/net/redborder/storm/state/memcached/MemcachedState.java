@@ -9,28 +9,7 @@ package net.redborder.storm.state.memcached;
 import backtype.storm.task.IMetricsContext;
 import backtype.storm.topology.ReportedFailedException;
 import backtype.storm.tuple.Values;
-import backtype.storm.Config;
-import backtype.storm.metric.api.CountMetric;
-import com.twitter.finagle.ApiException;
-import com.twitter.finagle.ApplicationException;
-import com.twitter.finagle.ChannelBufferUsageException;
-import com.twitter.finagle.ChannelException;
-import com.twitter.finagle.CodecException;
-import com.twitter.finagle.RequestException;
-import com.twitter.finagle.ServiceException;
-import java.io.Serializable;
-import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBuffers;
-
+import com.twitter.finagle.*;
 import com.twitter.finagle.builder.ClientBuilder;
 import com.twitter.finagle.memcached.KetamaClientBuilder;
 import com.twitter.finagle.memcached.java.Client;
@@ -39,23 +18,16 @@ import com.twitter.finagle.memcached.protocol.text.Memcached;
 import com.twitter.util.Duration;
 import com.twitter.util.Future;
 import com.twitter.util.Time;
+import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.buffer.ChannelBuffers;
+import storm.trident.state.*;
+import storm.trident.state.map.*;
 
-import storm.trident.state.JSONNonTransactionalSerializer;
-import storm.trident.state.JSONOpaqueSerializer;
-import storm.trident.state.JSONTransactionalSerializer;
-import storm.trident.state.OpaqueValue;
-import storm.trident.state.Serializer;
-import storm.trident.state.State;
-import storm.trident.state.map.IBackingMap;
-import storm.trident.state.StateFactory;
-import storm.trident.state.StateType;
-import storm.trident.state.TransactionalValue;
-import storm.trident.state.map.CachedMap;
-import storm.trident.state.map.MapState;
-import storm.trident.state.map.NonTransactionalMap;
-import storm.trident.state.map.OpaqueMap;
-import storm.trident.state.map.SnapshottableMap;
-import storm.trident.state.map.TransactionalMap;
+import java.io.Serializable;
+import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 public class MemcachedState<T> implements IBackingMap<T> {
     private static final Map<StateType, Serializer> DEFAULT_SERIALZERS = new HashMap<StateType, Serializer>() {{
@@ -130,7 +102,7 @@ public class MemcachedState<T> implements IBackingMap<T> {
             } catch (UnknownHostException e) {
                 throw new RuntimeException(e);
             }
-            s.registerMetrics(conf, context);
+            // s.registerMetrics(conf, context);
             CachedMap c = new CachedMap(s, _opts.localCacheSize);
             MapState ms;
             if(_type == StateType.NON_TRANSACTIONAL) {
@@ -191,9 +163,9 @@ public class MemcachedState<T> implements IBackingMap<T> {
     private final Client _client;
     private Options _opts;
     private Serializer _ser;
-    CountMetric _mreads;
-    CountMetric _mwrites;
-    CountMetric _mexceptions;
+    // CountMetric _mreads;
+    // CountMetric _mwrites;
+    // CountMetric _mexceptions;
     
     public MemcachedState(Client client, Options opts, Serializer<T> ser) {
         _client = client;
@@ -226,7 +198,7 @@ public class MemcachedState<T> implements IBackingMap<T> {
                     }
                 }
             }
-      _mreads.incrBy(ret.size());
+            // _mreads.incrBy(ret.size());
             return ret;
         } catch(Exception e) {
             checkMemcachedException(e);
@@ -251,7 +223,7 @@ public class MemcachedState<T> implements IBackingMap<T> {
             for(Future future: futures) {
                 future.get();
             }
-      _mwrites.incrBy(futures.size());
+            // _mwrites.incrBy(futures.size());
         } catch(Exception e) {
             checkMemcachedException(e);
         }
@@ -259,7 +231,7 @@ public class MemcachedState<T> implements IBackingMap<T> {
     
     
     private void checkMemcachedException(Exception e) {
-  _mexceptions.incr();
+        // _mexceptions.incr();
         if(e instanceof RequestException ||
            e instanceof ChannelException ||
            e instanceof ServiceException ||
@@ -273,12 +245,12 @@ public class MemcachedState<T> implements IBackingMap<T> {
         }        
     }
 
-    private void registerMetrics(Map conf, IMetricsContext context) {
-      int bucketSize = (Integer)(conf.get(Config.TOPOLOGY_BUILTIN_METRICS_BUCKET_SIZE_SECS));
-      _mreads = context.registerMetric("memcached/readCount", new CountMetric(), bucketSize);
-      _mwrites = context.registerMetric("memcached/writeCount", new CountMetric(), bucketSize);
-      _mexceptions = context.registerMetric("memcached/exceptionCount", new CountMetric(), bucketSize);
-    }
+    // private void registerMetrics(Map conf, IMetricsContext context) {
+      // int bucketSize = (Integer)(conf.get(Config.TOPOLOGY_BUILTIN_METRICS_BUCKET_SIZE_SECS));
+      // _mreads = context.registerMetric("memcached/readCount", new CountMetric(), bucketSize);
+      // _mwrites = context.registerMetric("memcached/writeCount", new CountMetric(), bucketSize);
+      // _mexceptions = context.registerMetric("memcached/exceptionCount", new CountMetric(), bucketSize);
+    // }
 
     private String toSingleKey(List<Object> key) {
         if(key.size()!=1) {

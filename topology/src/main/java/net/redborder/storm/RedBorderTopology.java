@@ -11,11 +11,13 @@ import com.metamx.tranquility.storm.TridentBeamStateFactory;
 import com.metamx.tranquility.storm.TridentBeamStateUpdater;
 import net.redborder.kafkastate.KafkaState;
 import net.redborder.kafkastate.KafkaStateUpdater;
+import net.redborder.storm.filters.FieldFilter;
 import net.redborder.storm.filters.MacLocallyAdministeredFilter;
 import net.redborder.storm.function.*;
 import net.redborder.storm.siddhi.SiddhiState;
 import net.redborder.storm.siddhi.SiddhiUpdater;
 import net.redborder.storm.spout.TridentKafkaSpout;
+import net.redborder.storm.spout.TridentKafkaSpoutLocation;
 import net.redborder.storm.spout.TridentKafkaSpoutNmsp;
 import net.redborder.storm.state.CacheNotValidException;
 import net.redborder.storm.state.RedBorderState;
@@ -126,7 +128,7 @@ public class RedBorderTopology {
         List<String> fieldsEvent = new ArrayList<>();
 
         /* States and Streams*/
-        TridentState locationState, mobileState, radiusState, trapState, darklistState, nmspState, nmspStateInfo, nmspStateLocationState, locationStasts, locationInfoState;
+        TridentState locationState, mobileState, radiusState, trapState, darklistState, darklistStateEvents, nmspStateFlow, nmspStateEvents, nmspStateInfo, nmspStateLocationState, locationStasts, locationInfoState;
         StateFactory locationStateFactory, mobileStateFactory, trapStateFactory, radiusStateFactory, nmspStateFactory, nmspStateInfoFactory, nmspStateLocationStateFactory, locationInfoStateFactory;
         Stream locationStream, radiusStream, flowStream = null, eventsStream = null, monitorStream = null, nmspStream, locationStreamUnderV10, locationStreamV10;
 
@@ -215,7 +217,7 @@ public class RedBorderTopology {
             locationInfoState = topology.newStaticState(locationInfoStateFactory);
 
             // Get msg
-            locationStream = topology.newStream("rb_loc", new TridentKafkaSpout(_config, "location").builder())
+            locationStream = topology.newStream("rb_loc", new TridentKafkaSpoutLocation(_config, "location").builder())
                     .name("Location").parallelismHint(locationPartition).shuffle()
                     .each(new Fields("str"), new MapperFunction("rb_loc"), new Fields("mse_map"))
                     .each(new Fields("mse_map"), new GetMSEdata(), new Fields("src_mac", "mse_data", "mse_data_druid", "mse_version_10"));
@@ -230,7 +232,6 @@ public class RedBorderTopology {
 
 
             // Association v10
-
             Stream associationV10 = locationStreamV10
                     .each(new Fields("mse10_association"), new FilterNull())
                     .each(new Fields("mse10_association"), new ProcessMse10Association(), new Fields("src_mac", "mse10_association_data", "mse10_association_druid"));
@@ -242,7 +243,6 @@ public class RedBorderTopology {
                     associationV10, "mse10_association_druid");
 
             // LocationUpdate v10
-
             Stream locationUpdateV10 = locationStreamV10
                     .each(new Fields("mse10_locationUpdate"), new FilterNull())
                     .stateQuery(locationInfoState, new Fields("mse10_locationUpdate"), StateQuery.getStateLocationV10Query(_config), new Fields("mseInfoV10"))
@@ -309,36 +309,37 @@ public class RedBorderTopology {
         if (_config.contains("nmsp")) {
             nmspPartition = _config.getKafkaPartitions("rb_nmsp");
             nmspStateFactory = RedBorderState.getStateFactory(_config, "nmsp");
-            nmspState = topology.newStaticState(nmspStateFactory);
+            nmspStateFlow = topology.newStaticState(nmspStateFactory);
+            nmspStateEvents = topology.newStaticState(nmspStateFactory);
 
             nmspStateInfoFactory = RedBorderState.getStateFactory(_config, "nmsp-info");
             nmspStateInfo = topology.newStaticState(nmspStateInfoFactory);
 
             // Get msg
-            nmspStream = topology.newStream("rb_nmsp", new TridentKafkaSpoutNmsp(_config, "nmsp").builder())
-                    .name("NMSP").parallelismHint(nmspPartition).shuffle()
-                    .each(new Fields("str"), new MapperFunction("rb_nmsp"), new Fields("nsmp_map"))
-                    .each(new Fields("nsmp_map"), new GetNMSPdata(), new Fields("nmsp_measure", "nmsp_info"));
+            nmspStream = topology.newStream("rb_nmsp", new TridentKafkaSpoutNmsp(_config, "nmsp").builder()).name("NMSP")
+                    .each(new Fields("str"), new MapperFunction("rb_nmsp"), new Fields("nmsp_map"))
+                    .parallelismHint(nmspPartition)
+                    .shuffle();
 
-            Stream nmspInfoStream = nmspStream.project(new Fields("nmsp_info"))
-                    .each(new Fields("nmsp_info"), new GetNMSPInfoData(), new Fields("src_mac", "nmsp_info_data", "nmsp_info_data_druid"));
+            Stream nmspInfoStream = nmspStream.each(new Fields("nmsp_map"), new FieldFilter("type", "info"))
+                    .each(new Fields("nmsp_map"), new GetNMSPInfoData(), new Fields("src_mac", "nmsp_info_data", "nmsp_info_data_druid"));
 
             if (_config.getMacLocallyAdministeredEnable())
                 nmspInfoStream = nmspInfoStream.each(new Fields("src_mac"), new MacLocallyAdministeredFilter());
 
-            nmspInfoStream = nmspInfoStream.each(new Fields("nmsp_info_data_druid"), new PostgreSQLocation(_config.getDbUri(), _config.getDbUser(), _config.getDbPass()), new Fields("infoLocation"))
+            nmspInfoStream = nmspInfoStream.each(new Fields("nmsp_info_data_druid"), new PostgreSQLocation(_config.getDbUri(), _config.getDbUser(), _config.getDbPass(), _config.getPostgresqlUpdateTime(), _config.getPostgresqlFailUpdateTime()), new Fields("infoLocation"))
                     .each(new Fields("nmsp_info_data_druid"), new MacVendorFunction(), new Fields("nmspInfoMacVendorMap"));
 
             nmspInfoStream.partitionPersist(nmspStateInfoFactory, new Fields("src_mac", "nmsp_info_data"),
                     StateUpdater.getStateUpdater(_config, "src_mac", "nmsp_info_data", "nmsp-info"));
 
-            Stream nmspMeasureStream = nmspStream.project(new Fields("nmsp_measure"))
-                    .stateQuery(nmspStateInfo, new Fields("nmsp_measure"), StateQuery.getStateNmspMeasureQuery(_config), new Fields("src_mac", "nmsp_measure_data", "nmsp_measure_data_druid"));
+            Stream nmspMeasureStream = nmspStream.each(new Fields("nmsp_map"), new FieldFilter("type", "measure"))
+                    .stateQuery(nmspStateInfo, new Fields("nmsp_map"), StateQuery.getStateNmspMeasureQuery(_config), new Fields("src_mac", "nmsp_measure_data", "nmsp_measure_data_druid"));
 
             if (_config.getMacLocallyAdministeredEnable())
                 nmspMeasureStream = nmspMeasureStream.each(new Fields("src_mac"), new MacLocallyAdministeredFilter());
 
-            nmspMeasureStream = nmspMeasureStream.each(new Fields("nmsp_measure_data_druid"), new PostgreSQLocation(_config.getDbUri(), _config.getDbUser(), _config.getDbPass()), new Fields("measureLocation"))
+            nmspMeasureStream = nmspMeasureStream.each(new Fields("nmsp_measure_data_druid"), new PostgreSQLocation(_config.getDbUri(), _config.getDbUser(), _config.getDbPass(), _config.getPostgresqlUpdateTime(), _config.getPostgresqlFailUpdateTime()), new Fields("measureLocation"))
                     .each(new Fields("nmsp_measure_data_druid"), new MacVendorFunction(), new Fields("nmspMeasureMacVendorMap"));
 
             nmspMeasureStream.partitionPersist(nmspStateFactory, new Fields("src_mac", "nmsp_measure_data"),
@@ -371,21 +372,21 @@ public class RedBorderTopology {
                         nmspInfoStream.each(new Fields("nmsp_info_data_druid", "nmspInfoMacVendorMap", "infoLocation"),
                                 new MergeMapsFunction(), new Fields("traffics")).parallelismHint(_config.getWorkers() * _config.getParallelismFactorNmsp()), "traffics");
 
-                flowStream = flowStream.stateQuery(nmspState, new Fields("flows"),
+                flowStream = flowStream.stateQuery(nmspStateFlow, new Fields("flows"),
                         StateQuery.getStateQuery(_config, "client_mac", "nmsp"), new Fields("nmspMap"))
-                        .each(new Fields("nmspMap"), new PostgreSQLocation(_config.getDbUri(), _config.getDbUser(), _config.getDbPass()), new Fields("locationWLC"));
+                        .each(new Fields("nmspMap"), new PostgreSQLocation(_config.getDbUri(), _config.getDbUser(), _config.getDbPass(), _config.getPostgresqlUpdateTime(), _config.getPostgresqlFailUpdateTime()), new Fields("locationWLC"));
 
                 fieldsFlow.add("locationWLC");
                 fieldsFlow.add("nmspMap");
             }
 
             if (_config.contains("events")) {
-                eventsStream = eventsStream.stateQuery(nmspState, new Fields("event"),
+                eventsStream = eventsStream.stateQuery(nmspStateEvents, new Fields("event"),
                         StateQuery.getStateEventsLocationNmspQuery(_config, "ethsrc", "nmsp"), new Fields("nmsp_ap_mac_ethsrc"))
-                        .each(new Fields("nmsp_ap_mac_ethsrc"), new PostgreSQLocation(_config.getDbUri(), _config.getDbUser(), _config.getDbPass()), new Fields("locationWLC_ethsrc"))
-                        .stateQuery(nmspState, new Fields("event"),
+                        .each(new Fields("nmsp_ap_mac_ethsrc"), new PostgreSQLocation(_config.getDbUri(), _config.getDbUser(), _config.getDbPass(), _config.getPostgresqlUpdateTime(), _config.getPostgresqlFailUpdateTime()), new Fields("locationWLC_ethsrc"))
+                        .stateQuery(nmspStateEvents, new Fields("event"),
                                 StateQuery.getStateEventsLocationNmspQuery(_config, "ethdst", "nmsp"), new Fields("nmsp_ap_mac_ethdst"))
-                        .each(new Fields("nmsp_ap_mac_ethdst"), new PostgreSQLocation(_config.getDbUri(), _config.getDbUser(), _config.getDbPass()), new Fields("locationWLC_ethdst"));
+                        .each(new Fields("nmsp_ap_mac_ethdst"), new PostgreSQLocation(_config.getDbUri(), _config.getDbUser(), _config.getDbPass(), _config.getPostgresqlUpdateTime(), _config.getPostgresqlFailUpdateTime()), new Fields("locationWLC_ethdst"));
 
                 fieldsEvent.add("nmsp_ap_mac_ethdst");
                 fieldsEvent.add("locationWLC_ethdst");
@@ -473,6 +474,7 @@ public class RedBorderTopology {
         if (_config.darklistIsEnabled() && _config.getCacheType().equals("gridgain")) {
             // Create a static state to query the database
             darklistState = topology.newStaticState(RedBorderState.getStateFactory(_config, "darklist"));
+            darklistStateEvents = topology.newStaticState(RedBorderState.getStateFactory(_config, "darklist"));
 
             // Enrich flow stream with darklist fields
             if (_config.contains("traffics")) {
@@ -485,9 +487,9 @@ public class RedBorderTopology {
 
 
             // Enrich event stream with darklist fields
-            if (_config.contains("event")) {
+            if (_config.contains("events")) {
                 eventsStream = eventsStream
-                        .stateQuery(darklistState, new Fields("event"), new DarkListQuery(_config.darklistType()),
+                        .stateQuery(darklistStateEvents, new Fields("event"), new DarkListQuery(_config.darklistType()),
                                 new Fields("darklistMap"));
 
                 fieldsEvent.add("darklistMap");
@@ -571,6 +573,7 @@ public class RedBorderTopology {
         print(pw, "- Debug: " + (_config.debug ? "ON" : "OFF"));
         print(pw, "- Date topology: " + new Date().toString());
         print(pw, "- Storm workers: " + _config.getWorkers());
+        print(pw, "- Postgresql update time: " + _config.getPostgresqlUpdateTime() + " Fail update time: " + _config.getPostgresqlFailUpdateTime());
         print(pw, "- Kafka partitions: ");
 
         if (_config.contains("location") && locationPartition > 0) print(pw, "   * rb_loc: " + locationPartition);
