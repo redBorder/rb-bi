@@ -34,12 +34,10 @@ public class GridGainNmspMeasureQuery extends GridGainQuery {
         Map<String, Object> nmspEvent = (Map<String, Object>) tuple.get(0);
 
         if (nmspEvent != null) {
-
             // if (result != null)
             //     logger.severe("Resulting NmspGridGainQuery " + result.size());
             // else
             //     logger.severe("Resulting NmspGridGainQuery " + null);
-
 
             List<String> apMacs = (List<String>) nmspEvent.get("ap_mac");
             List<Integer> clientRssis = (List<Integer>) nmspEvent.get("rssi");
@@ -50,7 +48,6 @@ public class GridGainNmspMeasureQuery extends GridGainQuery {
                 Integer rssi = Collections.max(clientRssis);
                 // logger.severe("Max RSSI is: " + rssi);
                 String apMac = apMacs.get(clientRssis.indexOf(rssi));
-                Map<String, Object> enrichment = (Map<String, Object>) nmspEvent.get("enrichment");
 
                 Map<String, Object> map = new HashMap<>();
 
@@ -85,11 +82,7 @@ public class GridGainNmspMeasureQuery extends GridGainQuery {
                     }
                 }
 
-
                 Map<String, Object> druid = new HashMap<>();
-
-                if (enrichment != null)
-                    druid.putAll(enrichment);
 
                 druid.put("bytes", 0);
                 druid.put("pkts", 0);

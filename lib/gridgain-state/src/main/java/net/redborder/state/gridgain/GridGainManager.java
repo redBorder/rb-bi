@@ -25,7 +25,7 @@ public class GridGainManager {
     private static Map<String, ConnectedGridGainStateCache> connectedCaches;
 
     // State of the gridgain connection
-    private enum ConnState { CONNECTED, DISCONNECTED, TESTING }
+    private enum ConnState { CONNECTED, DISCONNECTED, CONNECTING }
     private static ConnState state = ConnState.DISCONNECTED;
 
     // Thread that connects to gridgain
@@ -46,8 +46,6 @@ public class GridGainManager {
         emptyCache = new EmptyGridGainStateCache();
         connectedCaches = new ConcurrentHashMap<>();
 
-        // Connect asynchronously
-        // asyncReconnect();
         try {
             logger.severe("[State " + state.name() + "] Starting gridgain");
             grid = GridGain.start(gridConfig);
@@ -126,14 +124,14 @@ public class GridGainManager {
             connectedCaches.clear();
         } else if (state.equals(ConnState.DISCONNECTED)) {
             logger.severe("[State " + state.name() + "] Im currently disconnected, what did you expect");
-        } else if (state.equals(ConnState.TESTING)) {
+        } else if (state.equals(ConnState.CONNECTING)) {
             logger.severe("[State " + state.name() + "] Im currently in testing, relax... ");
         } else {
             logger.severe("[State " + state.name() + "] They notified a fail but I dont even know what Im doing");
         }
     }
 
-    /* public static void connect() {
+    public static void connect() {
         logger.severe("[State " + state.name() + "] Gridgain connect start" );
 
         if (state.equals(ConnState.DISCONNECTED) || state.equals(ConnState.CONNECTING)) {
@@ -163,9 +161,9 @@ public class GridGainManager {
         }
 
         logger.severe("[State " + state.name() + "] Gridgain connect end");
-    } */
+    }
 
-    /* public static void close() {
+    public static void close() {
         logger.severe("[State " + state.name() + "] Gridgain close start");
 
         if (!GridGain.state().equals(org.gridgain.grid.GridGainState.STOPPED)) {
@@ -194,14 +192,6 @@ public class GridGainManager {
 
         logger.severe("[State " + state.name() + "] Gridgain close end");
     }
-
-    public static void reconnect() {
-        logger.severe("[State " + state.name() + "] Gridgain close start");
-
-        GridGain.restart(true);
-
-        logger.severe("[State " + state.name() + "] Gridgain close end");
-    } */
 
     /* public static synchronized void asyncReconnect() {
         logger.severe("[State " + state.name() + "] Async reconnect to gridgain start.");

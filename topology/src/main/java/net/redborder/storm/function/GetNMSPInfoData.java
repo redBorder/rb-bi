@@ -27,8 +27,6 @@ public class GetNMSPInfoData extends BaseFunction {
         Map<String, Object> map = (Map<String, Object>) tuple.get(0);
 
         if (map != null) {
-            Map<String, Object> enrichment = (Map<String, Object>) map.remove("enrichment");
-
             Map<String, Object> data = new HashMap<>();
             data.putAll(map);
             data.remove("client_mac");
@@ -39,9 +37,6 @@ public class GetNMSPInfoData extends BaseFunction {
             druid.put("timestamp", System.currentTimeMillis() / 1000);
             druid.putAll(map);
             druid.put("type", "nmsp");
-
-            if (enrichment != null)
-                druid.putAll(enrichment);
 
             Object vlan = map.get("vlan_id");
 
