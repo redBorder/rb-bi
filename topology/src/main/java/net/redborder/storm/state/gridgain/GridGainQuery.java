@@ -88,9 +88,9 @@ public class GridGainQuery extends BaseQueryFunction<MapState<Map<String, Map<St
             }
 
             try {
-                logger.severe("Calling gridgain multiget");
+                logger.debug("Calling gridgain multiget");
                 gridGainData = state.multiGet(keysToGridGain);
-                logger.severe("Back from gridgain multiget");
+                logger.debug("Back from gridgain multiget");
                 if (gridGainData != null) {
                     queryData = gridGainData.get(0);
 

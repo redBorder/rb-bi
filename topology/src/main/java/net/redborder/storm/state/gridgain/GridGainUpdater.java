@@ -71,9 +71,9 @@ public class GridGainUpdater extends BaseStateUpdater<MapState<Map<String, Map<S
         events.add(keyValue);
 
         try {
-            logger.severe("Calling gridgain multiput");
+            logger.debug("Calling gridgain multiput");
             state.multiPut(keys, events);
-            logger.severe("Back from gridgain multiput");
+            logger.debug("Back from gridgain multiput");
         } catch (Exception e) {
             Logger.getLogger(GridGainUpdater.class.getName()).log(Level.SEVERE, null, e);
             e.printStackTrace();
