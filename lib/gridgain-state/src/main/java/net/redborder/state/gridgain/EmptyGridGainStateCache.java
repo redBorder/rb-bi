@@ -15,7 +15,7 @@ public class EmptyGridGainStateCache<K, V> implements IGridGainStateCache<K, V> 
 
     @Override
     public Map<K, V> getAll(List<K> keys) {
-        logger.debug("Get request to an empty gridgain state cache");
+        logger.fine("Get request to an empty gridgain state cache");
         return new HashMap<>();
     }
 

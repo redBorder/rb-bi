@@ -32,10 +32,10 @@ public class SplitMSE10Data extends BaseFunction {
 
         for (Map<String, Object> notification : notifications){
             if(notification.get("notificationType").equals("association")){
-                logger.debug("Mse10 event this event is a association, emitting: [" + notification.size() + ", " + "null]");
+                logger.fine("Mse10 event this event is a association, emitting: [" + notification.size() + ", " + "null]");
                 collector.emit(new Values(notification, null));
             }else if(notification.get("notificationType").equals("locationupdate")){
-                logger.debug("Mse10 event this event is a locationupdate, emitting: [null" + ", " + notification.size() + "]");
+                logger.fine("Mse10 event this event is a locationupdate, emitting: [null" + ", " + notification.size() + "]");
                 collector.emit(new Values(null, notification));
             }else{
                 Logger.getLogger(SplitMSE10Data.class.getName()).log(Level.WARNING, "MSE version 10 notificationType is unknown: " + notification.get("notificationType"));

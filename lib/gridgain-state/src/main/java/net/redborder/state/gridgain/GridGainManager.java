@@ -47,19 +47,19 @@ public class GridGainManager {
         connectedCaches = new ConcurrentHashMap<>();
 
         try {
-            logger.debug("[State " + state.name() + "] Starting gridgain");
+            logger.fine("[State " + state.name() + "] Starting gridgain");
             grid = GridGain.start(gridConfig);
 
             try {
-                logger.debug("[State " + state.name() + "] Waiting for gridgain to complete startup");
+                logger.fine("[State " + state.name() + "] Waiting for gridgain to complete startup");
                 Thread.sleep(5000);
-                logger.debug("[State " + state.name() + "] Gridgain wait finished!");
+                logger.fine("[State " + state.name() + "] Gridgain wait finished!");
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
 
             state = ConnState.CONNECTED;
-            logger.debug("[State " + state.name() + "] Gridgain started. Im connected!");
+            logger.fine("[State " + state.name() + "] Gridgain started. Im connected!");
         } catch (GridException e) {
             logger.log(Level.SEVERE, e.getMessage());
             state = ConnState.DISCONNECTED;
@@ -70,30 +70,30 @@ public class GridGainManager {
 
     public static IGridGainStateCache cache(String name) {
         IGridGainStateCache result = emptyCache;
-        logger.debug("[State " + state.name() + "] Asking for cache " + name);
+        logger.fine("[State " + state.name() + "] Asking for cache " + name);
 
         if (state.equals(ConnState.CONNECTED)) {
             if (!connectedCaches.containsKey(name)) {
-                logger.debug("[State " + state.name() + "] Im connected but cache " + name + " is not in the cache list, soy lets try to create one");
+                logger.fine("[State " + state.name() + "] Im connected but cache " + name + " is not in the cache list, soy lets try to create one");
                 GridCache cache = tryCache(name);
 
                 if (cache != null) {
                     ConnectedGridGainStateCache connectedCache = new ConnectedGridGainStateCache(cache);
                     connectedCaches.put(name, connectedCache);
                     result = connectedCache;
-                    logger.debug("[State " + state.name() + "] Created connected cache for cache " + name);
+                    logger.fine("[State " + state.name() + "] Created connected cache for cache " + name);
                 }
             } else {
-                logger.debug("[State " + state.name() + "] Im connected and the cache " + name + " is in the cache list so I return it");
+                logger.fine("[State " + state.name() + "] Im connected and the cache " + name + " is in the cache list so I return it");
                 result = connectedCaches.get(name);
             }
         } else if (state.equals(ConnState.DISCONNECTED)) {
-            logger.debug("[State " + state.name() + "] Im disconnected so I will return an empty cache for the cache " + name + " and I will try to reconnect async");
+            logger.fine("[State " + state.name() + "] Im disconnected so I will return an empty cache for the cache " + name + " and I will try to reconnect async");
         }
 
         // If im connecting, I do nothing, therefore
         // the client will use the empty cache
-        logger.debug("[State " + state.name() + "] I returned " + result + " to the cache " + name);
+        logger.fine("[State " + state.name() + "] I returned " + result + " to the cache " + name);
 
         return result;
     }
@@ -102,7 +102,7 @@ public class GridGainManager {
         GridCache cache = null;
 
         if (state.equals(ConnState.CONNECTED)) {
-            logger.debug("[State " + state.name() + "] Trying to get cache " + name + " from the grid cause im connected to it");
+            logger.fine("[State " + state.name() + "] Trying to get cache " + name + " from the grid cause im connected to it");
 
             try {
                 cache = grid.cache(name);
@@ -111,7 +111,7 @@ public class GridGainManager {
                 notifyFail();
             }
         } else {
-            logger.debug("[State " + state.name() + "] Tried to get cache " + name + " from the grid, but im not connected");
+            logger.fine("[State " + state.name() + "] Tried to get cache " + name + " from the grid, but im not connected");
         }
 
         return cache;
@@ -119,64 +119,64 @@ public class GridGainManager {
 
     public static void notifyFail() {
         if (state.equals(ConnState.CONNECTED)) {
-            logger.debug("[State " + state.name() + "] Apparently im connected, but I received a fail notify. Clear cache list");
+            logger.fine("[State " + state.name() + "] Apparently im connected, but I received a fail notify. Clear cache list");
             // asyncTest();
             connectedCaches.clear();
         } else if (state.equals(ConnState.DISCONNECTED)) {
-            logger.debug("[State " + state.name() + "] Im currently disconnected, what did you expect");
+            logger.fine("[State " + state.name() + "] Im currently disconnected, what did you expect");
         } else if (state.equals(ConnState.CONNECTING)) {
-            logger.debug("[State " + state.name() + "] Im currently in testing, relax... ");
+            logger.fine("[State " + state.name() + "] Im currently in testing, relax... ");
         } else {
-            logger.debug("[State " + state.name() + "] They notified a fail but I dont even know what Im doing");
+            logger.fine("[State " + state.name() + "] They notified a fail but I dont even know what Im doing");
         }
     }
 
     public static void connect() {
-        logger.debug("[State " + state.name() + "] Gridgain connect start" );
+        logger.fine("[State " + state.name() + "] Gridgain connect start" );
 
         if (state.equals(ConnState.DISCONNECTED) || state.equals(ConnState.CONNECTING)) {
             state = ConnState.CONNECTING;
-            logger.debug("[State " + state.name() + "] Connecting to gridgain grid");
+            logger.fine("[State " + state.name() + "] Connecting to gridgain grid");
 
             try {
-                logger.debug("[State " + state.name() + "] Starting gridgain");
+                logger.fine("[State " + state.name() + "] Starting gridgain");
                 grid = GridGain.start(gridConfig);
 
                 try {
-                    logger.debug("[State " + state.name() + "] Waiting for gridgain to complete startup");
+                    logger.fine("[State " + state.name() + "] Waiting for gridgain to complete startup");
                     Thread.sleep(5000);
-                    logger.debug("[State " + state.name() + "] Gridgain wait finished!");
+                    logger.fine("[State " + state.name() + "] Gridgain wait finished!");
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
 
                 state = ConnState.CONNECTED;
-                logger.debug("[State " + state.name() + "] Gridgain started. Im connected!");
+                logger.fine("[State " + state.name() + "] Gridgain started. Im connected!");
             } catch (GridException e) {
                 logger.log(Level.SEVERE, e.getMessage());
                 state = ConnState.DISCONNECTED;
             }
         } else {
-            logger.debug("[State " + state.name() + "] Connect was called but im not disconnected nor connecting!");
+            logger.fine("[State " + state.name() + "] Connect was called but im not disconnected nor connecting!");
         }
 
-        logger.debug("[State " + state.name() + "] Gridgain connect end");
+        logger.fine("[State " + state.name() + "] Gridgain connect end");
     }
 
     public static void close() {
-        logger.debug("[State " + state.name() + "] Gridgain close start");
+        logger.fine("[State " + state.name() + "] Gridgain close start");
 
         if (!GridGain.state().equals(org.gridgain.grid.GridGainState.STOPPED)) {
-            logger.debug("[State " + state.name() + "] Gridgain is not stopped. Stopping it.");
+            logger.fine("[State " + state.name() + "] Gridgain is not stopped. Stopping it.");
             GridGain.stopAll(true);
-            logger.debug("[State " + state.name() + "] Stopped all on gridgain done.");
+            logger.fine("[State " + state.name() + "] Stopped all on gridgain done.");
         }
 
         if (grid != null) {
             try {
-                logger.debug("[State " + state.name() + "] Closing gridgain");
+                logger.fine("[State " + state.name() + "] Closing gridgain");
                 grid.close();
-                logger.debug("[State " + state.name() + "] Closed gridgain");
+                logger.fine("[State " + state.name() + "] Closed gridgain");
             } catch (GridException e) {
                 logger.log(Level.SEVERE, e.getMessage(), e);
             }
@@ -185,12 +185,12 @@ public class GridGainManager {
             connectedCaches.clear();
 
             if (!state.equals(ConnState.CONNECTING)) {
-                logger.debug("[State " + state.name() + "] Im disconnected from gridgain now");
+                logger.fine("[State " + state.name() + "] Im disconnected from gridgain now");
                 state = ConnState.DISCONNECTED;
             }
         }
 
-        logger.debug("[State " + state.name() + "] Gridgain close end");
+        logger.fine("[State " + state.name() + "] Gridgain close end");
     }
 
     /* public static synchronized void asyncReconnect() {

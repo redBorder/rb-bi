@@ -30,13 +30,13 @@ public class ConnectedGridGainStateCache<K, V> implements IGridGainStateCache<K,
         Map<K, V> result;
 
         if (_gridMap == null) {
-            logger.debug("Got gridgain get on connected state cache, but gridMap is null");
+            logger.fine("Got gridgain get on connected state cache, but gridMap is null");
             result = new HashMap<>();
         } else {
             try {
-                logger.debug("Started gridgain get");
+                logger.fine("Started gridgain get");
                 result = _gridMap.getAll(keys);
-                logger.debug("Finished gridgain get");
+                logger.fine("Finished gridgain get");
             } catch (GridException | RuntimeException e) {
                 logger.log(Level.SEVERE, "Error getting data from GridCache", e);
                 GridGainManager.notifyFail();
@@ -50,14 +50,14 @@ public class ConnectedGridGainStateCache<K, V> implements IGridGainStateCache<K,
     @Override
     public void putAll(Map<K, V> entries) {
         if (_gridMap == null) {
-            logger.debug("Got gridgain put on connected state cache, but gridMap is null");
+            logger.fine("Got gridgain put on connected state cache, but gridMap is null");
             return;
         }
 
         try {
-            logger.debug("Started gridgain put");
+            logger.fine("Started gridgain put");
             _gridMap.putAllAsync(entries);
-            logger.debug("Finished gridgain put");
+            logger.fine("Finished gridgain put");
         } catch (RuntimeException e) {
             logger.log(Level.SEVERE, "Error updating GridCache", e);
             GridGainManager.notifyFail();
