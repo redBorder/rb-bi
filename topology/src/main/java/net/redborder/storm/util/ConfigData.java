@@ -57,7 +57,6 @@ public class ConfigData {
         _curator.start();
         initKafkaPartitions();
         initWorkers();
-        initMiddleManagerCapacity();
         _curator.close();
     }
 
@@ -111,47 +110,8 @@ public class ConfigData {
         return ret != null && ret;
     }
 
-    private void initMiddleManagerCapacity() {
-        int servers = 0;
-        int minimum = 99999;
-        int total = 0;
-        int capacity;
-
-        try {
-            List<String> middleManagersList = _curator.getChildren().forPath("/druid/indexer/announcements");
-
-            for (String middleManager : middleManagersList) {
-                String jsonString = new String(_curator.getData().forPath("/druid/indexer/announcements/" + middleManager), "UTF-8");
-                ObjectMapper mapper = new ObjectMapper();
-                Map<String, Object> json = mapper.readValue(jsonString, Map.class);
-                Integer nodeCapacity = (Integer) json.get("capacity");
-
-                if (minimum > nodeCapacity) minimum = nodeCapacity;
-                total = nodeCapacity + total;
-                servers++;
-            }
-        } catch (IOException | NullPointerException ex) {
-            Logger.getLogger(ConfigData.class.getName()).log(Level.SEVERE, "Failed converting a JSON tuple to a Map class", ex);
-        } catch (Exception ex) {
-            Logger.getLogger(ConfigData.class.getName()).log(Level.SEVERE, "No middle managers found, maybe use kafka to kafka. Default: 1");
-        }
-
-        if (servers == 0) {
-            servers = 1;
-            total = minimum = 3;
-        }
-
-        if (tranquilityReplication() == 1) {
-            capacity = total;
-        } else {
-            capacity = minimum * servers;
-        }
-
-        _middleManagers = capacity;
-    }
-
     public int getMiddleManagerCapacity() {
-        return _middleManagers;
+        return _configFile.getFromGeneral("middleManager_capacity");
     }
 
     public String getDbUri(){
