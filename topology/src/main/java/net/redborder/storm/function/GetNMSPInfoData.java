@@ -36,7 +36,7 @@ public class GetNMSPInfoData extends BaseFunction {
             druid.put("pkts", 0);
             druid.put("timestamp", System.currentTimeMillis() / 1000);
             druid.putAll(map);
-            druid.put("type", "nmsp");
+            druid.put("type", "nmsp-info");
 
             Object vlan = map.get("vlan_id");
 
