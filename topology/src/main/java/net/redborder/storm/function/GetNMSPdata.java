@@ -36,6 +36,7 @@ public class GetNMSPdata extends BaseFunction {
             // logger.severe("Sending nmsp events [measure]: " + datas.size());
             for (Map<String, Object> data : datas) {
                 data.put("sensor_name", sensor_name);
+                data.put("type", "nmsp-measure");
                 if (enrichment != null)
                     data.put("enrichment", enrichment);
                 collector.emit(new Values(data, null));
@@ -45,6 +46,7 @@ public class GetNMSPdata extends BaseFunction {
             // logger.severe("Sending nmsp events [info]: " + datas.size());
             for (Map<String, Object> data : datas) {
                 data.put("sensor_name", sensor_name);
+                data.put("type", "nmsp-info");
                 if (enrichment != null)
                     data.put("enrichment", enrichment);
                 collector.emit(new Values(null, data));
