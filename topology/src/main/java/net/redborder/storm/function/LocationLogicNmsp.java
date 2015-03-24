@@ -81,7 +81,7 @@ public class LocationLogicNmsp extends BaseFunction {
                     if (oldBuilding != null)
                         druid.put("client_building", oldBuilding);
                     if (oldZone != null)
-                        druid.put("client_building", oldZone);
+                        druid.put("client_zone", oldZone);
 
                     druid.put("wireless_station", oldwirelessStation);
                     collector.emit(new Values(null, druid));
