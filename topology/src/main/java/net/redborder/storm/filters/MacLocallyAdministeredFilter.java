@@ -27,22 +27,24 @@ public class MacLocallyAdministeredFilter extends BaseFilter {
     public boolean isKeep(TridentTuple tuple) {
         String mac = tuple.getStringByField("src_mac");
         boolean status = true;
-        String macSplit[] = mac.split(":");
-        String macHex = macSplit[0];
 
-        // if (_debug)
-        //    System.out.println("HEX: " + macHex);
+        if(mac!=null) {
+            String macSplit[] = mac.split(":");
+            String macHex = macSplit[0];
 
-        String binary = hexToBin(macHex);
+            // if (_debug)
+            //    System.out.println("HEX: " + macHex);
 
-        if (binary.endsWith("10") || binary.endsWith("11"))
-            status = false;
+            String binary = hexToBin(macHex);
 
-        // if (_debug) {
-        //     System.out.println("BIN: " + binary);
-        //     System.out.println("TRUE/FALSE: " + status);
-        // }
+            if (binary.endsWith("10") || binary.endsWith("11"))
+                status = false;
 
+            // if (_debug) {
+            //     System.out.println("BIN: " + binary);
+            //     System.out.println("TRUE/FALSE: " + status);
+            // }
+        }
         return status;
     }
 
