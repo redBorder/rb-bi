@@ -48,7 +48,17 @@ public class LocationLogicNmsp extends BaseFunction {
 
        // System.out.println("CLIENT_MAC: " + clientMac);
 
-        Long newTimestamp = (Long) location.get("timestamp");
+        Long newTimestamp;
+
+        if (location.get("timestamp") instanceof Integer) {
+            Integer aux = (Integer) location.get("timestamp");
+            newTimestamp = aux.longValue();
+        } else if (location.get("timestamp") instanceof Long) {
+            newTimestamp = (Long) location.get("timestamp");
+        } else {
+            newTimestamp = System.currentTimeMillis() / 1000L;
+        }
+
 
         boolean moved = false;
         Long oldTimestamp = 0L;
